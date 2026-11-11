@@ -72,11 +72,13 @@ defaults:
     values:
       layout: "writeup"
       lang: "es"
+      image: /assets/img/brand/og.png      # previsualizacion al compartir el enlace
   - scope:
       path: ""
     values:
       layout: "page"
       lang: "es"
+      image: /assets/img/brand/og.png
 
 exclude:
   - Gemfile

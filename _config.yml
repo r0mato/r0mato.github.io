@@ -43,7 +43,6 @@ cta:
 
 # ── Jekyll ───────────────────────────────────────────────────
 permalink: /writeups/:title/
-paginate: 0
 
 plugins:
   - jekyll-feed

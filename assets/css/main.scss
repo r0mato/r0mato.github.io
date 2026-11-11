@@ -551,29 +551,33 @@ p  { margin: 0 0 1.15rem; }
 .about-intro { flex: 1 1 200px; min-width: 0; }
 .about-intro p { margin: 0; }
 .about-name {
-  font-size: 1.6rem; font-weight: 680; letter-spacing: -.025em;
-  color: var(--ink); line-height: 1.15;
+  font-size: 1.45rem; font-weight: 680; letter-spacing: -.025em;
+  color: var(--ink); line-height: 1.18; text-wrap: balance;
 }
-.about-role { color: var(--text-soft); font-size: .97rem; margin-top: 4px !important; }
+.about-aka {
+  font-family: var(--font-mono); font-size: .92rem; color: var(--text-faint);
+  margin-top: 5px !important;
+}
+.about-aka strong { color: var(--accent); font-weight: 600; }
+.about-role { color: var(--text-soft); font-size: .95rem; margin-top: 8px !important; }
 .about-where {
   font-family: var(--font-mono); font-size: .76rem; letter-spacing: .06em;
   text-transform: uppercase; color: var(--text-faint); margin-top: 10px !important;
 }
 .about-logo {
-  width: 92px; height: 92px; flex: none; margin: 0;
-  border-radius: 12px; object-fit: cover;
-  border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  width: 132px; height: 132px; flex: none; margin: 0;   /* mismo tamaño que el retrato */
+  border-radius: 14px; object-fit: cover;
+  border: 3px solid var(--surface); box-shadow: var(--shadow);
 }
 /* Dentro de .prose las imágenes llevan estilos propios: aquí mandan estos */
 .prose .about-top img { margin: 0; background: none; }
 .prose .about-photo { border-radius: 14px; }
-.prose .about-logo  { border-radius: 12px; }
+.prose .about-logo  { border-radius: 14px; }
 
 @media (max-width: 560px) {
   .about-top { gap: 18px; padding: 20px; }
-  .about-photo { width: 96px; height: 96px; }
-  .about-logo { width: 64px; height: 64px; }
-  .about-name { font-size: 1.35rem; }
+  .about-photo, .about-logo { width: 96px; height: 96px; }
+  .about-name { font-size: 1.2rem; }
 }
 
 /* En móvil el selector de idioma se queda junto a los botones de la barra */

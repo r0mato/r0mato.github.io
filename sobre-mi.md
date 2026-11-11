@@ -12,9 +12,10 @@ image: /assets/img/brand/r0mato-perfil.jpg
 
 <div class="about-top">
   <img class="about-photo" src="{{ '/assets/img/brand/r0mato-perfil.jpg' | relative_url }}"
-       alt="Retrato de r0mato" width="640" height="640">
+       alt="Retrato de {{ site.author.full_name }}" width="640" height="640">
   <div class="about-intro">
-    <p class="about-name">{{ site.author.name }}</p>
+    <p class="about-name">{{ site.author.full_name }}</p>
+    <p class="about-aka">aka <strong>{{ site.author.name }}</strong></p>
     <p class="about-role">{{ site.author.role }}</p>
     <p class="about-where">{{ site.author.location }} · Web · API</p>
   </div>
@@ -24,7 +25,7 @@ image: /assets/img/brand/r0mato-perfil.jpg
 
 ## Quién soy
 
-Me llamo Curro y firmo como **r0mato**. Soy investigador de seguridad ofensiva: mi trabajo
+Me llamo **Francisco Javier Alcaide Deus** —Curro— y firmo como **r0mato**. Soy investigador de seguridad ofensiva: mi trabajo
 consiste en encontrar, demostrar y documentar fallos explotables en aplicaciones reales
 antes de que lo haga alguien con otras intenciones.
 

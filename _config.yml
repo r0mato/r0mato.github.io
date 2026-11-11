@@ -14,7 +14,8 @@ timezone:         "Europe/Madrid"
 
 # Tu perfil
 author:
-  name:     "r0mato"
+  name:      "r0mato"          # el alias con el que firmas
+  full_name: "Francisco Javier Alcaide Deus"
   role:     "Security Researcher · Bug Bounty Hunter"
   location: "España"
   email:    "curroalcaide2004@gmail.com"

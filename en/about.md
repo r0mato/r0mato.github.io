@@ -12,9 +12,10 @@ image: /assets/img/brand/r0mato-perfil.jpg
 
 <div class="about-top">
   <img class="about-photo" src="{{ '/assets/img/brand/r0mato-perfil.jpg' | relative_url }}"
-       alt="Portrait of r0mato" width="640" height="640">
+       alt="Portrait of {{ site.author.full_name }}" width="640" height="640">
   <div class="about-intro">
-    <p class="about-name">{{ site.author.name }}</p>
+    <p class="about-name">{{ site.author.full_name }}</p>
+    <p class="about-aka">aka <strong>{{ site.author.name }}</strong></p>
     <p class="about-role">{{ site.author.role }}</p>
     <p class="about-where">Spain · Web · API</p>
   </div>
@@ -24,7 +25,7 @@ image: /assets/img/brand/r0mato-perfil.jpg
 
 ## Who I am
 
-My name is Curro and I go by **r0mato**. I am an offensive security researcher: my job is
+My name is **Francisco Javier Alcaide Deus** and I go by **r0mato**. I am an offensive security researcher: my job is
 to find, prove and document exploitable flaws in real applications before someone with
 different intentions does.
 

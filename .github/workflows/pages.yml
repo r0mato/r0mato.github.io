@@ -31,9 +31,27 @@ jobs:
   build:
     name: Compilar y comprobar
     runs-on: ubuntu-latest
+    outputs:
+      fresh: ${{ steps.freshness.outputs.fresh }}
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
+
+      # Un run puede quedarse encolado mucho tiempo. Si mientras tanto han entrado
+      # commits nuevos, desplegar este publicaria una version ANTIGUA encima de la
+      # actual. Aqui se detecta y mas abajo se omite el despliegue.
+      - name: Comprobar que este commit sigue siendo la punta de main
+        id: freshness
+        run: |
+          LATEST="$(git ls-remote origin refs/heads/main | cut -f1)"
+          echo "Este run:  $GITHUB_SHA"
+          echo "main ahora: $LATEST"
+          if [ "$LATEST" = "$GITHUB_SHA" ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Commit superado por main. Se compila y comprueba, pero NO se publica."
+          fi
 
       - name: Preparar Ruby
         uses: ruby/setup-ruby@v1
@@ -70,7 +88,8 @@ jobs:
   # ─────────────────────────────────────────────────────────────
   deploy:
     name: Publicar en GitHub Pages
-    if: github.event_name != 'pull_request'
+    # Nunca en pull request, y nunca desde un commit que main ya ha superado.
+    if: github.event_name != 'pull_request' && needs.build.outputs.fresh == 'true'
     needs: build
     runs-on: ubuntu-latest
     environment:

@@ -28,18 +28,20 @@ comprueba enlaces e imágenes con html-proofer y, solo si todo pasa, publica.
 .github/workflows/pages.yml   compila, comprueba y publica en cada push
 Gemfile / Gemfile.lock        versiones exactas de Jekyll y plugins
 _config.yml                   configuración, perfil, métricas de portada
-index.html                    portada
-writeups.html                 archivo con filtros y búsqueda
-metodologia.md sobre-mi.md contacto.md
-_posts/                       los writeups publicados
+_data/ui.yml                  TODOS los textos de interfaz, en español e inglés
+index.html  writeups.html     portada y archivo en español
+sobre-mi.md  contacto.md      páginas en español
+en/                           las mismas cuatro páginas en inglés
+_posts/                       writeups; `lang:` marca el idioma, `ref:` empareja
 _drafts/                      writeups sin publicar (no salen en el sitio)
 _layouts/                     default · page · writeup
-_includes/                    head · header · footer · severity · writeup-card
+_includes/                    head · header · footer · home · archive · severity · writeup-card
 assets/css/main.scss          TODO el diseño (tokens de color en :root)
 assets/js/site.js             tema, filtros, índice lateral, copiar código, lightbox
-assets/img/writeups/<slug>/   imágenes de cada writeup
+assets/img/brand/             retrato, logo y favicon
+assets/img/writeups/<slug>/   imágenes de cada writeup (compartidas por los dos idiomas)
 plantilla-writeup.md          plantilla base
-nuevo-writeup.sh              generador de esqueleto
+nuevo-writeup.sh              generador de esqueleto (ES + EN)
 ```
 
 ## Licencia

@@ -17,10 +17,12 @@ permissions:
   pages: write
   id-token: write
 
-# Si haces dos push seguidos, cancela el despliegue viejo y publica el nuevo
+# Grupo propio: "pages" a secas lo usa tambien el pipeline interno de GitHub Pages,
+# y un bloqueo suyo deja este workflow encolado sin asignar runner.
+# cancel-in-progress en false para no interrumpir un despliegue a medias.
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: pages-deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   # ─────────────────────────────────────────────────────────────

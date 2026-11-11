@@ -18,6 +18,9 @@
 - `github.com/r0mato/r0mato.github.io` — repositorio propio
 - `github.com`, `api.github.com` — operaciones `git push` y API sobre la cuenta propia
 - `fonts.googleapis.com`, `fonts.gstatic.com` — CDN de tipografías que carga el sitio
+- `www.githubstatus.com` — página pública de estado de GitHub (solo lectura, para
+  diagnosticar si un despliegue se queda encolado por una incidencia suya)
+- `rubygems.org` — descarga de las gemas declaradas en el Gemfile
 
 ## FUERA DE ALCANCE
 - Todo lo demás. Cualquier host de un tercero.

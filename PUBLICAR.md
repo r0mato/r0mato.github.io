@@ -102,6 +102,12 @@ _posts/AAAA-MM-DD-titulo-en-minusculas-con-guiones.md
 La fecha del nombre del fichero **es obligatoria** y define el orden. El título del fichero
 se convierte en la URL: `https://r0mato.github.io/writeups/titulo-en-minusculas-con-guiones/`.
 
+> **Cuidado con las fechas futuras.** Jekyll **omite silenciosamente** cualquier post cuya
+> fecha sea posterior al momento del build: no da error, simplemente no aparece. Si publicas
+> un writeup y no sale en el sitio, lo primero que hay que mirar es la fecha —tanto la del
+> nombre del fichero como la del campo `date`— y la zona horaria (`+0100`).
+> Para forzar que se publique igualmente: `bundle exec jekyll build --future`.
+
 ### El front matter (la cabecera entre `---`)
 
 Es lo que pinta la ficha del archivo y la tabla de metadatos del artículo:
@@ -367,6 +373,11 @@ Para cambiar el color principal de todo el sitio basta con tocar una línea:
 - [ ] `severity` y `cvss` coinciden con lo que aceptó el programa.
 - [ ] Todas las imágenes cargan en local antes de hacer `push`.
 - [ ] Los `alt` de las imágenes describen lo que se ve.
+- [ ] La fecha **no** está en el futuro (si no, el post no se publica y no avisa).
+
+Si algo de esto se te escapa en una ruta de imagen o un enlace, el workflow lo detecta y
+**no publica**: te lo dice en Actions con el fichero y la línea exactos, y el sitio anterior
+sigue en línea sin tocar.
 
 ---
 

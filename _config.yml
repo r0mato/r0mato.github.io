@@ -88,6 +88,8 @@ exclude:
   - PUBLICAR.md
   - plantilla-writeup.md
   - nuevo-writeup.sh
+  - cambiar-foto.sh
+  - generar-og.sh
   - SCOPE.md
   - _sesion
   - _oob

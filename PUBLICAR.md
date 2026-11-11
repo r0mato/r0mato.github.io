@@ -5,6 +5,36 @@ No hace falta que instales nada: **GitHub compila el sitio por ti cada vez que h
 
 ---
 
+## Chuleta: lo que vas a hacer el 90 % de las veces
+
+Todo se hace desde `~/r0mato.github.io`. Los tres comandos que importan:
+
+```bash
+# 1 · escribir un writeup nuevo (crea el fichero en español y en inglés)
+./nuevo-writeup.sh "Título del writeup"
+
+# 2 · verlo antes de publicarlo
+bundle exec jekyll serve --port 4100        # -> http://127.0.0.1:4100
+
+# 3 · publicarlo
+git add -A && git commit -m "writeup: lo que sea" && git push
+```
+
+Y dos más, para las fotos:
+
+```bash
+./cambiar-foto.sh perfil ~/ruta/foto-nueva.png   # tu cara
+./cambiar-foto.sh logo   ~/ruta/logo-nuevo.png   # tu logo
+```
+
+**Nada se publica roto.** Cada `push` dispara una comprobación en GitHub: si una imagen
+apunta a una ruta que no existe, si un enlace interno está mal o si el front matter tiene
+un error de sintaxis, el despliegue **falla y no publica**. El sitio anterior se queda tal
+cual estaba. El error exacto, con fichero y línea, aparece en:
+**https://github.com/r0mato/r0mato.github.io/actions**
+
+---
+
 ## Índice
 
 1. [Puesta en marcha (solo una vez)](#1-puesta-en-marcha-solo-una-vez)
@@ -12,11 +42,13 @@ No hace falta que instales nada: **GitHub compila el sitio por ti cada vez que h
 3. [Imágenes: dónde van y cómo se ponen](#3-imágenes-dónde-van-y-cómo-se-ponen)
 4. [Elementos que puedes usar dentro del artículo](#4-elementos-que-puedes-usar-dentro-del-artículo)
 5. [Los dos idiomas](#4-bis-los-dos-idiomas)
-6. [Borradores](#5-borradores)
-7. [Ver el sitio en local antes de publicar](#6-ver-el-sitio-en-local-antes-de-publicar)
-8. [Personalizar textos, colores y datos](#7-personalizar-textos-colores-y-datos)
-9. [Checklist antes de cada publicación](#8-checklist-antes-de-cada-publicación)
-10. [Dominio propio (opcional)](#9-dominio-propio-opcional)
+6. [Cambiar tu foto o tu logo](#4-ter-cambiar-tu-foto-o-tu-logo)
+7. [Borradores](#5-borradores)
+8. [Ver el sitio en local antes de publicar](#6-ver-el-sitio-en-local-antes-de-publicar)
+9. [Personalizar textos, colores y datos](#7-personalizar-textos-colores-y-datos)
+10. [Checklist antes de cada publicación](#8-checklist-antes-de-cada-publicación)
+11. [Si algo sale mal](#si-algo-sale-mal)
+12. [Dominio propio (opcional)](#9-dominio-propio-opcional)
 
 ---
 
@@ -328,6 +360,45 @@ página rota.
 legal del final de cada writeup— están **todos** en `_data/ui.yml`, en los dos idiomas.
 Cambias una palabra ahí y cambia en todo el sitio. No la busques en los layouts.
 
+## 4-ter. Cambiar tu foto o tu logo
+
+Las dos imágenes viven en `assets/img/brand/`:
+
+| Fichero | Qué es | Tamaño |
+|---|---|---|
+| `r0mato-perfil.jpg` | tu cara, en «Sobre mí» | 640×640 |
+| `r0mato-logo.jpg` | tu logo, en «Sobre mí» y en la cabecera | 300×300 |
+| `og.png` | la tarjeta al compartir enlaces | 1200×630 |
+
+### La forma fácil
+
+```bash
+./cambiar-foto.sh perfil ~/Escritorio/foto-nueva.png
+./cambiar-foto.sh logo   ~/Escritorio/logo-nuevo.png
+```
+
+Acepta cualquier tamaño y formato: recorta al centro en cuadrado sin deformar, lo deja al
+tamaño correcto, lo optimiza y **regenera la tarjeta social**, que lleva las dos imágenes
+dentro. Luego `git push` y listo.
+
+### La forma manual
+
+Sustituye el fichero **conservando el mismo nombre** y, si quieres, regenera la tarjeta:
+
+```bash
+cp ~/mi-foto.jpg assets/img/brand/r0mato-perfil.jpg
+./generar-og.sh
+```
+
+Si le pones otro nombre tendrás que cambiar las rutas en `sobre-mi.md`, `en/about.md`,
+`_includes/header.html` y `generar-og.sh`. Por eso es más cómodo reusar el nombre.
+
+> **Encuadre.** La foto se muestra en un cuadrado de 132 px junto al logo. Si tu cara
+> queda pequeña dentro del marco, la foto se verá «más pequeña» que el logo aunque el
+> marco sea idéntico: recorta tú el cuadrado pegado a la cara antes de pasarlo al script.
+
+---
+
 ## 5. Borradores
 
 Un writeup que todavía no quieres publicar va en `_drafts/` **sin fecha en el nombre**:
@@ -416,6 +487,41 @@ Para cambiar el color principal de todo el sitio basta con tocar una línea:
 Si algo de esto se te escapa en una ruta de imagen o un enlace, el workflow lo detecta y
 **no publica**: te lo dice en Actions con el fichero y la línea exactos, y el sitio anterior
 sigue en línea sin tocar.
+
+---
+
+## Si algo sale mal
+
+**El sitio no se actualiza después de un push.**
+Mira https://github.com/r0mato/r0mato.github.io/actions. Si el último run está en rojo, el
+despliegue se detuvo a propósito: abre el run y el paso que falló te dice qué y dónde. Lo
+más habitual es una ruta de imagen mal escrita o unas comillas sin cerrar en el front
+matter. El sitio sigue mostrando la versión anterior, así que no hay prisa.
+
+**Un writeup no aparece.**
+Casi siempre es la fecha: Jekyll omite en silencio los posts con fecha futura. Comprueba
+la del nombre del fichero y la del campo `date`.
+
+**He cambiado los estilos y no veo el cambio.**
+El CSS se sirve con `?v=` y cambia en cada despliegue, así que no debería pasar. Si pasa,
+`Ctrl+Shift+R`.
+
+**La he liado y quiero volver atrás.**
+
+```bash
+git log --oneline          # busca el commit bueno
+git revert <hash>          # deshace ese commit creando otro encima
+git push
+```
+
+`git revert` no borra historia: crea un commit que deshace el anterior. Es la forma segura.
+
+**Quiero ver qué voy a publicar antes de hacer push.**
+
+```bash
+git status      # qué ficheros han cambiado
+git diff        # qué ha cambiado exactamente dentro de ellos
+```
 
 ---
 

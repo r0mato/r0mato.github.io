@@ -14,9 +14,12 @@ imágenes, avisos, borradores, previsualización local y personalización.
 Resumen:
 
 ```bash
-./nuevo-writeup.sh "Título del writeup"       # crea el artículo y su carpeta de imágenes
+./nuevo-writeup.sh "Título del writeup"       # crea el artículo (ES+EN) y su carpeta de imágenes
 bundle exec jekyll serve --port 4100          # previsualiza en http://127.0.0.1:4100
 git add -A && git commit -m "writeup: …" && git push
+
+./cambiar-foto.sh perfil ~/foto.png           # sustituye tu retrato (o `logo`)
+./generar-og.sh                               # rehace la tarjeta de previsualización social
 ```
 
 El push dispara `.github/workflows/pages.yml`, que compila con el Jekyll del `Gemfile`,
@@ -42,6 +45,8 @@ assets/img/brand/             retrato, logo y favicon
 assets/img/writeups/<slug>/   imágenes de cada writeup (compartidas por los dos idiomas)
 plantilla-writeup.md          plantilla base
 nuevo-writeup.sh              generador de esqueleto (ES + EN)
+cambiar-foto.sh               sustituye retrato o logo con el recorte correcto
+generar-og.sh                 rehace assets/img/brand/og.png
 ```
 
 ## Licencia

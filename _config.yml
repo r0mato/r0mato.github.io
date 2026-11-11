@@ -20,7 +20,7 @@ author:
   location: "España"
   email:    "curroalcaide2004@gmail.com"
   yeswehack: "r0mato"     # usuario de YesWeHack
-  linkedin: ""            # p.ej. "francisco-alcaide"  (vacío = no se muestra)
+  linkedin:  "francisco-javier-alcaide-deus"   # slug o URL completa; vacío = no se muestra
 
 # Métricas de la portada. Edita los números cuando cambien.
 stats:

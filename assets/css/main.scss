@@ -604,7 +604,7 @@ p  { margin: 0 0 1.15rem; }
   border: 3px solid var(--surface); box-shadow: var(--shadow);
   margin: 0;
 }
-.about-intro { flex: 1 1 200px; min-width: 0; }
+.about-intro { flex: 1 1 200px; min-width: 0; text-align: center; }   /* solo los textos de la ficha */
 .about-intro p { margin: 0; }
 .about-name {
   font-size: 1.45rem; font-weight: 680; letter-spacing: -.025em;
@@ -631,8 +631,10 @@ p  { margin: 0 0 1.15rem; }
 .prose .about-logo  { border-radius: 14px; }
 
 @media (max-width: 560px) {
-  .about-top { gap: 18px; padding: 20px; }
-  .about-photo, .about-logo { width: 96px; height: 96px; }
+  /* retrato y logo en una fila arriba; el texto, centrado, debajo */
+  .about-top { gap: 16px; padding: 22px 20px; justify-content: center; }
+  .about-photo, .about-logo { width: 104px; height: 104px; }
+  .about-intro { order: 3; flex: 0 0 100%; }
   .about-name { font-size: 1.2rem; }
 }
 

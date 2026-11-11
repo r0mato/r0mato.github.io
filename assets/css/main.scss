@@ -475,6 +475,8 @@ p  { margin: 0 0 1.15rem; }
 
 /* ── Páginas simples ────────────────────────────────────────── */
 .page-head { padding: 54px 24px 18px; }   /* el 24px lateral repite el de .wrap: si no, lo pisa */
+/* la entradilla se lee junto al cuerpo: mismo ancho de linea */
+.page-head .lede { max-width: var(--wrap-text); }
 .page-body { padding: 0 24px 80px; }
 .contact-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; list-style: none; padding: 0; margin: 28px 0 0; }
 .contact-list a {

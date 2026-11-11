@@ -415,20 +415,23 @@ p  { margin: 0 0 1.15rem; }
 .zoomable { cursor: zoom-in; }
 
 /* Avisos */
-.note, .warn, .impact {
+.note, .warn, .impact, .plain {
   margin: 1.7rem 0; padding: 16px 18px 16px 44px; position: relative;
   border-radius: var(--radius); border: 1px solid var(--border);
   background: var(--surface-alt); font-size: .945rem;
 }
 /* gana a `.prose p` cuando el aviso se escribe con `{: .note }` sobre un párrafo */
-.prose .note, .prose .warn, .prose .impact { margin: 1.7rem 0; }
-.note > :last-child, .warn > :last-child, .impact > :last-child { margin-bottom: 0; }
-.note::before, .warn::before, .impact::before {
+.prose .note, .prose .warn, .prose .impact, .prose .plain { margin: 1.7rem 0; }
+.note > :last-child, .warn > :last-child, .impact > :last-child, .plain > :last-child { margin-bottom: 0; }
+.note::before, .warn::before, .impact::before, .plain::before {
   position: absolute; left: 16px; top: 15px; font-size: 1rem; line-height: 1.4;
 }
 .note { border-left: 3px solid var(--accent); } .note::before { content: "ℹ"; color: var(--accent); }
 .warn { border-left: 3px solid var(--sev-high); background: var(--sev-high-bg); } .warn::before { content: "⚠"; color: var(--sev-high); }
 .impact { border-left: 3px solid var(--sev-crit); background: var(--sev-crit-bg); } .impact::before { content: "◉"; color: var(--sev-crit); }
+/* explicación llana, para quien llega sin contexto */
+.plain { border-left: 3px solid var(--ok); background: var(--ok-bg); } .plain::before { content: "💡"; }
+.plain strong:first-child { color: var(--ok); }
 
 /* Conclusiones */
 .takeaways {

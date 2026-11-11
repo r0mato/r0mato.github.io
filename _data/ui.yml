@@ -59,6 +59,7 @@ es:
     result_one: "resultado"
     result_many: "resultados"
     empty: "Ningún writeup coincide con ese filtro."
+    list_heading: "Lista de writeups"
 
   wu:
     read_time: "min de lectura"
@@ -142,6 +143,7 @@ en:
     result_one: "result"
     result_many: "results"
     empty: "No writeup matches that filter."
+    list_heading: "List of writeups"
 
   wu:
     read_time: "min read"

@@ -40,6 +40,7 @@
   <p class="results-count" id="results-count"
      data-one="{{ t.archive.result_one }}" data-many="{{ t.archive.result_many }}"></p>
 
+  <h2 class="sr-only">{{ t.archive.list_heading }}</h2>
   <div class="cards" id="writeup-list">
     {% for post in mine %}{% include writeup-card.html post=post %}{% endfor %}
   </div>

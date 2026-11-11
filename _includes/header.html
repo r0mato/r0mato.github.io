@@ -28,7 +28,9 @@
     {%- endif -%}
     {%- if alt == nil -%}{%- if t.other_code == 'en' -%}{%- assign alt = '/en/writeups/' -%}{%- else -%}{%- assign alt = '/writeups/' -%}{%- endif -%}{%- endif -%}
 
-    <a class="lang-switch" href="{{ alt | relative_url }}" aria-label="{{ t.a11y.lang }}" title="{{ t.other_name }}">
+    <a class="lang-switch" href="{{ alt | relative_url }}"
+       aria-label="{{ t.code | upcase }}/{{ t.other_code | upcase }} — {{ t.a11y.lang }}"
+       title="{{ t.other_name }}">
       <span class="is-on">{{ t.code | upcase }}</span><span class="sep">/</span><span>{{ t.other_code | upcase }}</span>
     </a>
 

@@ -39,9 +39,10 @@
 
     <dl class="stats">
       {% for s in site.stats %}
+      {%- comment -%} dt = etiqueta, dd = valor; el CSS los invierte visualmente {%- endcomment -%}
       <div>
-        <strong>{{ s.value }}</strong>
-        <span>{% if L == 'en' %}{{ s.label_en }}{% else %}{{ s.label_es }}{% endif %}</span>
+        <dt>{% if L == 'en' %}{{ s.label_en }}{% else %}{{ s.label_es }}{% endif %}</dt>
+        <dd>{{ s.value }}</dd>
       </div>
       {% endfor %}
     </dl>

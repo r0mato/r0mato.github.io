@@ -11,7 +11,4 @@ description: "Contact for bug bounty programs, one-off penetration testing and t
 
 Email is the fastest way. I usually reply within 24 hours.
 
-If you are sending something sensitive and want an encrypted reply, say so in your first
-message and I will share my public key.
-
 {% include contact-list.html %}

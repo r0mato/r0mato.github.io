@@ -1,0 +1,14 @@
+<footer class="site-footer">
+  <div class="wrap site-footer__inner">
+    <div>
+      © {{ 'now' | date: "%Y" }} {{ site.author.name }} · Todo el contenido se publica tras divulgación coordinada.
+    </div>
+    <nav>
+      <a href="{{ '/writeups/' | relative_url }}">Writeups</a>
+      <a href="{{ '/metodologia/' | relative_url }}">Metodología</a>
+      <a href="{{ '/contacto/' | relative_url }}">Contacto</a>
+      <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
+      {% if site.author.github %}<a href="https://github.com/{{ site.author.github }}" rel="me noopener">GitHub</a>{% endif %}
+    </nav>
+  </div>
+</footer>

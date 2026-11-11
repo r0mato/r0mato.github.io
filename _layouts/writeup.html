@@ -1,0 +1,67 @@
+---
+layout: default
+---
+{%- assign words = content | number_of_words -%}
+{%- assign mins = words | divided_by: 210 | plus: 1 -%}
+
+<div class="wu-head">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Migas de pan">
+      <a href="{{ '/' | relative_url }}">Inicio</a> / <a href="{{ '/writeups/' | relative_url }}">Writeups</a> / <span>{{ page.vuln_class | default: 'Writeup' }}</span>
+    </nav>
+
+    <div class="wu-head__pills">
+      {% include severity.html level=page.severity %}
+      <span class="tag">{{ page.date | date: "%d %B %Y" }}</span>
+      <span class="tag">{{ mins }} min de lectura</span>
+      {% if page.status %}<span class="tag">{{ page.status }}</span>{% endif %}
+    </div>
+
+    <h1>{{ page.title }}</h1>
+    {% if page.summary %}<p class="lede">{{ page.summary }}</p>{% endif %}
+
+    <dl class="wu-facts">
+      {% if page.target_type %}<div><dt>Tipo de objetivo</dt><dd>{{ page.target_type }}</dd></div>{% endif %}
+      {% if page.vuln_class %}<div><dt>Clase</dt><dd>{{ page.vuln_class }}</dd></div>{% endif %}
+      {% if page.cwe %}<div><dt>CWE</dt><dd>{{ page.cwe }}</dd></div>{% endif %}
+      {% if page.cvss %}<div><dt>CVSS v3.1</dt><dd>{{ page.cvss }}</dd></div>{% endif %}
+      {% if page.cvss_vector %}<div><dt>Vector</dt><dd><code>{{ page.cvss_vector }}</code></dd></div>{% endif %}
+      {% if page.platform %}<div><dt>Plataforma</dt><dd>{{ page.platform }}</dd></div>{% endif %}
+      {% if page.reward %}<div><dt>Recompensa</dt><dd>{{ page.reward }}</dd></div>{% endif %}
+      {% if page.fixed %}<div><dt>Corregido</dt><dd>{{ page.fixed }}</dd></div>{% endif %}
+    </dl>
+  </div>
+</div>
+
+<div class="wrap wu-layout">
+  <article class="prose" id="article">
+    {{ content }}
+
+    {% if page.takeaways %}
+    <aside class="takeaways">
+      <h2>Qué me llevo de este caso</h2>
+      <ul>
+        {% for t in page.takeaways %}<li>{{ t | markdownify | remove: '<p>' | remove: '</p>' }}</li>{% endfor %}
+      </ul>
+    </aside>
+    {% endif %}
+
+    <p class="disclosure">
+      {{ page.disclosure | default: "Publicado tras la corrección del fallo y con el consentimiento del programa correspondiente. Los identificadores, dominios y datos sensibles han sido anonimizados o sustituidos por valores de laboratorio propios. Ninguna prueba utilizó datos de usuarios reales." }}
+    </p>
+
+    <nav class="wu-nav">
+      {% if page.previous %}
+        <a class="prev" href="{{ page.previous.url | relative_url }}"><small>← Anterior</small><strong>{{ page.previous.title }}</strong></a>
+      {% else %}<span></span>{% endif %}
+      {% if page.next %}
+        <a class="next" href="{{ page.next.url | relative_url }}"><small>Siguiente →</small><strong>{{ page.next.title }}</strong></a>
+      {% endif %}
+    </nav>
+  </article>
+
+  <aside class="toc" id="toc" aria-label="Contenido del artículo">
+    <div class="toc__title">En esta página</div>
+    <ol id="toc-list"></ol>
+  </aside>
+</div>

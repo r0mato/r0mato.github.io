@@ -1,0 +1,133 @@
+---
+layout: default
+title: "Investigación de seguridad ofensiva"
+description: "Writeups técnicos de vulnerabilidades reales en web, API y móvil. Metodología verificable, control negativo y divulgación coordinada."
+---
+
+<!-- ───────────────────────── HERO ───────────────────────── -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero__grid">
+      <div>
+        <span class="eyebrow">Security Research · Bug Bounty</span>
+        <h1>Encuentro el fallo que <em>sí</em> se puede explotar.</h1>
+        <p class="lede">
+          Investigo aplicaciones web, APIs y móvil buscando vulnerabilidades con impacto
+          demostrable — no listados de escáner. Cada caso que publico aquí incluye la prueba
+          de concepto, el control negativo que descarta el falso positivo y el impacto real
+          para el negocio.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="{{ '/writeups/' | relative_url }}">
+            Ver writeups
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn--ghost" href="{{ '/contacto/' | relative_url }}">Trabajar conmigo</a>
+        </div>
+      </div>
+
+      <div class="card-id">
+        <div class="card-id__top">
+          <span class="card-id__dot"></span>
+          <span>status: disponible para programas</span>
+        </div>
+        <div class="card-id__body">
+          <dl>
+            <div class="card-id__row"><dt>Investigador</dt><dd>{{ site.author.name }}</dd></div>
+            <div class="card-id__row"><dt>Enfoque</dt><dd>Web · API · Móvil</dd></div>
+            <div class="card-id__row"><dt>Especialidad</dt><dd>Lógica de negocio · IDOR · Auth</dd></div>
+            <div class="card-id__row"><dt>Ubicación</dt><dd>{{ site.author.location }}</dd></div>
+            <div class="card-id__row"><dt>Divulgación</dt><dd>Coordinada</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <dl class="stats">
+      {% for s in site.stats %}
+      <div><strong>{{ s.value }}</strong><span>{{ s.label }}</span></div>
+      {% endfor %}
+    </dl>
+  </div>
+</section>
+
+<!-- ─────────────────── PLATAFORMAS ─────────────────── -->
+<section class="section section--alt" style="padding:34px 0">
+  <div class="wrap platforms">
+    <span class="platforms__label">Activo en</span>
+    <span class="chip">HackerOne</span>
+    <span class="chip">YesWeHack</span>
+    <span class="chip">Intigriti</span>
+    <span class="chip">Bugcrowd</span>
+    <span class="chip">Programas privados / VDP</span>
+  </div>
+</section>
+
+<!-- ─────────────────── WRITEUPS DESTACADOS ─────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <span class="eyebrow">Casos publicados</span>
+      <h2>Writeups recientes</h2>
+      <p>Vulnerabilidades reportadas, corregidas y publicadas con permiso. Lo que importa no es el payload: es la suposición del desarrollador que lo hizo posible.</p>
+    </div>
+
+    {% assign featured = site.posts | slice: 0, 3 %}
+    {% if featured.size > 0 %}
+      <div class="cards">
+        {% for post in featured %}{% include writeup-card.html post=post %}{% endfor %}
+      </div>
+      {% if site.posts.size > 3 %}
+      <p style="margin-top:28px">
+        <a class="btn btn--ghost" href="{{ '/writeups/' | relative_url }}">Ver los {{ site.posts.size }} writeups</a>
+      </p>
+      {% endif %}
+    {% else %}
+      <p class="empty-state">Todavía no hay writeups publicados.</p>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ─────────────────── METODOLOGÍA ─────────────────── -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="section__head">
+      <span class="eyebrow">Cómo trabajo</span>
+      <h2>Un hallazgo no existe hasta que sobrevive a su propio control</h2>
+      <p>El proceso está diseñado para matar falsos positivos antes de que lleguen a tu bandeja de entrada.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <h3>Reconocimiento pasivo</h3>
+        <p>Mapeo de superficie sin una sola petición de prueba: subdominios, bundles JS, source maps, endpoints no documentados y parámetros ocultos.</p>
+      </div>
+      <div class="step">
+        <h3>Hipótesis con señal citada</h3>
+        <p>Nada se ataca «por probar». Cada prueba parte de una señal concreta en el código o en una respuesta, y declara de antemano qué la confirmaría y qué la mataría.</p>
+      </div>
+      <div class="step">
+        <h3>Control negativo obligatorio</h3>
+        <p>Toda señal se repite sin la condición de ataque. Si el comportamiento es idéntico, no era una vulnerabilidad: era una coincidencia.</p>
+      </div>
+      <div class="step">
+        <h3>Validación independiente</h3>
+        <p>Un segundo pase reproduce los pasos a ciegas, sin conocer la hipótesis, para eliminar el sesgo de confirmación antes de redactar el reporte.</p>
+      </div>
+    </div>
+    <p style="margin-top:28px">
+      <a class="btn btn--ghost" href="{{ '/metodologia/' | relative_url }}">Leer la metodología completa</a>
+    </p>
+  </div>
+</section>
+
+<!-- ─────────────────── CTA ─────────────────── -->
+<section class="cta-band">
+  <div class="wrap">
+    <h2>{{ site.cta.title }}</h2>
+    <p>{{ site.cta.text }}</p>
+    <div class="hero__actions">
+      <a class="btn btn--primary" href="mailto:{{ site.author.email }}">Escríbeme</a>
+      <a class="btn btn--ghost" href="{{ '/sobre-mi/' | relative_url }}">Sobre mí</a>
+    </div>
+  </div>
+</section>

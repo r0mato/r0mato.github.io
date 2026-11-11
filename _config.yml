@@ -1,0 +1,87 @@
+# ─────────────────────────────────────────────────────────────
+#  Configuración del sitio.  Cambia SOLO los valores de aquí.
+# ─────────────────────────────────────────────────────────────
+
+title:            "r0mato"
+tagline:          "Offensive Security Research"
+description:      "Writeups técnicos de vulnerabilidades reales en web, API y móvil. Investigación de seguridad ofensiva con metodología verificable y divulgación responsable."
+url:              "https://r0mato.github.io"
+baseurl:          ""
+lang:             "es"
+timezone:         "Europe/Madrid"
+
+# Tu perfil (sale en el hero, el about y los metadatos)
+author:
+  name:     "r0mato"
+  role:     "Security Researcher · Bug Bounty Hunter"
+  location: "España"
+  bio:      "Investigador de seguridad ofensiva especializado en aplicaciones web, APIs y móvil. Cada hallazgo que publico ha pasado por control negativo y validación ciega antes de ser reportado."
+  email:    "curroalcaide2004@gmail.com"
+  github:   "r0mato"
+  linkedin: ""        # p.ej. "francisco-alcaide"  (deja vacío para ocultar)
+  twitter:  ""        # p.ej. "r0mato"             (sin la @)
+  hackerone: ""       # tu usuario de HackerOne
+  yeswehack: ""       # tu usuario de YesWeHack
+  intigriti: ""
+  bugcrowd:  ""
+
+# Métricas del hero. Edita los números cuando cambien.
+stats:
+  - value: "25+"
+    label: "Vulnerabilidades reportadas"
+  - value: "8"
+    label: "Critical / High"
+  - value: "12"
+    label: "Programas auditados"
+  - value: "100%"
+    label: "Divulgación coordinada"
+
+# Mensaje de la franja de contacto de la home
+cta:
+  title: "¿Necesitas que alguien intente romperlo antes que otros?"
+  text:  "Disponible para programas de bug bounty, pruebas de intrusión puntuales y revisión de superficie de ataque."
+
+# ── Jekyll ───────────────────────────────────────────────────
+permalink: /writeups/:title/
+paginate: 0
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+sass:
+  style: compressed
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "writeup"
+  - scope:
+      path: ""
+    values:
+      layout: "page"
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - README.md
+  - PUBLICAR.md
+  - plantilla-writeup.md
+  - nuevo-writeup.sh
+  - SCOPE.md
+  - _sesion
+  - _oob
+  - _ritmo
+  - .gitignore

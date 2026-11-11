@@ -1,0 +1,19 @@
+{%- assign wu = include.post -%}
+<article class="card"
+         data-title="{{ wu.title | downcase | strip }}"
+         data-class="{{ wu.vuln_class | default: 'otros' | downcase }}"
+         data-severity="{{ wu.severity | default: 'info' | downcase }}"
+         data-tags="{{ wu.tags | join: ' ' | downcase }}">
+  <div class="card__top">
+    {% include severity.html level=wu.severity %}
+    <time class="card__date" datetime="{{ wu.date | date_to_xmlschema }}">{{ wu.date | date: "%d %b %Y" }}</time>
+  </div>
+  <h3><a href="{{ wu.url | relative_url }}">{{ wu.title }}</a></h3>
+  <p>{{ wu.summary | default: wu.excerpt | strip_html | truncate: 165 }}</p>
+  <div class="card__meta">
+    {% if wu.vuln_class %}<span class="tag">{{ wu.vuln_class }}</span>{% endif %}
+    {% if wu.cwe %}<span class="tag">{{ wu.cwe }}</span>{% endif %}
+    {% if wu.cvss %}<span class="tag tag--cvss">CVSS {{ wu.cvss }}</span>{% endif %}
+    {% if wu.target_type %}<span class="tag">{{ wu.target_type }}</span>{% endif %}
+  </div>
+</article>

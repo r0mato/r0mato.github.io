@@ -1,0 +1,13 @@
+{%- comment -%}
+  Uso: {% include severity.html level=page.severity %}
+  Valores aceptados: critical | high | medium | low | info
+{%- endcomment -%}
+{%- assign s = include.level | default: 'info' | downcase -%}
+{%- case s -%}
+  {%- when 'critical' or 'critica' or 'crítica' -%}{%- assign c = 'crit' -%}{%- assign p = 'P1' -%}{%- assign l = 'Critical' -%}
+  {%- when 'high' or 'alta' -%}{%- assign c = 'high' -%}{%- assign p = 'P2' -%}{%- assign l = 'High' -%}
+  {%- when 'medium' or 'media' -%}{%- assign c = 'med' -%}{%- assign p = 'P3' -%}{%- assign l = 'Medium' -%}
+  {%- when 'low' or 'baja' -%}{%- assign c = 'low' -%}{%- assign p = 'P4' -%}{%- assign l = 'Low' -%}
+  {%- else -%}{%- assign c = 'info' -%}{%- assign p = 'P5' -%}{%- assign l = 'Info' -%}
+{%- endcase -%}
+<span class="sev sev--{{ c }}" title="Severidad {{ l }}"><span class="sev__dot"></span>{{ p }} · {{ l }}</span>

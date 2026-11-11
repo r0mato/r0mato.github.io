@@ -1,0 +1,50 @@
+---
+layout: default
+permalink: /writeups/
+title: "Writeups"
+description: "Archivo de vulnerabilidades investigadas, reportadas y corregidas: IDOR, lógica de negocio, autenticación, inyección y más."
+---
+
+<div class="wrap page-head">
+  <span class="eyebrow">Archivo</span>
+  <h1>Writeups</h1>
+  <p class="lede">
+    {{ site.posts.size }} caso{% if site.posts.size != 1 %}s{% endif %} publicado{% if site.posts.size != 1 %}s{% endif %}.
+    Todos reportados por canales oficiales, corregidos por el propietario y publicados con permiso.
+  </p>
+</div>
+
+<div class="wrap page-body">
+  <div class="filters">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="q" placeholder="Buscar por título, clase o etiqueta…" autocomplete="off" aria-label="Buscar writeups">
+    </label>
+
+    <div class="filter-group" id="filters-sev" role="group" aria-label="Filtrar por severidad">
+      <button class="filter is-active" data-key="severity" data-value="all">Todas</button>
+      <button class="filter" data-key="severity" data-value="critical">Critical</button>
+      <button class="filter" data-key="severity" data-value="high">High</button>
+      <button class="filter" data-key="severity" data-value="medium">Medium</button>
+      <button class="filter" data-key="severity" data-value="low">Low</button>
+    </div>
+
+    {% assign classes = site.posts | map: 'vuln_class' | compact | uniq | sort %}
+    {% if classes.size > 1 %}
+    <div class="filter-group" id="filters-class" role="group" aria-label="Filtrar por clase">
+      <button class="filter is-active" data-key="class" data-value="all">Toda clase</button>
+      {% for c in classes %}
+      <button class="filter" data-key="class" data-value="{{ c | downcase }}">{{ c }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <p class="results-count" id="results-count"></p>
+
+  <div class="cards" id="writeup-list">
+    {% for post in site.posts %}{% include writeup-card.html post=post %}{% endfor %}
+  </div>
+
+  <p class="empty-state" id="empty" hidden>Ningún writeup coincide con ese filtro.</p>
+</div>

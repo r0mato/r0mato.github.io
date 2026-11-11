@@ -79,6 +79,11 @@ es:
       reward: "Recompensa"
       fixed: "Corregido"
 
+  contact:
+    email: "Correo"
+    linkedin: "LinkedIn"
+    yeswehack: "YesWeHack"
+
   footer:
     rights: "Todo el contenido se publica tras divulgación coordinada."
 
@@ -162,6 +167,11 @@ en:
       platform: "Platform"
       reward: "Reward"
       fixed: "Fixed in"
+
+  contact:
+    email: "Email"
+    linkedin: "LinkedIn"
+    yeswehack: "YesWeHack"
 
   footer:
     rights: "All content is published after coordinated disclosure."

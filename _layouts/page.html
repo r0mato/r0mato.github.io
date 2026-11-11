@@ -7,7 +7,8 @@ layout: default
   {% if page.lede %}<p class="lede">{{ page.lede }}</p>{% endif %}
 </div>
 <div class="wrap page-body">
-  <div class="prose">
+  {%- comment -%} wide: true en el front matter suelta el limite de 760px {%- endcomment -%}
+  <div class="prose{% if page.wide %} prose--wide{% endif %}">
     {{ content }}
   </div>
 </div>

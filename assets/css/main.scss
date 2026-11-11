@@ -96,6 +96,8 @@
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0;
+  /* el pie se queda abajo aunque la pagina sea corta */
+  min-height: 100vh; display: flex; flex-direction: column;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
@@ -104,6 +106,7 @@ body {
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv11", "ss01";
 }
+main { flex: 1 0 auto; }
 img, svg, video { max-width: 100%; height: auto; display: block; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-hover); }
@@ -352,6 +355,7 @@ p  { margin: 0 0 1.15rem; }
 
 /* ── Cuerpo del artículo ─────────────────────────────────────── */
 .prose { max-width: var(--wrap-text); font-size: 1.0425rem; }
+.prose--wide { max-width: none; }
 .prose > h2 { margin-top: 2.4em; padding-top: .3em; }
 .prose > h3 { margin-top: 1.9em; }
 .prose > h2 + h3 { margin-top: 1.1em; }
@@ -478,20 +482,48 @@ p  { margin: 0 0 1.15rem; }
 /* la entradilla se lee junto al cuerpo: mismo ancho de linea */
 .page-head .lede { max-width: var(--wrap-text); }
 .page-body { padding: 0 24px 80px; }
-.contact-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; list-style: none; padding: 0; margin: 28px 0 0; }
+.contact-list {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(236px, 1fr));
+  gap: 16px; list-style: none; padding: 0; margin: 40px 0 0;
+}
 .contact-list a {
-  display: flex; align-items: center; gap: 12px; padding: 16px 18px;
-  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface);
-  color: var(--ink); font-weight: 550; font-size: .93rem;
-  min-width: 0;                       /* permite encoger dentro del grid */
+  position: relative; display: flex; flex-direction: column; gap: 18px; height: 100%;
+  padding: 24px 22px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  transition: border-color .18s, box-shadow .18s, transform .18s;
+  min-width: 0;
 }
-.contact-list a > span {
-  min-width: 0; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35;
+.contact-list a:hover {
+  border-color: var(--accent); color: var(--ink);
+  box-shadow: var(--shadow); transform: translateY(-3px);
 }
-.contact-list a:hover { border-color: var(--accent); color: var(--accent); }
+.contact-list .ico {
+  width: 44px; height: 44px; flex: none; display: grid; place-items: center;
+  border-radius: 12px; background: var(--accent-soft); color: var(--accent);
+  transition: background .18s, color .18s;
+}
+.contact-list a:hover .ico { background: var(--accent); color: #fff; }
+.contact-list .ico svg { width: 21px; height: 21px; }
+.contact-list .txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.contact-list .label {
+  font-family: var(--font-mono); font-size: .69rem; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint);
+}
+.contact-list .value {
+  font-size: .97rem; font-weight: 600; line-height: 1.35;
+  overflow-wrap: anywhere; word-break: break-word;
+}
+.contact-list .go {
+  position: absolute; top: 20px; right: 20px; width: 16px; height: 16px;
+  color: var(--text-faint); opacity: 0;
+  transition: opacity .18s, transform .18s, color .18s;
+}
+.contact-list a:hover .go, .contact-list a:focus-visible .go {
+  opacity: 1; color: var(--accent); transform: translate(2px, -2px);
+}
 .prose .contact-list a { text-decoration: none; }
-.contact-list svg { width: 18px; height: 18px; flex: none; color: var(--text-faint); }
-.contact-list a:hover svg { color: var(--accent); }
 
 /* ── Pie ─────────────────────────────────────────────────────── */
 .site-footer { border-top: 1px solid var(--border); background: var(--bg-alt); padding: 40px 0; font-size: .875rem; color: var(--text-faint); }

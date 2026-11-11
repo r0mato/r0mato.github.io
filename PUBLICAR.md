@@ -48,17 +48,30 @@ git push -u origin main
 
 ### 1.3 Activar GitHub Pages
 
-En el repositorio: **Settings → Pages**
+En el repositorio: **Settings → Pages → Build and deployment → Source: `GitHub Actions`**.
 
-- **Source**: `Deploy from a branch`
-- **Branch**: `main` · carpeta `/ (root)`
-- **Save**
+Con esa opción el sitio lo compila **nuestro propio workflow**
+(`.github/workflows/pages.yml`) con el Jekyll del `Gemfile`, el mismo que usas en local.
+La alternativa (`Deploy from a branch`) usa una versión antigua y fija de Jekyll que
+GitHub controla, y provoca fallos que en local no aparecen.
 
 En uno o dos minutos el sitio estará en **https://r0mato.github.io**.
-Cada `push` posterior lo reconstruye solo; tarda entre 30 segundos y 2 minutos.
+Cada `push` posterior lo reconstruye solo.
 
-Si algo falla, la pestaña **Actions** del repositorio muestra el log del build de Pages y el
-error exacto (casi siempre: un `---` mal cerrado o comillas sin cerrar en el front matter).
+### 1.4 Qué hace el workflow en cada push
+
+1. Instala Ruby y las gemas exactas del `Gemfile.lock` (con caché, así tarda ~40 s).
+2. Compila el sitio con `JEKYLL_ENV=production`.
+3. Pasa **html-proofer**: si hay una imagen con la ruta mal escrita o un enlace interno
+   roto, **falla y no publica**. El sitio anterior sigue en línea intacto.
+4. Si todo está bien, despliega.
+
+En un *pull request* ejecuta los pasos 1–3 pero **no** publica: sirve para validar un
+writeup antes de fusionarlo.
+
+Si algo falla, la pestaña **Actions** del repositorio muestra el log con el error exacto
+(lo más habitual: un `---` mal cerrado o comillas sin cerrar en el front matter, o una
+ruta de imagen equivocada).
 
 ---
 
@@ -291,18 +304,33 @@ Cuando lo publiques, muévelo a `_posts/` con la fecha delante del nombre.
 
 ## 6. Ver el sitio en local antes de publicar
 
-Jekyll ya está instalado en esta máquina:
-
 ```bash
 cd ~/r0mato.github.io
-jekyll serve --port 4100 --livereload
+bundle exec jekyll serve --port 4100 --livereload
 ```
 
 Abre **http://127.0.0.1:4100**. Cada vez que guardes un fichero se recarga solo.
 
-> El proyecto **no lleva `Gemfile` a propósito**: si añades uno, Jekyll intentará resolver
-> las dependencias con Bundler y fallará con `Could not find gem 'github-pages'`. Para
-> publicar no hace falta ninguno — GitHub usa su propia versión.
+Las dependencias ya están instaladas en `vendor/bundle`. Si alguna vez te falta alguna:
+
+```bash
+bundle install
+```
+
+> **Usa siempre `bundle exec`.** Es lo que garantiza que compiles con el mismo Jekyll
+> (4.4.1) y los mismos plugins que usa GitHub Actions al publicar. Sin `bundle exec`
+> podrías estar compilando con otra versión y ver algo distinto a lo que se publica.
+
+### Comprobar enlaces e imágenes antes de publicar
+
+```bash
+bundle exec jekyll build
+bundle exec htmlproofer ./_site --disable-external --allow-hash-href
+```
+
+Esto detecta rutas de imagen mal escritas y enlaces internos rotos — el error más común
+al publicar un writeup. **El workflow lo ejecuta solo en cada push**, así que si algo está
+roto no llega a publicarse, pero correrlo en local te ahorra el viaje de ida y vuelta.
 
 ---
 

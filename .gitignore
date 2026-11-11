@@ -1,12 +1,20 @@
+# Salida de compilación
 _site/
 .jekyll-cache/
 .jekyll-metadata
 .sass-cache/
-Gemfile.lock
+
+# Dependencias instaladas en local
+# OJO: Gemfile.lock SÍ se versiona — el workflow lo necesita para cachear.
 vendor/
-.DS_Store
-*.swp
+.bundle/
+
+# Estado del harness de bug bounty (no forma parte del sitio)
 _sesion/
 _oob/
 _ritmo/
 .playwright-mcp/
+
+# Sistema
+.DS_Store
+*.swp

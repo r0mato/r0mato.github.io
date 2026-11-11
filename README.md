@@ -14,14 +14,19 @@ imágenes, avisos, borradores, previsualización local y personalización.
 Resumen:
 
 ```bash
-./nuevo-writeup.sh "Título del writeup"   # crea el artículo y su carpeta de imágenes
-jekyll serve --port 4100                  # previsualiza en http://127.0.0.1:4100
+./nuevo-writeup.sh "Título del writeup"       # crea el artículo y su carpeta de imágenes
+bundle exec jekyll serve --port 4100          # previsualiza en http://127.0.0.1:4100
 git add -A && git commit -m "writeup: …" && git push
 ```
+
+El push dispara `.github/workflows/pages.yml`, que compila con el Jekyll del `Gemfile`,
+comprueba enlaces e imágenes con html-proofer y, solo si todo pasa, publica.
 
 ## Estructura
 
 ```
+.github/workflows/pages.yml   compila, comprueba y publica en cada push
+Gemfile / Gemfile.lock        versiones exactas de Jekyll y plugins
 _config.yml                   configuración, perfil, métricas de portada
 index.html                    portada
 writeups.html                 archivo con filtros y búsqueda

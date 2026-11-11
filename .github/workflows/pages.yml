@@ -1,0 +1,80 @@
+name: Compilar y publicar el sitio
+
+# Cuándo se ejecuta:
+#  - push a main            -> compila, comprueba y PUBLICA
+#  - pull request a main    -> compila y comprueba, pero NO publica
+#  - botón manual en Actions
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Permisos mínimos que necesita el despliegue de Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si haces dos push seguidos, cancela el despliegue viejo y publica el nuevo
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  #  1 · Compilar el sitio y comprobar que no hay nada roto
+  # ─────────────────────────────────────────────────────────────
+  build:
+    name: Compilar y comprobar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true     # instala las gemas del Gemfile.lock y las cachea
+
+      - name: Configurar Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        with:
+          # Activa Pages y cambia el origen a "GitHub Actions" sin tocar Settings.
+          enablement: true
+
+      # Sin --baseurl: es un sitio de usuario y vive en la raíz del dominio.
+      # El baseurl correcto ya está en _config.yml.
+      - name: Compilar con Jekyll
+        run: bundle exec jekyll build --trace
+        env:
+          JEKYLL_ENV: production
+
+      - name: Comprobar enlaces e imágenes rotas
+        run: |
+          bundle exec htmlproofer ./_site \
+            --disable-external \
+            --allow-hash-href \
+            --no-enforce-https
+
+      - name: Subir el sitio compilado
+        uses: actions/upload-pages-artifact@v3
+
+  # ─────────────────────────────────────────────────────────────
+  #  2 · Publicar (solo en push a main, nunca en pull request)
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Publicar en GitHub Pages
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Desplegar
+        id: deployment
+        uses: actions/deploy-pages@v4

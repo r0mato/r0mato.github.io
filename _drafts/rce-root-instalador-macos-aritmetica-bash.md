@@ -14,7 +14,7 @@ target_type: "Instalador de escritorio (macOS)"
 platform:    "YesWeHack"
 status:      "Corregido"
 reward:      "Recompensado"
-tags:        [rce, macos, bash, instalador, root, inyeccion-de-comandos, privacidad]
+tags:        [rce, macos, bash, instalador, root, inyeccion-de-comandos]
 
 takeaways:
   - "En bash, `$(( ))` y `[[ … -ge … ]]` **evalúan** su contenido. No son comparaciones inocentes: son un intérprete abierto."
@@ -24,9 +24,9 @@ takeaways:
 ---
 
 Este es mi primer writeup publicado, y he elegido el hallazgo del que más aprendí: una
-ejecución de comandos **como root** en el Mac de cualquier usuario de un producto de VPN
-comercial, provocada por algo que a simple vista parece inofensivo — sumarle uno a un
-número.
+ejecución de comandos **como root** en el Mac de cualquier usuario de una aplicación de
+escritorio bastante conocida, provocada por algo que a simple vista parece inofensivo —
+sumarle uno a un número.
 
 Lo voy a contar desde el principio y sin dar nada por sabido. Si no has tocado bash en tu
 vida, deberías poder seguirlo igual. Si ya lo has tocado, vas a ver el patrón y te va a
@@ -34,7 +34,7 @@ costar no buscarlo en todas partes a partir de ahora.
 
 <div class="warn" markdown="1">
 **Todo está anonimizado.** El programa autorizó la publicación con la condición de no
-identificar al producto. He cambiado el nombre del proveedor, los hosts, los números de
+identificar al producto. He cambiado el nombre del fabricante, el tipo de producto, los hosts, los números de
 versión y los nombres de los campos. **El mecanismo, el código y la cadena son exactos**:
 lo único que no vas a encontrar aquí es a quién le pasó.
 </div>
@@ -157,7 +157,7 @@ Así que seguí la variable hacia atrás por el script, y esto es lo que encontr
 
 ```bash
 # el script descarga un registro remoto identificado por install_id
-curl_data=$(curl -s "https://feedback.vpn-ejemplo.tld/v2/feedback/${install_id}?plain=1")
+curl_data=$(curl -s "https://feedback.ejemplo.tld/v2/feedback/${install_id}?plain=1")
 
 # y lo parsea a pelo, quitando solo las comillas dobles
 while IFS=':' read -r name value; do
@@ -186,7 +186,7 @@ Probé a escribir, sin tener cuenta ni token ni nada:
 
 ```http
 POST /v2/feedback?plain=1 HTTP/2
-Host: feedback.vpn-ejemplo.tld
+Host: feedback.ejemplo.tld
 Content-Type: application/json
 
 {"clickId":"<mi-id-canario>",
@@ -302,8 +302,8 @@ muchísima credibilidad ante quien lo tría, y evita que te lo devuelvan por exa
 <div class="impact" markdown="1">
 **Impacto.** Ejecución de comandos arbitrarios **como root** en el Mac de la víctima al
 instalar o reinstalar. Control total del equipo: lectura de cualquier fichero, instalación
-de persistencia, robo de credenciales. Sin cuenta por parte del atacante, sin indicio
-visible para la víctima, y en un producto cuya razón de ser es precisamente la privacidad.
+de persistencia, robo de credenciales. Sin cuenta por parte del atacante y sin un solo
+indicio visible para la víctima, que ve una instalación terminada con éxito.
 </div>
 
 ## El arreglo

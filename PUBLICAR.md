@@ -11,11 +11,12 @@ No hace falta que instales nada: **GitHub compila el sitio por ti cada vez que h
 2. [Publicar un writeup nuevo](#2-publicar-un-writeup-nuevo)
 3. [Imágenes: dónde van y cómo se ponen](#3-imágenes-dónde-van-y-cómo-se-ponen)
 4. [Elementos que puedes usar dentro del artículo](#4-elementos-que-puedes-usar-dentro-del-artículo)
-5. [Borradores](#5-borradores)
-6. [Ver el sitio en local antes de publicar](#6-ver-el-sitio-en-local-antes-de-publicar)
-7. [Personalizar textos, colores y datos](#7-personalizar-textos-colores-y-datos)
-8. [Checklist antes de cada publicación](#8-checklist-antes-de-cada-publicación)
-9. [Dominio propio (opcional)](#9-dominio-propio-opcional)
+5. [Los dos idiomas](#4-bis-los-dos-idiomas)
+6. [Borradores](#5-borradores)
+7. [Ver el sitio en local antes de publicar](#6-ver-el-sitio-en-local-antes-de-publicar)
+8. [Personalizar textos, colores y datos](#7-personalizar-textos-colores-y-datos)
+9. [Checklist antes de cada publicación](#8-checklist-antes-de-cada-publicación)
+10. [Dominio propio (opcional)](#9-dominio-propio-opcional)
 
 ---
 
@@ -84,12 +85,17 @@ cd ~/r0mato.github.io
 ./nuevo-writeup.sh "ATO por token de reset reutilizable en el flujo de invitación"
 ```
 
-El script hace tres cosas:
+El script hace cuatro cosas:
 
-- crea `_posts/2026-11-20-ato-por-token-de-reset-reutilizable-en-el-flujo-de-invitacion.md`
-  ya rellenado con la plantilla,
-- crea la carpeta de imágenes `assets/img/writeups/<slug>/`,
-- te dice el siguiente paso.
+- crea la versión en **español**: `_posts/2026-11-20-<slug>.md`,
+- crea la versión en **inglés**: `_posts/2026-11-20-<slug>-en.md`, ya con su `permalink`
+  bajo `/en/writeups/`,
+- pone el mismo `ref:` en las dos, que es lo que las empareja para el botón ES/EN,
+- crea la carpeta de imágenes `assets/img/writeups/<slug>/`, **compartida por los dos
+  idiomas** (no dupliques capturas).
+
+Si de momento solo quieres la versión española: `./nuevo-writeup.sh --solo-es "Título"`.
+El botón de idioma llevará entonces al archivo en inglés en lugar de a una traducción.
 
 ### Opción manual
 
@@ -295,6 +301,33 @@ tiene menos de dos encabezados, el índice se oculta.
 
 ---
 
+## 4-bis. Los dos idiomas
+
+El sitio está completo en español y en inglés. El botón **ES / EN** de la cabecera lleva
+siempre a la página equivalente, no a la portada.
+
+| Español | Inglés | Fichero |
+|---|---|---|
+| `/` | `/en/` | `index.html` · `en/index.html` |
+| `/writeups/` | `/en/writeups/` | `writeups.html` · `en/writeups.html` |
+| `/sobre-mi/` | `/en/about/` | `sobre-mi.md` · `en/about.md` |
+| `/contacto/` | `/en/contact/` | `contacto.md` · `en/contact.md` |
+
+Cómo funciona, en tres reglas:
+
+1. **Cada página declara su idioma** con `lang: es` o `lang: en` en el front matter.
+2. **Las páginas fijas se emparejan con `alt_url:`** (la ruta de su equivalente).
+3. **Los writeups se emparejan con `ref:`**: el mismo valor en las dos versiones. El archivo
+   de cada idioma solo muestra los writeups de ese idioma, y el botón ES/EN salta entre las
+   dos versiones del mismo caso.
+
+Si un writeup solo existe en español, su botón EN lleva al archivo inglés en vez de a una
+página rota.
+
+**Los textos de la interfaz** —menú, botones, «min de lectura», «En esta página», el aviso
+legal del final de cada writeup— están **todos** en `_data/ui.yml`, en los dos idiomas.
+Cambias una palabra ahí y cambia en todo el sitio. No la busques en los layouts.
+
 ## 5. Borradores
 
 Un writeup que todavía no quieres publicar va en `_drafts/` **sin fecha en el nombre**:
@@ -303,7 +336,7 @@ Un writeup que todavía no quieres publicar va en `_drafts/` **sin fecha en el n
 _drafts/pendiente-de-permiso-del-programa.md
 ```
 
-No aparece en el sitio publicado. Para verlo en local: `jekyll serve --drafts`.
+No aparece en el sitio publicado. Para verlo en local: `bundle exec jekyll serve --drafts`.
 Cuando lo publiques, muévelo a `_posts/` con la fecha delante del nombre.
 
 ---
@@ -349,7 +382,11 @@ roto no llega a publicarse, pero correrlo en local te ahorra el viaje de ida y v
 | El mensaje de la franja azul oscura | `_config.yml` → bloque `cta` |
 | Titular y texto del hero | `index.html` (primeras 25 líneas) |
 | Los 4 pasos de "Cómo trabajo" | `index.html` → sección `.steps` |
-| El texto de Metodología / Sobre mí / Contacto | `metodologia.md`, `sobre-mi.md`, `contacto.md` |
+| El texto de Sobre mí / Contacto (español) | `sobre-mi.md`, `contacto.md` |
+| El texto de About / Contact (inglés) | `en/about.md`, `en/contact.md` |
+| **Menú, botones y etiquetas, en los dos idiomas** | `_data/ui.yml` |
+| Titular de la portada | `index.html` y `en/index.html` (front matter) |
+| Tus fotos | `assets/img/brand/r0mato-perfil.jpg` y `r0mato-logo.jpg` |
 | **Colores de toda la marca** | `assets/css/main.scss` → bloque `:root` (arriba del todo) |
 | Colores del modo oscuro | `assets/css/main.scss` → `:root[data-theme="dark"]` |
 | Aviso legal del final de cada writeup | `_layouts/writeup.html` → `page.disclosure` |
@@ -374,6 +411,7 @@ Para cambiar el color principal de todo el sitio basta con tocar una línea:
 - [ ] Todas las imágenes cargan en local antes de hacer `push`.
 - [ ] Los `alt` de las imágenes describen lo que se ve.
 - [ ] La fecha **no** está en el futuro (si no, el post no se publica y no avisa).
+- [ ] Si has escrito las dos versiones, las dos llevan el **mismo `ref:`**.
 
 Si algo de esto se te escapa en una ruta de imagen o un enlace, el workflow lo detecta y
 **no publica**: te lo dice en Actions con el fichero y la línea exactos, y el sitio anterior

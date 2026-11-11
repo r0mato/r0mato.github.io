@@ -3,6 +3,8 @@
 title:       "Acceso a la facturación de cualquier organización mediante una cabecera controlada por el cliente"
 summary:     "El gateway validaba la firma del token, pero el servicio de facturación tomaba el identificador de organización de una cabecera HTTP que el cliente podía escribir. Una sesión de prueba leía las facturas, el CIF y los IBAN de cualquier otro cliente de la plataforma."
 date:        2026-11-11 10:00:00 +0100
+lang:        es
+ref:         idor-tenant-header      # empareja este writeup con su version en el otro idioma
 
 # ─── Metadatos que pintan las fichas y la cabecera ──────────────
 severity:    high            # critical | high | medium | low | info

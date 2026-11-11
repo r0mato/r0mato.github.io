@@ -1,0 +1,98 @@
+{%- assign L = page.lang | default: 'es' -%}
+{%- assign t = site.data.ui[L] -%}
+{%- if L == 'en' -%}{%- assign wu = '/en/writeups/' -%}{%- assign co = '/en/contact/' -%}
+{%- else -%}{%- assign wu = '/writeups/' -%}{%- assign co = '/contacto/' -%}{%- endif -%}
+
+<!-- ───────────────────────── HERO ───────────────────────── -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero__grid">
+      <div>
+        <span class="eyebrow">{{ t.hero.eyebrow }}</span>
+        <h1>{{ page.headline }} <em>{{ page.headline_em }}</em> {{ page.headline_tail }}</h1>
+        <p class="lede">{{ page.lede }}</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="{{ wu | relative_url }}">
+            {{ t.hero.cta_primary }}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn--ghost" href="{{ co | relative_url }}">{{ t.hero.cta_secondary }}</a>
+        </div>
+      </div>
+
+      <div class="card-id">
+        <div class="card-id__top">
+          <span class="card-id__dot"></span>
+          <span>{{ t.card.status }}</span>
+        </div>
+        <div class="card-id__body">
+          <dl>
+            <div class="card-id__row"><dt>{{ t.card.researcher }}</dt><dd>{{ site.author.name }}</dd></div>
+            <div class="card-id__row"><dt>{{ t.card.focus }}</dt><dd>{{ t.card.focus_value }}</dd></div>
+            <div class="card-id__row"><dt>{{ t.card.specialty }}</dt><dd>{{ t.card.specialty_value }}</dd></div>
+            <div class="card-id__row"><dt>{{ t.card.location }}</dt><dd>{{ t.card.location_value }}</dd></div>
+            <div class="card-id__row"><dt>{{ t.card.disclosure }}</dt><dd>{{ t.card.disclosure_value }}</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <dl class="stats">
+      {% for s in site.stats %}
+      <div>
+        <strong>{{ s.value }}</strong>
+        <span>{% if L == 'en' %}{{ s.label_en }}{% else %}{{ s.label_es }}{% endif %}</span>
+      </div>
+      {% endfor %}
+    </dl>
+
+    {% if site.severity_breakdown %}
+    <div class="breakdown">
+      {% for b in site.severity_breakdown %}
+        {%- case b.level -%}
+          {%- when 'critical' -%}{%- assign c = 'crit' -%}{%- assign n = 'Critical' -%}
+          {%- when 'high' -%}{%- assign c = 'high' -%}{%- assign n = 'High' -%}
+          {%- when 'medium' -%}{%- assign c = 'med' -%}{%- assign n = 'Medium' -%}
+          {%- when 'low' -%}{%- assign c = 'low' -%}{%- assign n = 'Low' -%}
+          {%- else -%}{%- assign c = 'info' -%}{%- assign n = 'Info' -%}
+        {%- endcase -%}
+        <span class="sev sev--{{ c }}"><span class="sev__dot"></span>{{ b.count }} × {{ n }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ─────────────────── PLATAFORMAS ─────────────────── -->
+<section class="section section--alt" style="padding:30px 0">
+  <div class="wrap platforms">
+    <span class="platforms__label">{{ t.platforms_label }}</span>
+    <a class="chip" href="https://yeswehack.com/hunters/{{ site.author.yeswehack }}" rel="me noopener">YesWeHack</a>
+    <span class="chip">{{ t.platforms_private }}</span>
+  </div>
+</section>
+
+<!-- ─────────────────── WRITEUPS ─────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="section__head">
+      <span class="eyebrow">{{ t.latest.eyebrow }}</span>
+      <h2>{{ t.latest.title }}</h2>
+      <p>{{ t.latest.text }}</p>
+    </div>
+
+    {%- assign mine = site.posts | where: 'lang', L -%}
+    {% if mine.size > 0 %}
+      <div class="cards">
+        {% for post in mine limit: 3 %}{% include writeup-card.html post=post %}{% endfor %}
+      </div>
+      {% if mine.size > 3 %}
+      <p style="margin-top:28px">
+        <a class="btn btn--ghost" href="{{ wu | relative_url }}">{{ t.latest.view_all }}</a>
+      </p>
+      {% endif %}
+    {% else %}
+      <p class="empty-state">{{ t.latest.empty }}</p>
+    {% endif %}
+  </div>
+</section>

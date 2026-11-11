@@ -8,6 +8,8 @@
 title:       "Título descriptivo: qué permite hacer el fallo"
 summary:     "Dos o tres líneas. Es lo que lee la empresa en la ficha y en la cabecera del artículo. Di el impacto, no la técnica."
 date:        2026-01-01 10:00:00 +0100
+lang:        es          # es | en  (el script crea las dos versiones)
+ref:         slug-comun  # mismo valor en ES y EN: empareja las dos versiones
 
 severity:    medium          # critical | high | medium | low | info
 cvss:        "6.5"

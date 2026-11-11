@@ -1,0 +1,48 @@
+{%- assign L = page.lang | default: 'es' -%}
+{%- assign t = site.data.ui[L] -%}
+{%- assign mine = site.posts | where: 'lang', L -%}
+
+<div class="wrap page-head">
+  <span class="eyebrow">{{ t.archive.eyebrow }}</span>
+  <h1>{{ t.archive.title }}</h1>
+  <p class="lede">
+    {{ mine.size }} {% if mine.size == 1 %}{{ t.archive.one }}{% else %}{{ t.archive.many }}{% endif %}
+    {{ t.archive.lede_tail }}
+  </p>
+</div>
+
+<div class="wrap page-body">
+  <div class="filters">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="q" placeholder="{{ t.archive.search }}" autocomplete="off" aria-label="{{ t.archive.search }}">
+    </label>
+
+    <div class="filter-group" role="group">
+      <button class="filter is-active" data-key="severity" data-value="all">{{ t.archive.all_sev }}</button>
+      <button class="filter" data-key="severity" data-value="critical">Critical</button>
+      <button class="filter" data-key="severity" data-value="high">High</button>
+      <button class="filter" data-key="severity" data-value="medium">Medium</button>
+      <button class="filter" data-key="severity" data-value="low">Low</button>
+    </div>
+
+    {% assign classes = mine | map: 'vuln_class' | compact | uniq | sort %}
+    {% if classes.size > 1 %}
+    <div class="filter-group" role="group">
+      <button class="filter is-active" data-key="class" data-value="all">{{ t.archive.all_class }}</button>
+      {% for c in classes %}
+      <button class="filter" data-key="class" data-value="{{ c | downcase }}">{{ c }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <p class="results-count" id="results-count"
+     data-one="{{ t.archive.result_one }}" data-many="{{ t.archive.result_many }}"></p>
+
+  <div class="cards" id="writeup-list">
+    {% for post in mine %}{% include writeup-card.html post=post %}{% endfor %}
+  </div>
+
+  <p class="empty-state" id="empty" hidden>{{ t.archive.empty }}</p>
+</div>

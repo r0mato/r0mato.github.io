@@ -1,19 +1,23 @@
 ---
 layout: default
 ---
+{%- assign L = page.lang | default: 'es' -%}
+{%- assign t = site.data.ui[L] -%}
+{%- if L == 'en' -%}{%- assign home = '/en/' -%}{%- assign wu = '/en/writeups/' -%}
+{%- else -%}{%- assign home = '/' -%}{%- assign wu = '/writeups/' -%}{%- endif -%}
 {%- assign words = content | number_of_words -%}
 {%- assign mins = words | divided_by: 210 | plus: 1 -%}
 
 <div class="wu-head">
   <div class="wrap">
-    <nav class="crumbs" aria-label="Migas de pan">
-      <a href="{{ '/' | relative_url }}">Inicio</a> / <a href="{{ '/writeups/' | relative_url }}">Writeups</a> / <span>{{ page.vuln_class | default: 'Writeup' }}</span>
+    <nav class="crumbs" aria-label="breadcrumb">
+      <a href="{{ home | relative_url }}">{{ t.nav.home }}</a> / <a href="{{ wu | relative_url }}">{{ t.nav.writeups }}</a> / <span>{{ page.vuln_class | default: 'Writeup' }}</span>
     </nav>
 
     <div class="wu-head__pills">
       {% include severity.html level=page.severity %}
-      <span class="tag">{{ page.date | date: "%d %B %Y" }}</span>
-      <span class="tag">{{ mins }} min de lectura</span>
+      <span class="tag">{{ page.date | date: "%d %b %Y" }}</span>
+      <span class="tag">{{ mins }} {{ t.wu.read_time }}</span>
       {% if page.status %}<span class="tag">{{ page.status }}</span>{% endif %}
     </div>
 
@@ -21,14 +25,14 @@ layout: default
     {% if page.summary %}<p class="lede">{{ page.summary }}</p>{% endif %}
 
     <dl class="wu-facts">
-      {% if page.target_type %}<div><dt>Tipo de objetivo</dt><dd>{{ page.target_type }}</dd></div>{% endif %}
-      {% if page.vuln_class %}<div><dt>Clase</dt><dd>{{ page.vuln_class }}</dd></div>{% endif %}
-      {% if page.cwe %}<div><dt>CWE</dt><dd>{{ page.cwe }}</dd></div>{% endif %}
-      {% if page.cvss %}<div><dt>CVSS v3.1</dt><dd>{{ page.cvss }}</dd></div>{% endif %}
-      {% if page.cvss_vector %}<div><dt>Vector</dt><dd><code>{{ page.cvss_vector }}</code></dd></div>{% endif %}
-      {% if page.platform %}<div><dt>Plataforma</dt><dd>{{ page.platform }}</dd></div>{% endif %}
-      {% if page.reward %}<div><dt>Recompensa</dt><dd>{{ page.reward }}</dd></div>{% endif %}
-      {% if page.fixed %}<div><dt>Corregido</dt><dd>{{ page.fixed }}</dd></div>{% endif %}
+      {% if page.target_type %}<div><dt>{{ t.wu.facts.target }}</dt><dd>{{ page.target_type }}</dd></div>{% endif %}
+      {% if page.vuln_class %}<div><dt>{{ t.wu.facts.class }}</dt><dd>{{ page.vuln_class }}</dd></div>{% endif %}
+      {% if page.cwe %}<div><dt>{{ t.wu.facts.cwe }}</dt><dd>{{ page.cwe }}</dd></div>{% endif %}
+      {% if page.cvss %}<div><dt>{{ t.wu.facts.cvss }}</dt><dd>{{ page.cvss }}</dd></div>{% endif %}
+      {% if page.cvss_vector %}<div><dt>{{ t.wu.facts.vector }}</dt><dd><code>{{ page.cvss_vector }}</code></dd></div>{% endif %}
+      {% if page.platform %}<div><dt>{{ t.wu.facts.platform }}</dt><dd>{{ page.platform }}</dd></div>{% endif %}
+      {% if page.reward %}<div><dt>{{ t.wu.facts.reward }}</dt><dd>{{ page.reward }}</dd></div>{% endif %}
+      {% if page.fixed %}<div><dt>{{ t.wu.facts.fixed }}</dt><dd>{{ page.fixed }}</dd></div>{% endif %}
     </dl>
   </div>
 </div>
@@ -39,29 +43,35 @@ layout: default
 
     {% if page.takeaways %}
     <aside class="takeaways">
-      <h2>Qué me llevo de este caso</h2>
+      <h2>{{ t.wu.takeaways }}</h2>
       <ul>
-        {% for t in page.takeaways %}<li>{{ t | markdownify | remove: '<p>' | remove: '</p>' }}</li>{% endfor %}
+        {% for item in page.takeaways %}<li>{{ item | markdownify | remove: '<p>' | remove: '</p>' }}</li>{% endfor %}
       </ul>
     </aside>
     {% endif %}
 
-    <p class="disclosure">
-      {{ page.disclosure | default: "Publicado tras la corrección del fallo y con el consentimiento del programa correspondiente. Los identificadores, dominios y datos sensibles han sido anonimizados o sustituidos por valores de laboratorio propios. Ninguna prueba utilizó datos de usuarios reales." }}
-    </p>
+    <p class="disclosure">{{ page.disclosure | default: t.wu.disclosure }}</p>
 
+    {%- comment -%} Anterior/siguiente solo entre writeups del mismo idioma {%- endcomment -%}
+    {%- assign same = site.posts | where: 'lang', L -%}
+    {%- assign idx = 0 -%}
+    {%- for p in same -%}{%- if p.url == page.url -%}{%- assign idx = forloop.index0 -%}{%- endif -%}{%- endfor -%}
+    {%- assign prev_i = idx | plus: 1 -%}
+    {%- assign next_i = idx | minus: 1 -%}
     <nav class="wu-nav">
-      {% if page.previous %}
-        <a class="prev" href="{{ page.previous.url | relative_url }}"><small>← Anterior</small><strong>{{ page.previous.title }}</strong></a>
+      {% if prev_i < same.size %}
+        {%- assign p = same[prev_i] -%}
+        <a class="prev" href="{{ p.url | relative_url }}"><small>{{ t.wu.prev }}</small><strong>{{ p.title }}</strong></a>
       {% else %}<span></span>{% endif %}
-      {% if page.next %}
-        <a class="next" href="{{ page.next.url | relative_url }}"><small>Siguiente →</small><strong>{{ page.next.title }}</strong></a>
+      {% if idx > 0 %}
+        {%- assign n = same[next_i] -%}
+        <a class="next" href="{{ n.url | relative_url }}"><small>{{ t.wu.next }}</small><strong>{{ n.title }}</strong></a>
       {% endif %}
     </nav>
   </article>
 
-  <aside class="toc" id="toc" aria-label="Contenido del artículo">
-    <div class="toc__title">En esta página</div>
+  <aside class="toc" id="toc" aria-label="{{ t.wu.toc }}">
+    <div class="toc__title">{{ t.wu.toc }}</div>
     <ol id="toc-list"></ol>
   </aside>
 </div>

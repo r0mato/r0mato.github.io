@@ -44,7 +44,9 @@
         if (visible) shown++;
       });
       if (counter) {
-        counter.textContent = shown + (shown === 1 ? ' resultado' : ' resultados');
+        var one = counter.dataset.one || 'resultado';
+        var many = counter.dataset.many || 'resultados';
+        counter.textContent = shown + ' ' + (shown === 1 ? one : many);
       }
       if (empty) empty.hidden = shown !== 0;
     }
@@ -116,16 +118,20 @@
   }
 
   /* ── Botón «copiar» en los bloques de código ──────────────── */
+  var isEn = (document.documentElement.lang || 'es').indexOf('en') === 0;
+  var labelIdle = isEn ? 'copy' : 'copiar';
+  var labelDone = isEn ? 'copied!' : '¡copiado!';
+
   document.querySelectorAll('.prose pre').forEach(function (pre) {
     var btn = document.createElement('button');
     btn.className = 'copy-btn';
     btn.type = 'button';
-    btn.textContent = 'copiar';
+    btn.textContent = labelIdle;
     btn.addEventListener('click', function () {
       var code = pre.querySelector('code') || pre;
       navigator.clipboard.writeText(code.innerText).then(function () {
-        btn.textContent = '¡copiado!';
-        setTimeout(function () { btn.textContent = 'copiar'; }, 1600);
+        btn.textContent = labelDone;
+        setTimeout(function () { btn.textContent = labelIdle; }, 1600);
       });
     });
     pre.appendChild(btn);

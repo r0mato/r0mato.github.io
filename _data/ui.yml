@@ -1,0 +1,171 @@
+# ═══════════════════════════════════════════════════════════════
+#  Textos de la interfaz en los dos idiomas.
+#  Para cambiar una palabra del menú, un botón o una etiqueta,
+#  tócala AQUÍ y cambia en todo el sitio a la vez.
+# ═══════════════════════════════════════════════════════════════
+
+es:
+  code: es
+  name: "Español"
+  other_code: en
+  other_name: "English"
+
+  nav:
+    home: "Inicio"
+    writeups: "Writeups"
+    about: "Sobre mí"
+    contact: "Contacto"
+  a11y:
+    skip: "Saltar al contenido"
+    menu: "Abrir menú"
+    theme: "Cambiar tema"
+    lang: "Cambiar idioma"
+
+  hero:
+    eyebrow: "Security Research · Bug Bounty"
+    cta_primary: "Ver writeups"
+    cta_secondary: "Contactar"
+  card:
+    status: "status: disponible para programas"
+    researcher: "Investigador"
+    focus: "Enfoque"
+    specialty: "Especialidad"
+    location: "Ubicación"
+    disclosure: "Divulgación"
+    disclosure_value: "Coordinada"
+    focus_value: "Web · API"
+    specialty_value: "Lógica de negocio · IDOR · Auth"
+    location_value: "España"
+
+  platforms_label: "Activo en"
+  platforms_private: "Programas privados"
+
+  latest:
+    eyebrow: "Casos publicados"
+    title: "Writeups recientes"
+    text: "Vulnerabilidades reportadas, corregidas y publicadas con permiso. Lo que importa no es el payload: es la suposición del desarrollador que lo hizo posible."
+    view_all: "Ver todos los writeups"
+    empty: "Todavía no hay writeups publicados."
+
+  archive:
+    eyebrow: "Archivo"
+    title: "Writeups"
+    one: "caso publicado."
+    many: "casos publicados."
+    lede_tail: "Todos reportados por canales oficiales, corregidos por el propietario y publicados con permiso."
+    search: "Buscar por título, clase o etiqueta…"
+    all_sev: "Todas"
+    all_class: "Toda clase"
+    result_one: "resultado"
+    result_many: "resultados"
+    empty: "Ningún writeup coincide con ese filtro."
+
+  wu:
+    read_time: "min de lectura"
+    toc: "En esta página"
+    takeaways: "Qué me llevo de este caso"
+    prev: "← Anterior"
+    next: "Siguiente →"
+    no_translation: "Este writeup aún no está traducido."
+    disclosure: "Publicado tras la corrección del fallo y con el consentimiento del programa correspondiente. Los identificadores, dominios y datos sensibles han sido anonimizados o sustituidos por valores de laboratorio propios. Ninguna prueba utilizó datos de usuarios reales."
+    facts:
+      target: "Tipo de objetivo"
+      class: "Clase"
+      cwe: "CWE"
+      cvss: "CVSS v3.1"
+      vector: "Vector"
+      platform: "Plataforma"
+      reward: "Recompensa"
+      fixed: "Corregido"
+
+  footer:
+    rights: "Todo el contenido se publica tras divulgación coordinada."
+
+  notfound:
+    eyebrow: "Error 404"
+    title: "Esta ruta no existe"
+    text: "El recurso no está aquí. Puede que el enlace haya cambiado o que el writeup aún no esté publicado."
+    cta: "Ir al archivo de writeups"
+
+en:
+  code: en
+  name: "English"
+  other_code: es
+  other_name: "Español"
+
+  nav:
+    home: "Home"
+    writeups: "Writeups"
+    about: "About"
+    contact: "Contact"
+  a11y:
+    skip: "Skip to content"
+    menu: "Open menu"
+    theme: "Toggle theme"
+    lang: "Switch language"
+
+  hero:
+    eyebrow: "Security Research · Bug Bounty"
+    cta_primary: "Read the writeups"
+    cta_secondary: "Get in touch"
+  card:
+    status: "status: available for programs"
+    researcher: "Researcher"
+    focus: "Focus"
+    specialty: "Specialty"
+    location: "Location"
+    disclosure: "Disclosure"
+    disclosure_value: "Coordinated"
+    focus_value: "Web · API"
+    specialty_value: "Business logic · IDOR · Auth"
+    location_value: "Spain"
+
+  platforms_label: "Active on"
+  platforms_private: "Private programs"
+
+  latest:
+    eyebrow: "Published cases"
+    title: "Recent writeups"
+    text: "Vulnerabilities reported, fixed and published with permission. What matters is not the payload: it is the developer assumption that made it possible."
+    view_all: "See all writeups"
+    empty: "No writeups published yet."
+
+  archive:
+    eyebrow: "Archive"
+    title: "Writeups"
+    one: "published case."
+    many: "published cases."
+    lede_tail: "All reported through official channels, fixed by the owner and published with permission."
+    search: "Search by title, class or tag…"
+    all_sev: "All"
+    all_class: "All classes"
+    result_one: "result"
+    result_many: "results"
+    empty: "No writeup matches that filter."
+
+  wu:
+    read_time: "min read"
+    toc: "On this page"
+    takeaways: "What I take away from this case"
+    prev: "← Previous"
+    next: "Next →"
+    no_translation: "This writeup is not translated yet."
+    disclosure: "Published after the issue was fixed and with the consent of the relevant program. Identifiers, domains and sensitive data have been anonymised or replaced with my own lab values. No test used real user data."
+    facts:
+      target: "Target type"
+      class: "Class"
+      cwe: "CWE"
+      cvss: "CVSS v3.1"
+      vector: "Vector"
+      platform: "Platform"
+      reward: "Reward"
+      fixed: "Fixed in"
+
+  footer:
+    rights: "All content is published after coordinated disclosure."
+
+  notfound:
+    eyebrow: "Error 404"
+    title: "This page does not exist"
+    text: "The resource is not here. The link may have changed, or the writeup may not be published yet."
+    cta: "Go to the writeup archive"

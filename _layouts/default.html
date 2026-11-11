@@ -1,8 +1,22 @@
 <!doctype html>
-<html lang="{{ site.lang | default: 'es' }}">
-<head>{% include head.html %}</head>
+<html lang="{{ page.lang | default: site.lang | default: 'es' }}">
+<head>
+  {% include head.html %}
+  {%- comment -%} Señala a los buscadores la versión en el otro idioma {%- endcomment -%}
+  {%- assign L = page.lang | default: 'es' -%}
+  {%- assign t = site.data.ui[L] -%}
+  {%- assign alt = page.alt_url -%}
+  {%- if alt == nil and page.ref -%}
+    {%- assign pair = site.posts | where: 'ref', page.ref | where: 'lang', t.other_code | first -%}
+    {%- if pair -%}{%- assign alt = pair.url -%}{%- endif -%}
+  {%- endif -%}
+  {%- if alt -%}
+  <link rel="alternate" hreflang="{{ t.other_code }}" href="{{ alt | absolute_url }}">
+  <link rel="alternate" hreflang="{{ t.code }}" href="{{ page.url | absolute_url }}">
+  {%- endif -%}
+</head>
 <body>
-  <a class="skip" href="#main">Saltar al contenido</a>
+  <a class="skip" href="#main">{{ t.a11y.skip }}</a>
   {% include header.html %}
   <main id="main">
     {{ content }}

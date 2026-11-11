@@ -1,14 +1,19 @@
 ---
 layout: default
 permalink: /404.html
+lang: es
 title: "Página no encontrada"
 sitemap: false
 ---
-<div class="wrap" style="padding:120px 0;text-align:center">
+<div class="wrap" style="padding:110px 0;text-align:center">
   <span class="eyebrow" style="justify-content:center">Error 404</span>
   <h1>Esta ruta no existe</h1>
-  <p class="lede" style="max-width:520px;margin:0 auto 28px">
+  <p class="lede" style="max-width:540px;margin:0 auto 10px">
     El recurso no está aquí. Puede que el enlace haya cambiado o que el writeup aún no esté publicado.
   </p>
-  <a class="btn btn--primary" href="{{ '/writeups/' | relative_url }}">Ir al archivo de writeups</a>
+  <p style="color:var(--text-faint);font-size:.92rem;margin-bottom:28px">
+    This page does not exist. The link may have changed, or the writeup may not be published yet.
+  </p>
+  <a class="btn btn--primary" href="{{ '/writeups/' | relative_url }}">Ir a los writeups</a>
+  <a class="btn btn--ghost" href="{{ '/en/writeups/' | relative_url }}">Go to the writeups</a>
 </div>

@@ -1,14 +1,16 @@
+{%- assign L = page.lang | default: 'es' -%}
+{%- assign t = site.data.ui[L] -%}
+{%- if L == 'en' -%}{%- assign wu = '/en/writeups/' -%}{%- assign ab = '/en/about/' -%}{%- assign co = '/en/contact/' -%}
+{%- else -%}{%- assign wu = '/writeups/' -%}{%- assign ab = '/sobre-mi/' -%}{%- assign co = '/contacto/' -%}{%- endif -%}
+
 <footer class="site-footer">
   <div class="wrap site-footer__inner">
-    <div>
-      © {{ 'now' | date: "%Y" }} {{ site.author.name }} · Todo el contenido se publica tras divulgación coordinada.
-    </div>
+    <div>© {{ 'now' | date: "%Y" }} {{ site.author.name }} · {{ t.footer.rights }}</div>
     <nav>
-      <a href="{{ '/writeups/' | relative_url }}">Writeups</a>
-      <a href="{{ '/metodologia/' | relative_url }}">Metodología</a>
-      <a href="{{ '/contacto/' | relative_url }}">Contacto</a>
+      <a href="{{ wu | relative_url }}">{{ t.nav.writeups }}</a>
+      <a href="{{ ab | relative_url }}">{{ t.nav.about }}</a>
+      <a href="{{ co | relative_url }}">{{ t.nav.contact }}</a>
       <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
-      {% if site.author.github %}<a href="https://github.com/{{ site.author.github }}" rel="me noopener">GitHub</a>{% endif %}
     </nav>
   </div>
 </footer>

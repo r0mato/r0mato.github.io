@@ -144,11 +144,13 @@ La respuesta llegó como un flujo de eventos, y dentro venía esto:
  "observation":"0e407c15aa4778af3f4ba76dbfa2b0d3fd990d2f365bdf3aa3d95091e4069005"}
 ```
 
+{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/rce-agente-ia/01-canario.png' | relative_url }}"
        alt="Dos terminales lado a lado: a la izquierda el SHA-256 calculado en local, a la derecha la respuesta del servidor con el mismo valor idéntico">
   <figcaption>Izquierda: calculado en mi máquina antes de tocar nada. Derecha: devuelto por el servidor. Idénticos. Eso no se improvisa.</figcaption>
 </figure>
+{% endcomment %}
 
 **Carácter por carácter, el mismo.** Eso cierra la discusión.
 

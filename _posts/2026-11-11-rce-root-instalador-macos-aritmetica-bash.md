@@ -75,11 +75,13 @@ cat /tmp/instalador-abierto/*.pkg/Scripts/postinstall
 Eso es todo. Dos comandos y estás leyendo el código que va a correr como root en el
 ordenador de miles de personas.
 
+{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/rce-instalador-macos/01-pkg-expandido.png' | relative_url }}"
        alt="Terminal mostrando el paquete expandido y la estructura de carpetas con el script postinstall">
   <figcaption>El paquete expandido. A partir de aquí ya no estoy adivinando: estoy leyendo.</figcaption>
 </figure>
+{% endcomment %}
 
 ## La línea que me hizo parar
 
@@ -199,11 +201,13 @@ HTTP/2 200 OK
 
 Doscientos. Sin autenticación. Cualquiera, desde cualquier sitio.
 
+{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/rce-instalador-macos/02-escritura-sin-auth.png' | relative_url }}"
        alt="Burp Repeater: petición POST sin cabecera de autorización y respuesta 200 OK del servidor de feedback">
   <figcaption>Ni cabecera <code>Authorization</code>, ni cookie, ni nada. <code>200 OK</code>.</figcaption>
 </figure>
+{% endcomment %}
 
 Y al leerlo de vuelta, el valor volvía **byte a byte**, sin filtrar ni escapar nada:
 

@@ -93,7 +93,9 @@
       </p>
       {% endif %}
     {% else %}
-      <p class="empty-state">{{ t.latest.empty }}</p>
+      {%- if L == 'en' -%}{%- assign otro = '/writeups/' -%}{%- else -%}{%- assign otro = '/en/writeups/' -%}{%- endif -%}
+      <p>{{ t.archive.sin_traducir }}</p>
+      <p style="margin-top:20px"><a class="btn btn--ghost" href="{{ otro | relative_url }}">{{ t.archive.sin_traducir_cta }}</a></p>
     {% endif %}
   </div>
 </section>

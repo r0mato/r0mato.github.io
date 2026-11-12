@@ -60,6 +60,8 @@ es:
     result_many: "resultados"
     empty: "Ningún writeup coincide con ese filtro."
     list_heading: "Lista de writeups"
+    sin_traducir: "Todavía no hay writeups en español. Están publicados en inglés."
+    sin_traducir_cta: "Ver los writeups en inglés"
 
   wu:
     read_time: "min de lectura"
@@ -149,6 +151,8 @@ en:
     result_many: "results"
     empty: "No writeup matches that filter."
     list_heading: "List of writeups"
+    sin_traducir: "These writeups are not translated yet — they are published in Spanish. The English versions are on the way."
+    sin_traducir_cta: "Read them in Spanish"
 
   wu:
     read_time: "min read"

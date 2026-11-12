@@ -2,14 +2,23 @@
 {%- assign t = site.data.ui[L] -%}
 {%- assign mine = site.posts | where: 'lang', L -%}
 
+{%- if L == 'en' -%}{%- assign otro = '/writeups/' -%}{%- else -%}{%- assign otro = '/en/writeups/' -%}{%- endif -%}
+
 <div class="wrap page-head">
   <span class="eyebrow">{{ t.archive.eyebrow }}</span>
   <h1>{{ t.archive.title }}</h1>
-  <p class="lede">
-    {{ mine.size }} {% if mine.size == 1 %}{{ t.archive.one }}{% else %}{{ t.archive.many }}{% endif %}
-    {{ t.archive.lede_tail }}
-  </p>
+  {% if mine.size == 0 %}
+    <p class="lede">{{ t.archive.sin_traducir }}</p>
+    <p style="margin-top:22px"><a class="btn btn--primary" href="{{ otro | relative_url }}">{{ t.archive.sin_traducir_cta }}</a></p>
+  {% else %}
+    <p class="lede">
+      {{ mine.size }} {% if mine.size == 1 %}{{ t.archive.one }}{% else %}{{ t.archive.many }}{% endif %}
+      {{ t.archive.lede_tail }}
+    </p>
+  {% endif %}
 </div>
+
+{% if mine.size > 0 %}
 
 <div class="wrap page-body">
   <div class="filters">
@@ -47,3 +56,4 @@
 
   <p class="empty-state" id="empty" hidden>{{ t.archive.empty }}</p>
 </div>
+{% endif %}

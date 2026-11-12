@@ -167,11 +167,13 @@ HTTP/2 200 OK
 {"code":"000000","data":{"access_token":"eyJhbGciOi..."}}
 ```
 
+{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/01-token-sin-cuenta.png' | relative_url }}"
        alt="Burp Repeater: petición sin cookie ni cabecera de autorización, respuesta 200 con un access_token, y el token decodificado mostrando scope read write">
   <figcaption>Sin cuenta, sin cookie, sin contraseña. Y el token decodificado trae <code>scope: "read write"</code>.</figcaption>
 </figure>
+{% endcomment %}
 
 Un token válido. Con permisos de **lectura y escritura**.
 

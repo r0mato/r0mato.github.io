@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel del blog</title>
+<style>
+  :root{
+    --bg:#0a1020; --panel:#111a2d; --panel2:#15203a; --borde:#22304d;
+    --txt:#e8eef9; --dim:#93a3bd; --azul:#6b9cff; --ok:#34d399; --mal:#fb7185; --amb:#fbbf24;
+    --mono:ui-monospace,"JetBrains Mono","DejaVu Sans Mono",monospace;
+    --sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.55 var(--sans);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:16px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--borde);flex:none}
+  header h1{font-size:15px;margin:0;font-weight:650;letter-spacing:-.01em}
+  header h1 span{color:var(--azul)}
+  nav{display:flex;gap:4px;margin-left:12px}
+  nav button{background:none;border:1px solid transparent;color:var(--dim);padding:6px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:14px}
+  nav button:hover{color:var(--txt);background:var(--panel2)}
+  nav button.on{background:var(--azul);color:#071022;font-weight:600}
+  .crece{flex:1}
+  .chip{font:12px var(--mono);padding:4px 10px;border-radius:999px;border:1px solid var(--borde);color:var(--dim)}
+  .chip.cambios{color:var(--amb);border-color:var(--amb)}
+  .chip.limpio{color:var(--ok);border-color:var(--ok)}
+  main{flex:1;overflow:hidden;display:none}
+  main.on{display:flex}
+  .col{display:flex;flex-direction:column;min-width:0;min-height:0}
+  .izq{flex:0 0 300px;border-right:1px solid var(--borde);overflow:auto;background:var(--panel)}
+  .med{flex:1;overflow:auto;padding:20px 22px}
+  .der{flex:0 0 46%;border-left:1px solid var(--borde);background:#fff}
+  .der iframe{width:100%;height:100%;border:0;display:block}
+  .lista{padding:8px}
+  .item{padding:10px 12px;border-radius:9px;cursor:pointer;border:1px solid transparent}
+  .item:hover{background:var(--panel2)}
+  .item.on{background:var(--panel2);border-color:var(--azul)}
+  .item b{display:block;font-weight:550;font-size:13.5px;line-height:1.35;margin-bottom:5px}
+  .item small{color:var(--dim);font:11.5px var(--mono);display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .pt{padding:2px 7px;border-radius:5px;font:10.5px var(--mono)}
+  .pt.es{background:#16233d;color:var(--azul)} .pt.en{background:#2a2210;color:var(--amb)}
+  .pt.bor{background:#2a1a12;color:#fb923c} .pt.pub{background:#0c2520;color:var(--ok)}
+  h2{font-size:17px;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 20px}
+  label{display:block;font:11.5px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin:14px 0 5px}
+  input,select,textarea{width:100%;background:var(--panel);color:var(--txt);border:1px solid var(--borde);border-radius:8px;padding:9px 11px;font:inherit;font-size:14px}
+  textarea{font:13.5px/1.6 var(--mono);resize:vertical}
+  input:focus,select,textarea:focus{outline:2px solid var(--azul);outline-offset:-1px}
+  .fila{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fila3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  button.b{background:var(--azul);color:#071022;border:0;border-radius:8px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+  button.b:hover{background:#8fb5ff}
+  button.b.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--borde);font-weight:500}
+  button.b.sec:hover{border-color:var(--azul)}
+  button.b:disabled{opacity:.5;cursor:not-allowed}
+  .barra{display:flex;gap:9px;align-items:center;padding:11px 16px;background:var(--panel);border-bottom:1px solid var(--borde);flex:none}
+  .aviso{padding:11px 14px;border-radius:9px;margin:12px 0;font-size:13.5px;border:1px solid}
+  .aviso.ok{border-color:var(--ok);background:#0c2520;color:var(--ok)}
+  .aviso.mal{border-color:var(--mal);background:#2a1220;color:var(--mal)}
+  .aviso.inf{border-color:var(--borde);background:var(--panel2);color:var(--dim)}
+  .soltar{border:2px dashed var(--borde);border-radius:10px;padding:18px;text-align:center;color:var(--dim);font-size:13.5px;margin-top:10px}
+  .soltar.activa{border-color:var(--azul);color:var(--azul);background:#16233d}
+  pre{background:#0d1526;border:1px solid var(--borde);border-radius:8px;padding:11px 13px;overflow:auto;font:12px/1.5 var(--mono);color:#cbd5e1;max-height:230px;white-space:pre-wrap}
+  .paso{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--borde)}
+  .paso .ic{font:13px var(--mono);flex:none;width:18px}
+  .ok{color:var(--ok)} .mal{color:var(--mal)}
+  .imgs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .imgs span{font:11.5px var(--mono);background:var(--panel2);border:1px solid var(--borde);padding:5px 9px;border-radius:7px;cursor:pointer}
+  .imgs span:hover{border-color:var(--azul);color:var(--azul)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Panel <span>r0mato</span></h1>
+  <nav>
+    <button data-v="writeups" class="on">Writeups</button>
+    <button data-v="portada">Portada</button>
+    <button data-v="paginas">Sobre mí / Contacto</button>
+    <button data-v="publicar">Publicar</button>
+  </nav>
+  <div class="crece"></div>
+  <span class="chip" id="estado">…</span>
+</header>
+
+<!-- ═══════════════ WRITEUPS ═══════════════ -->
+<main id="v-writeups" class="on">
+  <div class="col izq">
+    <div class="barra"><button class="b" id="nuevo">+ Nuevo writeup</button></div>
+    <div class="lista" id="lista"></div>
+  </div>
+
+  <div class="col med" id="editor" style="display:none">
+    <div class="barra" style="margin:-20px -22px 16px;padding:11px 22px">
+      <button class="b" id="guardar">Guardar</button>
+      <button class="b sec" id="ver">Ver en el sitio ↗</button>
+      <button class="b sec" id="cambiarEstado">—</button>
+      <span class="crece"></span>
+      <span id="guardado" style="color:var(--dim);font-size:12.5px"></span>
+    </div>
+
+    <label>Título</label><input id="f-title">
+    <label>Resumen (lo que se lee en la ficha)</label><textarea id="f-summary" rows="3"></textarea>
+
+    <div class="fila3">
+      <div><label>Severidad</label><select id="f-severity">
+        <option value="critical">critical</option><option value="high">high</option>
+        <option value="medium">medium</option><option value="low">low</option>
+        <option value="info">info</option></select></div>
+      <div><label>CVSS</label><input id="f-cvss"></div>
+      <div><label>CWE</label><input id="f-cwe"></div>
+    </div>
+    <div class="fila3">
+      <div><label>Clase</label><input id="f-vuln_class"></div>
+      <div><label>Tipo de objetivo</label><input id="f-target_type"></div>
+      <div><label>Estado</label><input id="f-status"></div>
+    </div>
+    <div class="fila3">
+      <div><label>Plataforma</label><input id="f-platform"></div>
+      <div><label>Recompensa</label><input id="f-reward"></div>
+      <div><label>Fecha</label><input id="f-date"></div>
+    </div>
+    <label>Vector CVSS</label><input id="f-cvss_vector">
+    <label>Etiquetas (separadas por comas)</label><input id="f-tags">
+    <label>Conclusiones (una por línea)</label><textarea id="f-takeaways" rows="4"></textarea>
+
+    <label>Imágenes de este writeup — arrastra aquí para subirlas</label>
+    <div class="soltar" id="soltar">Suelta una captura y te pego el bloque de imagen en el cursor</div>
+    <div class="imgs" id="imgs"></div>
+
+    <label>Cuerpo del artículo (Markdown)</label>
+    <textarea id="cuerpo" rows="26"></textarea>
+    <div style="height:30px"></div>
+  </div>
+
+  <div class="col der"><iframe id="previa" src="about:blank"></iframe></div>
+</main>
+
+<!-- ═══════════════ PORTADA ═══════════════ -->
+<main id="v-portada">
+  <div class="col med">
+    <h2>Portada</h2>
+    <p class="sub">Los cuatro números grandes y tus datos. Se guardan en <code>_config.yml</code>.</p>
+    <div id="statsBox"></div>
+    <h2 style="margin-top:26px">Tus datos</h2>
+    <div class="fila">
+      <div><label>Alias</label><input id="c-name"></div>
+      <div><label>Nombre completo</label><input id="c-full_name"></div>
+    </div>
+    <div class="fila">
+      <div><label>Rol</label><input id="c-role"></div>
+      <div><label>Ubicación</label><input id="c-location"></div>
+    </div>
+    <div style="margin-top:18px"><button class="b" id="guardarConfig">Guardar</button>
+      <span id="okConfig" style="margin-left:10px;color:var(--ok);font-size:13px"></span></div>
+  </div>
+  <div class="col der"><iframe id="previaPortada" src="about:blank"></iframe></div>
+</main>
+
+<!-- ═══════════════ PÁGINAS ═══════════════ -->
+<main id="v-paginas">
+  <div class="col izq">
+    <div class="lista" id="listaPaginas"></div>
+    <div style="padding:14px 16px;border-top:1px solid var(--borde)">
+      <h2 style="font-size:14px">Contacto</h2>
+      <label>Correo</label><input id="c-email">
+      <label>YesWeHack (usuario)</label><input id="c-yeswehack">
+      <label>LinkedIn (slug o URL)</label><input id="c-linkedin">
+      <div style="margin-top:14px"><button class="b" id="guardarContacto">Guardar contacto</button></div>
+      <div id="okContacto" style="color:var(--ok);font-size:12.5px;margin-top:8px"></div>
+    </div>
+  </div>
+  <div class="col med">
+    <div class="barra" style="margin:-20px -22px 16px;padding:11px 22px">
+      <button class="b" id="guardarPagina">Guardar</button>
+      <span class="crece"></span>
+      <span id="okPagina" style="color:var(--dim);font-size:12.5px"></span>
+    </div>
+    <textarea id="textoPagina" rows="34" style="font-size:13.5px"></textarea>
+  </div>
+  <div class="col der"><iframe id="previaPagina" src="about:blank"></iframe></div>
+</main>
+
+<!-- ═══════════════ PUBLICAR ═══════════════ -->
+<main id="v-publicar">
+  <div class="col med" style="max-width:820px">
+    <h2>Publicar los cambios</h2>
+    <p class="sub">Antes de subir nada: comprueba que no aparece ningún identificador real,
+      compila el sitio y verifica que no hay enlaces ni imágenes rotas. Si algo falla, no publica.</p>
+    <div id="pendientes"></div>
+    <label>Descripción del cambio</label>
+    <input id="mensaje" placeholder="writeup nuevo sobre…">
+    <div style="margin-top:16px"><button class="b" id="publicar">Comprobar y publicar</button></div>
+    <div id="resultado"></div>
+  </div>
+</main>
+
+<script>
+const T = "__TOKEN__", JK = "http://127.0.0.1:__JEKYLL__";
+const $ = s => document.querySelector(s);
+const api = async (ruta, datos) => {
+  const r = await fetch(ruta + (ruta.includes("?") ? "&" : "?") + "t=" + encodeURIComponent(T), {
+    method: datos ? "POST" : "GET",
+    headers: { "Content-Type": "application/json", "X-Panel-Token": T },
+    body: datos ? JSON.stringify(datos) : undefined,
+  });
+  return r.json();
+};
+
+/* ── navegación ── */
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("main").forEach(m => m.classList.toggle("on", m.id === "v-" + b.dataset.v));
+  if (b.dataset.v === "portada") $("#previaPortada").src = JK + "/";
+  if (b.dataset.v === "publicar") cargarEstado();
+});
+
+/* ── estado del repositorio ── */
+async function cargarEstado() {
+  const e = await api("/api/estado");
+  const n = e.pendientes.length;
+  const chip = $("#estado");
+  chip.textContent = n ? n + " sin publicar" : "todo publicado";
+  chip.className = "chip " + (n ? "cambios" : "limpio");
+  const box = $("#pendientes");
+  if (box) box.innerHTML = n
+    ? '<div class="aviso inf"><b>' + n + ' ficheros con cambios</b><pre>' +
+      e.pendientes.map(x => x.replace(/</g, "&lt;")).join("\n") + "</pre></div>"
+    : '<div class="aviso ok">No hay cambios pendientes. El sitio está al día.</div>';
+}
+
+/* ── writeups ── */
+let actual = null, campos = {};
+const CAMPOS = ["title","summary","date","severity","cvss","cvss_vector","cwe",
+                "vuln_class","target_type","platform","status","reward"];
+
+async function cargarLista() {
+  const d = await api("/api/writeups");
+  $("#lista").innerHTML = d.writeups.map(w => `
+    <div class="item" data-f="${w.fichero}" data-url="${w.url}">
+      <b>${w.titulo.replace(/</g,"&lt;")}</b>
+      <small>
+        <span class="pt ${w.idioma}">${w.idioma.toUpperCase()}</span>
+        <span class="pt ${w.publicado ? "pub" : "bor"}">${w.publicado ? "publicado" : "borrador"}</span>
+        ${w.fecha}
+      </small>
+    </div>`).join("");
+  document.querySelectorAll("#lista .item").forEach(el => el.onclick = () => abrir(el));
+}
+
+async function abrir(el) {
+  document.querySelectorAll("#lista .item").forEach(x => x.classList.toggle("on", x === el));
+  actual = el.dataset.f;
+  const d = await api("/api/writeup?fichero=" + encodeURIComponent(actual));
+  campos = d.campos;
+  CAMPOS.forEach(c => { const i = $("#f-" + c); if (i) i.value = campos[c] || ""; });
+  $("#f-tags").value = (campos.tags || []).join(", ");
+  $("#f-takeaways").value = (campos.takeaways || []).join("\n");
+  $("#cuerpo").value = d.cuerpo;
+  $("#editor").style.display = "flex";
+  const pub = el.querySelector(".pt.pub");
+  $("#cambiarEstado").textContent = pub ? "Pasar a borrador" : "Publicar en el sitio";
+  $("#previa").src = pub ? JK + el.dataset.url : "about:blank";
+  $("#guardado").textContent = "";
+  listarImagenes();
+}
+
+function carpetaImg() {
+  return (campos.ref || actual.split("/").pop().replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/(-en)?\.md$/, ""));
+}
+
+function listarImagenes() {
+  const cuerpo = $("#cuerpo").value;
+  const usadas = [...cuerpo.matchAll(/writeups\/[^/]+\/([\w.-]+)/g)].map(m => m[1]);
+  $("#imgs").innerHTML = [...new Set(usadas)].map(n => `<span data-n="${n}">${n}</span>`).join("")
+    || '<span style="border:0;background:none;color:var(--dim)">ninguna todavía</span>';
+}
+
+$("#guardar").onclick = async () => {
+  const c = {};
+  CAMPOS.forEach(x => { const i = $("#f-" + x); if (i) c[x] = i.value; });
+  c.tags = $("#f-tags").value.split(",").map(s => s.trim()).filter(Boolean);
+  c.takeaways = $("#f-takeaways").value.split("\n").map(s => s.trim()).filter(Boolean);
+  const r = await api("/api/guardar", { fichero: actual, campos: c, cuerpo: $("#cuerpo").value });
+  $("#guardado").textContent = r.ok ? "guardado · la vista previa se recarga sola" : "error: " + r.error;
+  setTimeout(() => { const f = $("#previa"); if (f.src !== "about:blank") f.src = f.src; }, 1600);
+  cargarEstado(); listarImagenes();
+};
+
+$("#ver").onclick = () => {
+  const el = document.querySelector("#lista .item.on");
+  if (el) window.open(JK + el.dataset.url, "_blank");
+};
+
+$("#cambiarEstado").onclick = async () => {
+  const pub = $("#cambiarEstado").textContent.startsWith("Publicar");
+  const r = await api("/api/estado-post", { fichero: actual, publicar: pub });
+  if (r.ok) { await cargarLista(); cargarEstado();
+    const el = document.querySelector(`#lista .item[data-f="${r.fichero}"]`); if (el) abrir(el); }
+};
+
+$("#nuevo").onclick = async () => {
+  const titulo = prompt("Título del writeup:");
+  if (!titulo) return;
+  const idioma = confirm("¿Es la versión en INGLÉS?\n\nAceptar = inglés · Cancelar = español") ? "en" : "es";
+  const r = await api("/api/nuevo", { titulo, idioma, borrador: true });
+  if (!r.ok) return alert(r.error);
+  await cargarLista();
+  const el = document.querySelector(`#lista .item[data-f="${r.fichero}"]`);
+  if (el) abrir(el);
+  cargarEstado();
+};
+
+/* ── subir imágenes arrastrando ── */
+const z = $("#soltar");
+["dragenter","dragover"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.add("activa"); }));
+["dragleave","drop"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.remove("activa"); }));
+z.addEventListener("drop", async ev => {
+  for (const file of ev.dataTransfer.files) {
+    const datos = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(file); });
+    const r = await api("/api/subir", { carpeta: carpetaImg(), nombre: file.name, datos });
+    if (!r.ok) { alert(r.error); continue; }
+    const ta = $("#cuerpo"), p = ta.selectionStart;
+    const bloque = `\n<figure>\n  <img src="{{ '${r.ruta}' | relative_url }}"\n       alt="DESCRIBE lo que se ve">\n  <figcaption>Pie de imagen.</figcaption>\n</figure>\n`;
+    ta.value = ta.value.slice(0, p) + bloque + ta.value.slice(p);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = p + bloque.length;
+  }
+  listarImagenes();
+});
+
+/* ── portada y contacto ── */
+async function cargarConfig() {
+  const { config } = await api("/api/config");
+  ["name","full_name","role","location","email","yeswehack","linkedin"].forEach(k => {
+    const i = $("#c-" + k); if (i) i.value = config[k] || "";
+  });
+  $("#statsBox").innerHTML = config.stats.map(([v, es, en], i) => `
+    <div class="fila3" style="margin-bottom:6px">
+      <div><label>Número ${i+1}</label><input class="st" data-i="${i}" data-k="0" value="${v}"></div>
+      <div><label>Etiqueta ES</label><input class="st" data-i="${i}" data-k="1" value="${es}"></div>
+      <div><label>Etiqueta EN</label><input class="st" data-i="${i}" data-k="2" value="${en}"></div>
+    </div>`).join("");
+  window._stats = config.stats.map(s => [...s]);
+}
+
+function recogerStats() {
+  document.querySelectorAll(".st").forEach(i => { window._stats[+i.dataset.i][+i.dataset.k] = i.value; });
+  return window._stats;
+}
+const autor = () => Object.fromEntries(["name","full_name","role","location","email","yeswehack","linkedin"]
+  .map(k => [k, ($("#c-" + k) || {}).value || ""]));
+
+$("#guardarConfig").onclick = async () => {
+  const r = await api("/api/config", { autor: autor(), stats: recogerStats() });
+  $("#okConfig").textContent = r.ok ? "guardado" : "error";
+  setTimeout(() => { $("#previaPortada").src = JK + "/"; }, 1800);
+  cargarEstado();
+};
+$("#guardarContacto").onclick = async () => {
+  const r = await api("/api/config", { autor: autor() });
+  $("#okContacto").textContent = r.ok ? "guardado · recarga la vista en 2 s" : "error";
+  setTimeout(() => { $("#previaPagina").src = JK + "/contacto/"; }, 1800);
+  cargarEstado();
+};
+
+/* ── páginas sueltas ── */
+const PAGINAS = [
+  ["sobre-mi.md", "Sobre mí (ES)", "/sobre-mi/"],
+  ["en/about.md", "About (EN)", "/en/about/"],
+  ["contacto.md", "Contacto (ES)", "/contacto/"],
+  ["en/contact.md", "Contact (EN)", "/en/contact/"],
+  ["index.html", "Portada: titular (ES)", "/"],
+  ["en/index.html", "Home: headline (EN)", "/en/"],
+];
+let paginaActual = null;
+$("#listaPaginas").innerHTML = PAGINAS.map(([f, n, u]) =>
+  `<div class="item" data-f="${f}" data-u="${u}"><b>${n}</b><small>${f}</small></div>`).join("");
+document.querySelectorAll("#listaPaginas .item").forEach(el => el.onclick = async () => {
+  document.querySelectorAll("#listaPaginas .item").forEach(x => x.classList.toggle("on", x === el));
+  paginaActual = el.dataset.f;
+  const d = await api("/api/fichero?ruta=" + encodeURIComponent(paginaActual));
+  $("#textoPagina").value = d.texto;
+  $("#previaPagina").src = JK + el.dataset.u;
+  $("#okPagina").textContent = "";
+});
+$("#guardarPagina").onclick = async () => {
+  const r = await api("/api/fichero", { ruta: paginaActual, texto: $("#textoPagina").value });
+  $("#okPagina").textContent = r.ok ? "guardado · la vista se recarga sola" : "error";
+  setTimeout(() => { const f = $("#previaPagina"); f.src = f.src; }, 1800);
+  cargarEstado();
+};
+
+/* ── publicar ── */
+$("#publicar").onclick = async () => {
+  const b = $("#publicar");
+  b.disabled = true; b.textContent = "Comprobando…";
+  $("#resultado").innerHTML = '<div class="aviso inf">Compilando y verificando. Tarda unos segundos…</div>';
+  const r = await api("/api/publicar", { mensaje: $("#mensaje").value });
+  b.disabled = false; b.textContent = "Comprobar y publicar";
+  $("#resultado").innerHTML =
+    `<div class="aviso ${r.ok ? "ok" : "mal"}">${r.ok ? "Publicado. GitHub tarda un minuto en reconstruir el sitio." : "No se ha publicado nada: una comprobación ha fallado."}</div>` +
+    (r.pasos || []).map(p => `<div class="paso"><span class="ic ${p.ok ? "ok" : "mal"}">${p.ok ? "OK" : "✗"}</span>
+       <div style="min-width:0"><b style="font-size:13.5px">${p.paso}</b>
+       ${p.salida && (!p.ok || p.salida.length < 90) ? "<pre>" + p.salida.replace(/</g,"&lt;") + "</pre>" : ""}</div></div>`).join("") +
+    (r.error ? '<div class="aviso mal">' + r.error + "</div>" : "");
+  if (r.ok) $("#mensaje").value = "";
+  cargarEstado();
+};
+
+cargarLista(); cargarConfig(); cargarEstado();
+setInterval(cargarEstado, 15000);
+</script>
+</body>
+</html>

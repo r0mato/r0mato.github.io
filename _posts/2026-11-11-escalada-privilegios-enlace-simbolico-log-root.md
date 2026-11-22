@@ -1,5 +1,5 @@
 ---
-title:       "El proceso root que escribe en tu carpeta: de usuario normal a root con un enlace simbólico"
+title:       "Escalada local a root por enlace simbólico: el log que un proceso privilegiado deja en tu carpeta"
 summary:     "Un servicio que corre como root guardaba su registro en el directorio del usuario que lo lanzaba, con un nombre predecible, y le ponía permisos de escritura para todo el mundo. Eso es todo lo que hace falta para crear cualquier fichero del sistema y que lo ejecute root."
 date:        2026-11-11 20:30:00 +0100
 lang:        es
@@ -42,15 +42,13 @@ aplicación, que necesita permisos de root para tocar la red. Así que añade un
 usuario ALL=(root) NOPASSWD: /usr/bin/cliente
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** esa línea dice *«este usuario puede ejecutar **este programa concreto**
+Esa línea dice *«este usuario puede ejecutar **este programa concreto**
 como administrador, sin pedirle la contraseña»*. Es una práctica **correcta** y
 recomendada: en vez de dar permisos de administrador completos, das permiso para una cosa
 concreta.
 
 La frontera que el administrador está dibujando es clarísima: *puedes ejecutar ese
 programa como root*, no *eres root*. Todo este fallo consiste en borrar esa frontera.
-</div>
 
 Y hay que insistir en esto porque es la objeción que me esperaba del triador: *«pero si ya
 podía ejecutar algo como root»*. No. Podía ejecutar **un** programa. Ahora puede ejecutar
@@ -81,13 +79,11 @@ Léelo despacio, porque las tres cosas que lo rompen están a la vista:
 os.getenv('SUDO_USER')
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** cuando ejecutas algo con `sudo`, el sistema deja una pista de quién
+Cuando ejecutas algo con `sudo`, el sistema deja una pista de quién
 eras: la variable `SUDO_USER`. El programa la usa **a propósito** para dejar los registros
 en la carpeta del usuario, no en la de root. La intención es buena —que puedas leer tus
 propios logs—, pero el efecto es que **un proceso todopoderoso está escribiendo dentro de
 un territorio que tú controlas por completo**.
-</div>
 
 **2. El nombre del fichero es predecible.** Es la hora, en segundos. No hay nada aleatorio.
 
@@ -103,14 +99,7 @@ ln -s /etc/passwd  mi-atajo
 cat mi-atajo          # muestra /etc/passwd
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** es un acceso directo. Lo importante para nosotros es **quién lo sigue**:
-la mayoría de los programas, al escribir en un enlace, **escriben en el destino**, no en el
-enlace.
-
-Así que si yo pongo un acceso directo donde tú vas a escribir, y tú eres root... **escribes
-donde yo te diga**.
-</div>
+Lo que importa aquí no es qué es un enlace, sino **quién lo sigue**: al escribir sobre un enlace, la mayoría de las herramientas escriben en el destino. Si pongo uno donde tú vas a escribir, y tú eres root, escribes donde yo te diga.
 
 <figure>
   <img src="{{ '/assets/img/writeups/escalada-symlink/01-enlace-simbolico.svg' | relative_url }}"
@@ -159,8 +148,7 @@ done
 echo 'id > /tmp/CANARIO' >> /etc/profile.d/x.sh
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** `/etc/profile.d/` es una carpeta cuyos scripts se ejecutan **cada vez que
+`/etc/profile.d/` es una carpeta cuyos scripts se ejecutan **cada vez que
 alguien abre una sesión**, incluido root. Así que he conseguido que root cree un fichero
 que yo puedo escribir, dentro de una carpeta cuyo contenido root ejecuta. Lo que escriba
 ahí, se ejecuta con sus permisos.
@@ -168,7 +156,6 @@ ahí, se ejecuta con sus permisos.
 Y fíjate en el paso 2: **no hay que ganar ninguna carrera**. Como el nombre depende solo de
 la hora en segundos, planto un enlace por segundo y espero tranquilamente. Esa es la
 diferencia entre un fallo «teóricamente explotable» y uno que funciona siempre.
-</div>
 
 Nota aparte: aunque no haya ningún atacante, **cada registro que escribe ese programa
 queda con permisos de lectura y escritura para todos los usuarios de la máquina**. Eso ya
@@ -186,12 +173,10 @@ Esta parte iba en el reporte y me parece tan importante como el fallo:
 - No toqué datos de nadie: la máquina era una máquina virtual mía, con cuentas mías.
 - Paré **en cuanto la primitiva quedó confirmada**, desinstalé el cliente y borré todo.
 
-<div class="plain" markdown="1">
-**En cristiano:** para demostrar que puedo crear cualquier fichero como root, **basta con
+Para demostrar que puedo crear cualquier fichero como root, **basta con
 crear uno inofensivo**. Apuntar a `/etc/shadow` no demuestra nada más y convierte tu
 reporte en un incidente. La diferencia entre un investigador y un problema es exactamente
 dónde decide parar.
-</div>
 
 ## El control negativo
 
@@ -201,12 +186,10 @@ dónde decide parar.
 | Comprobar el otro modo de conexión del mismo producto | **No** usa esa secuencia y escribe en una carpeta propia de root | Que fuera un fallo general del producto: está acotado a una ruta |
 | Protecciones del kernel activadas | El ataque **funciona igual** | Que el sistema operativo ya lo cubriera |
 
-<div class="plain" markdown="1">
-**En cristiano:** la segunda fila es la que más credibilidad da. Comprobé el camino
+La segunda fila es la que más credibilidad da. Comprobé el camino
 hermano del mismo programa y **no era vulnerable**, y lo dije en el reporte aunque me
 quitara alcance. Acotar tu propio hallazgo es lo que hace que el triador se fíe del resto
 de lo que cuentas.
-</div>
 
 ## Impacto
 

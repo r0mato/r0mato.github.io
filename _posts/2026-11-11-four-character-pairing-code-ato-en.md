@@ -1,5 +1,5 @@
 ---
-title:       "Four characters: how a code for pairing your TV hands over the whole account"
+title:       "Full account takeover with four characters: the pairing code that belonged to nobody"
 summary:     "The code you type to link the app with your television was not bound to anyone. Anyone could request one, talk you into typing it, and walk away with a permanent credential, your email address and the password recovery token."
 date:        2026-11-11 20:20:00 +0100
 lang:        en
@@ -46,13 +46,11 @@ is torture, nearly all of them use the same pattern:
 3. You type the code.
 4. The TV is linked to your account.
 
-<div class="plain" markdown="1">
-**In plain words:** it is the same pattern smart TV apps use the world over. You have done
+It is the same pattern smart TV apps use the world over. You have done
 it twenty times. And it works because it assumes **whoever types the code is looking at the
 screen showing it** — that is, that both devices are in the same room.
 
 That assumption is what breaks here.
-</div>
 
 ## Part 1: requesting a code without an account
 
@@ -72,13 +70,11 @@ x-app-key: <client public key, extracted from the installer>
 
 Note the detail that decides everything: **`users_id: null`**.
 
-<div class="plain" markdown="1">
-**In plain words:** the server just handed me a code **that belongs to nobody**. It is an
+The server just handed me a code **that belongs to nobody**. It is an
 empty slot waiting for someone to fill it. And it is filled by whoever types it.
 
 A code like that should not exist without being bound, from the first second, to the
 session of the device that asked for it.
-</div>
 
 ## Part 2: the screen that does not say what you are authorising
 
@@ -89,15 +85,19 @@ When the victim types the code into their app, a confirmation appears. And that
 confirmation **said nothing about the device that requested it**: no name, no type, no IP
 address, no approximate location.
 
-<div class="plain" markdown="1">
-**In plain words:** the victim sees something like *"Authorise this device?"* and a button.
+The victim sees something like *"Authorise this device?"* and a button.
 There is no human way to tell their own television apart from a stranger's laptop on the
 other side of the country. It is not that the victim is careless: **they are not being given
 the information to decide**.
 
 That is why a consent screen that does not describe what you are authorising is not a
 protection. It is a formality.
-</div>
+
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/02-consentimiento-en.svg' | relative_url }}"
+       alt="Comparison between the real confirmation screen, showing only the question and the code, and one that would include client, IP address, location and request time">
+  <figcaption>On the left, what they were asked to authorise. On the right, what it takes to actually decide.</figcaption>
+</figure>
 
 An attacker only needs a believable excuse for someone to type four characters: tech
 support, an "account verification", a prize draw, a colleague. The usual repertoire.
@@ -120,11 +120,9 @@ x-app-key: <public key>
 And the server handed over a full device credential — a token and its secret — **with no
 authentication header, no cookie and no signature of any kind**.
 
-<div class="plain" markdown="1">
-**In plain words:** the server does not check who collects the prize. It checks that
+The server does not check who collects the prize. It checks that
 somebody said "yes" to that code, and then gives it **to whoever asks**. It is a bearer
 cheque: no name on it, cashed by whoever holds it.
-</div>
 
 And that credential is **permanent**: it identifies "a device on this account" and keeps
 working indefinitely.
@@ -142,15 +140,13 @@ Authorization: <signature using the device token and secret>
 And in the response, along with the victim's email, there was a field that should not have
 been there: **the password recovery token**.
 
-<div class="plain" markdown="1">
-**In plain words:** the recovery token is that code you get by email when you click "I
+The recovery token is that code you get by email when you click "I
 forgot my password". It is, to all intents and purposes, **equivalent to the password**:
 whoever holds it can change it.
 
 And here it could be **read** from a device credential. A paired device should not be able
 to read the mechanism that recovers the account. Those are two completely different levels
 of trust.
-</div>
 
 I verified it with the control that gives it meaning: **before** requesting a recovery, that
 field came back empty. After triggering one from the public form — with only an email
@@ -166,12 +162,10 @@ POST /api/recover/puk          ← redeem the token that was read
 And following that session to the password setup screen, the form arrived with the hidden
 "current password" field **already filled in** with the same token.
 
-<div class="plain" markdown="1">
-**In plain words:** the last obstacle to changing a password is usually *"type the current
+The last obstacle to changing a password is usually *"type the current
 one"*. Here the page filled it in by itself, because it considers that whoever arrives with
 the recovery token has already proven who they are. **You never need to know the original
 password.**
-</div>
 
 ## The full chain
 
@@ -202,15 +196,13 @@ recommends: **change the password**. Here that **does not evict the attacker**, 
 what they hold is not the password: it is the device credential from step 3. And that
 credential **survives the password change**.
 
-<div class="plain" markdown="1">
-**In plain words:** the victim does everything any security guide would tell them, believes
+The victim does everything any security guide would tell them, believes
 the incident is closed, and the attacker is still inside. Worse: with that credential they
 can repeat the whole chain and change the password again whenever they feel like it.
 
 The only real cleanup is **deleting the specific device** from the list of linked devices —
 something nobody thinks of, because nobody connects "someone got into my account" with "I
 have one television too many on the list".
-</div>
 
 ## The negative control
 
@@ -220,11 +212,9 @@ have one television too many on the list".
 | Requesting the code **without** the app's public key | `401` | That the endpoint was completely open |
 | Reading the profile **before** requesting a recovery | The token field comes back **empty** | That the field always carried a value: it appears exactly when the flow is triggered |
 
-<div class="plain" markdown="1">
-**In plain words:** the first test is what proves I am not exploiting a server bug but
+The first test is what proves I am not exploiting a server bug but
 **the design of the flow**. Everything works as programmed. The problem is that what is
 programmed hands over the account.
-</div>
 
 ## Impact
 

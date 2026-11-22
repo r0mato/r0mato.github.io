@@ -1,5 +1,5 @@
 ---
-title:       "How a «+ 1» in a macOS installer ends up giving you root on anyone's Mac"
+title:       "Root RCE in a macOS installer: bash arithmetic runs whatever you put in it"
 summary:     "An installation script added one to a number that came from the server. The problem is that in bash \"adding\" means \"evaluating\", and that number could be written by anyone on the internet without an account. Report accepted and rewarded."
 date:        2026-11-11 19:30:00 +0100
 lang:        en
@@ -52,13 +52,11 @@ When you install a `.pkg` on macOS, the system can run two scripts: `preinstall`
 copying files and `postinstall` afterwards. If the package asks for it, those scripts run
 **as root**, the user with total control of the machine.
 
-<div class="plain" markdown="1">
-**In plain words:** when you hit "Install" and type your password, you are not just copying
+When you hit "Install" and type your password, you are not just copying
 files. You are letting a script written by someone else run whatever it likes on your
 computer with administrator privileges. Normally that script does boring, legitimate
 things. But if someone manages to slip an order into it, that order runs with those same
 privileges.
-</div>
 
 And the best part: **an installer is a public file**. You download it, open it and read the
 code. No account needed, nothing to attack, not a single odd request sent. It is one of the
@@ -118,12 +116,10 @@ echo $((number + 1))      # 1  (the empty index is 0, plus one)
 ls -l /tmp/i-got-in       # the file exists
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** we asked bash to add one to a variable. But the variable did not hold a
+We asked bash to add one to a variable. But the variable did not hold a
 number, it held **an order**. And bash, before adding, ran the order. The sum returned a
 perfectly normal number and it looked like nothing happened — but the file is there. That
 is the whole vulnerability: in a place expecting a number you put an order, and it runs.
-</div>
 
 Why does this happen? Because inside `$(( ))` bash allows array indices — `a[something]` —
 and to know which index that is, it has to **resolve** what is inside the brackets. If
@@ -169,12 +165,10 @@ while IFS=':' read -r name value; do
 done <<< "$curl_data"
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** the installer calls a server, downloads some text, looks for a line
+The installer calls a server, downloads some text, looks for a line
 containing the word `installCount` and keeps whatever is to the right of it, stripping only
 the quotes. Whatever the server put there ends up inside the variable. And that variable
 ends up inside `$(( ))`.
-</div>
 
 In other words: **the server decides the value**. Which led to the question that opened
 everything up.
@@ -231,12 +225,10 @@ from:
 mdls -name kMDItemWhereFroms installer_<install_id>.pkg
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** that identifier travels glued to the installer. It is in the filename
+That identifier travels glued to the installer. It is in the filename
 and in the metadata macOS attaches on download. If someone shares their installer over
 chat, a forum or an affiliate link, they are sharing the identifier. It is not a secret: it
 is a label.
-</div>
 
 ## The full chain
 
@@ -264,12 +256,10 @@ trap finish EXIT
 finish() { exit 0; }
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** the script is programmed to always say "everything went fine", whatever
+The script is programmed to always say "everything went fine", whatever
 happens. It is a convenient decision so the user never sees odd errors. But it means that
 if your order runs and breaks the script halfway, **the installer still shows a green tick**.
 The victim gets not a single hint.
-</div>
 
 The script also used neither `set -u` nor `set -e`, so a malformed value did not stop it
 either.
@@ -289,12 +279,10 @@ thing**: the attack condition.
 | Writing to the server **without** the payload | `200`, stores the value and returns it unchanged | That the service filters or type-checks the field |
 | The Windows installer, same field | Not affected: parses the value as an integer | That the bug belongs to the product in general |
 
-<div class="plain" markdown="1">
-**In plain words:** put a normal number in, nothing happens. Use the POSIX comparison,
+Put a normal number in, nothing happens. Use the POSIX comparison,
 nothing happens. Remove the order, nothing happens. It only happens when you put an order
 inside an arithmetic context. That proves the bug is exactly the one I say it is and not a
 coincidence.
-</div>
 
 That last point — that **Windows was not vulnerable** — I included by choice, even though
 it narrowed my own finding. The Windows installer parses the same field as an integer, so a

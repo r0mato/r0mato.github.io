@@ -1,5 +1,5 @@
 ---
-title:       "I asked the chatbot to run code and it did: RCE in production through an AI agent"
+title:       "9.8 RCE in production through an AI agent with a code-execution tool"
 summary:     "An internal conversational assistant had, among its tools, one that executed Python on the server. Anyone could ask for it. I proved it with a cryptographic canary, because \"the model made that up\" is the objection that kills these reports."
 date:        2026-11-11 20:00:00 +0100
 lang:        en
@@ -42,14 +42,12 @@ An **agent** is a different animal. You give an agent *tools*: search a database
 API, send an email, run code. The model decides **which one to use** based on what you ask,
 and the system **actually runs it**.
 
-<div class="plain" markdown="1">
-**In plain words:** a chatbot is someone on the phone giving you advice. An agent is
+A chatbot is someone on the phone giving you advice. An agent is
 someone on the phone **with the keys to your house**. The conversation is just as harmless;
 what changes is what they can do while talking to you.
 
 That is why, when auditing an AI assistant, the question is not "can I make it say silly
 things?". The question is **"what tools does it have and who can ask it to use them?"**.
-</div>
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-agente-ia/02-chatbot-vs-agente-en.svg' | relative_url }}"
@@ -79,11 +77,7 @@ Among the list was one that made me sit up straight:
 run_ipython_cell
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** IPython is an interactive Python interpreter. A tool called "run an
-IPython cell" means, literally, **"run the Python code you are given"**. Inside an assistant
-anyone can write to.
-</div>
+The name leaves no room for doubt: a tool that "runs an IPython cell" runs whatever Python it is given, inside an assistant anyone can write to.
 
 ## Step 2: the trap almost everyone falls into
 
@@ -120,15 +114,13 @@ python3 -c 'import hashlib; print(hashlib.sha256(b"canary-verify-20261017-7f3ad9
 # 0e407c15aa4778af3f4ba76dbfa2b0d3fd990d2f365bdf3aa3d95091e4069005
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** a hash is a fingerprint of a piece of text. Change one letter and the
+A hash is a fingerprint of a piece of text. Change one letter and the
 fingerprint changes completely. There is no way to "deduce" it: you have to compute it.
 
 A language model **cannot compute hashes**. It can recite famous hashes it saw during
 training, but it cannot produce one for a string I just invented. If the server returns
 exactly the same fingerprint I computed on my laptop, there is only one explanation: **it
 really ran the code**.
-</div>
 
 And now, to the assistant:
 
@@ -160,6 +152,12 @@ The response arrived as an event stream, and inside it was this:
 
 **Character for character, the same.** That closes the discussion.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-agente-ia/03-canario-en.svg' | relative_url }}"
+       alt="Canary diagram: the hash is computed on the researcher's own machine, the agent is asked to compute it with its tool, and the two values are compared">
+  <figcaption>The hash is computed before touching the server. If it comes back identical, it ran.</figcaption>
+</figure>
+
 And I repeated it **twice more, with different strings**, to rule out coincidence or
 caching. One canary could be luck; three are not.
 
@@ -179,12 +177,10 @@ The result: **uid 0 (root)**, inside a container on a production cluster, with n
 reach to several dozen internal services and credentials sitting in the process
 environment.
 
-<div class="plain" markdown="1">
-**In plain words:** the code was not running in an isolated toy box. It ran as administrator
+The code was not running in an isolated toy box. It ran as administrator
 inside the company's internal network, with access to other services that should never be
 reachable from the internet. From there, an attacker is not "chatting with a bot": **they
 are inside**.
-</div>
 
 <div class="note" markdown="1">
 **Where I stopped.** I read the user id, the hostname and counted how many environment
@@ -210,10 +206,8 @@ That last point is the decisive argument: even if they fixed authentication tomo
 employee with normal chat access could still run code as root in production. Two bugs, two
 different fixes.
 
-<div class="plain" markdown="1">
-**In plain words:** it is one thing for the front door to be open and another for there to
+It is one thing for the front door to be open and another for there to
 be a lever inside that blows up the building. Fixing the door does not remove the lever.
-</div>
 
 ## The negative control
 
@@ -224,12 +218,10 @@ be a lever inside that blows up the building. Fixing the door does not remove th
 | Repeating from another session and another container | Same behaviour | That it was an odd state of one particular instance |
 | Asking without a token | `401` | That the endpoint was open by design |
 
-<div class="plain" markdown="1">
-**In plain words:** the first row is the key. When I ask for the hash **without** the tool,
+The first row is the key. When I ask for the hash **without** the tool,
 the model invents it and gets it wrong. When I ask it to use the tool, it gets it right.
 That difference proves what is getting it right is not the model: it is the Python
 interpreter behind it.
-</div>
 
 ## Impact
 

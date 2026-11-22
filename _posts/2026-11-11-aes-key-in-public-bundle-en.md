@@ -1,5 +1,5 @@
 ---
-title:       "The key was under the doormat: an AES key in a public JavaScript file was worth every account"
+title:       "Critical: an AES key in a public JavaScript bundle opened every account in the company"
 summary:     "A multinational's internal portal signed its tokens with a key anyone could read in a JavaScript file served to the internet. With that key you could mint valid credentials without an account, and the API never checked whose data it was returning. Accepted as critical."
 date:        2026-11-11 19:50:00 +0100
 lang:        en
@@ -47,13 +47,6 @@ its features was an internal conversational assistant, and that is where I went.
 When you open a website, your browser downloads `.js` files with all the client-side logic.
 They are minified — compressed, no spaces, no readable names — but **not encrypted**.
 Minifying is not protecting: it is saving bytes.
-
-<div class="plain" markdown="1">
-**In plain words:** when you enter a website, the server sends you the program that runs in
-your browser. That program is yours: you can read all of it. If the developers put a
-password in there thinking "nobody will see it because it is all squashed together", they
-were wrong. It is one `Ctrl+U` away.
-</div>
 
 The first thing I do on any target is download every bundle and search for words that give
 secrets away:
@@ -118,15 +111,13 @@ fetch("/assistant/auth/v1/app-source/token", {
 });
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** the application encrypts a piece of text with that key and sends it to
+The application encrypts a piece of text with that key and sends it to
 the server. The server decrypts it, sees the result makes sense and concludes: *"if you knew
 how to encrypt this, you are my legitimate application"*. And hands you an entry pass.
 
 The problem is obvious the moment you say it out loud: **if the key is in the file I just
 downloaded, I also know how to encrypt it.** The server is not checking who you are. It is
 checking you hold a secret it handed to everybody.
-</div>
 
 <figure>
   <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/02-clave-en-el-navegador-en.svg' | relative_url }}"
@@ -199,15 +190,13 @@ X-Authorization: <my minted token>
 
 And they arrived. That employee's conversations, by the hundred.
 
-<div class="plain" markdown="1">
-**In plain words:** the token I minted does not say **who I am**. And the API, instead of
+The token I minted does not say **who I am**. And the API, instead of
 deducing it from the token, lets me write it in the request body. It is like an unnamed
 train ticket where the inspector asks "and what is your name?" and takes your word for it.
 
 This is called **BOLA** (Broken Object Level Authorization), or IDOR, and it is the number
 one flaw in modern APIs. The application checks that you got in, but not that what you are
 asking for is yours.
-</div>
 
 Here is the important part for anyone learning: **the finding is not the key**. The key is
 the door. What makes this critical is the combination:
@@ -254,11 +243,9 @@ it once: holding the key does not entitle you to open the door.
 | Valid token, asking for **my own** canary user | `200` with my data | That the response was a generic error that looked like success |
 | Valid token, asking for **another** user | `200` with **their** data | Nothing: this is the bug |
 
-<div class="plain" markdown="1">
-**In plain words:** with a made-up key, I do not get in. With no token, I do not get in. Ask
+With a made-up key, I do not get in. With no token, I do not get in. Ask
 for mine, I see mine. Ask for someone else's… I see someone else's. The first three tests
 are what make the fourth mean something.
-</div>
 
 ## The fix
 

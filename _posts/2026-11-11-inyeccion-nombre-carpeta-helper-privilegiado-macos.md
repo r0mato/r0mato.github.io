@@ -1,5 +1,5 @@
 ---
-title:       "El nombre de una carpeta como arma: inyección de comandos en un ayudante privilegiado de macOS"
+title:       "Inyección de comandos en un helper privilegiado de macOS: el payload es el nombre de la carpeta"
 summary:     "Un servicio con permisos de root comprobaba quién le llamaba resolviendo su ruta y metiéndola entre comillas dentro de una orden de shell. Bastó con crear una carpeta cuyo nombre contenía la inyección. Una lista negra de cuatro caracteres no fue suficiente."
 date:        2026-11-11 20:40:00 +0100
 lang:        es
@@ -39,14 +39,12 @@ necesita hacerlo —configurar red, instalar un servicio, modificar carpetas pro
 instala un **ayudante privilegiado**: un programita separado que corre **como root** de
 forma permanente y al que la aplicación le pide favores.
 
-<div class="plain" markdown="1">
-**En cristiano:** es un mayordomo con llaves de todo. La aplicación no abre las puertas: se
+Es un mayordomo con llaves de todo. La aplicación no abre las puertas: se
 lo pide al mayordomo. Y como el mayordomo tiene todas las llaves, **lo único que lo separa
 del desastre es saber a quién le está obedeciendo**.
 
 De ahí que toda la seguridad de estos componentes se reduzca a una pregunta: ¿cómo
 comprueba quién le está hablando?
-</div>
 
 ## Cómo comprobaba este quién le llamaba
 
@@ -67,12 +65,6 @@ std::string salida = ejecutarConSalida(cmd);   // popen() → /bin/sh -c
 El paso 4 es el fallo. La ruta —algo que **el atacante elige**, porque elige dónde pone su
 programa— acaba dentro de una cadena que interpreta la shell.
 
-<div class="plain" markdown="1">
-**En cristiano:** el mayordomo, para comprobar tu identidad, escribe tu dirección en un
-papel, se lo da al cocinero y le dice «haz lo que ponga aquí». Si tu dirección es
-*«Calle Mayor 5; quema la casa»*, el cocinero lee las dos cosas.
-</div>
-
 ## Las comillas simples: la falsa seguridad
 
 El desarrollador no fue ingenuo del todo. Puso la ruta **entre comillas simples**, que en
@@ -84,14 +76,12 @@ echo 'esto $(no) se ejecuta'      # sale tal cual
 
 Y además añadió una **lista negra de cuatro caracteres**, para que no te colaras.
 
-<div class="plain" markdown="1">
-**En cristiano:** una lista negra es la estrategia de *«voy a prohibir lo peligroso»*. El
+Una lista negra es la estrategia de *«voy a prohibir lo peligroso»*. El
 problema es que para que funcione tienes que haber pensado en **todo** lo peligroso. Y
 siempre, siempre, se te escapa algo.
 
 Lo que se escapó aquí fue la propia comilla simple. Si tú **cierras** la comilla, lo que
 venga después ya no es texto literal: es código.
-</div>
 
 ```bash
 # el programa construye esto:
@@ -118,14 +108,12 @@ para inyectar, tengo que **crear una carpeta cuyo nombre sea la inyección**:
 mkdir "/tmp/p\$(/bin/sh /tmp/x.sh)"
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** no estoy enviando un dato malicioso por ningún campo. Estoy creando una
+No estoy enviando un dato malicioso por ningún campo. Estoy creando una
 carpeta con un nombre raro y metiendo mi programa dentro. Cuando el mayordomo pregunte
 «¿dónde vives?», la respuesta **es** el ataque.
 
 Y es un nombre de carpeta perfectamente legal en macOS: una comilla, un dólar y un
 paréntesis. Nada prohibido.
-</div>
 
 Un detalle precioso de este caso: el nombre **no puede contener una barra `/`**, porque es
 el único carácter que los sistemas de ficheros no permiten en un nombre. Por eso el payload
@@ -142,11 +130,7 @@ Eso suena a barrera, pero no lo es: macOS permite firmar cualquier binario **de 
 improvisada**, sin certificado de desarrollador, poniéndole el identificador que quieras.
 Y eso es exactamente lo que la comprobación miraba.
 
-<div class="plain" markdown="1">
-**En cristiano:** el mayordomo mira que lleves un carnet con el nombre de la empresa. Pero
-no comprueba que lo haya emitido la empresa — solo que lo ponga. Y cualquiera puede
-imprimirse uno.
-</div>
+Es decir: comprueba que el carnet lleve el nombre de la empresa, no que lo haya emitido ella.
 
 {% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
@@ -166,12 +150,10 @@ alcanzaba:
 - **El propio servicio privilegiado del producto**, que root puede reescribir. Es decir:
   el atacante puede reemplazar el mayordomo por uno suyo.
 
-<div class="plain" markdown="1">
-**En cristiano:** una vez eres root en un Mac, el producto que estabas atacando es lo de
+Una vez eres root en un Mac, el producto que estabas atacando es lo de
 menos. Tienes la máquina. Y en este caso, además, tienes la capacidad de modificar el
 propio componente privilegiado, con lo que te quedas dentro aunque desinstalen la
 aplicación.
-</div>
 
 Y un detalle que lo hace peor: cuando el ayudante rechaza a un llamante que no reconoce,
 **termina de golpe**. Resultado: la instalación legítima que estuviera en curso falla con
@@ -194,14 +176,12 @@ Al leer los scripts del propio instalador del producto, encontré un comentario 
 desarrolladores que decía, en esencia, que *de lo contrario un proceso sin privilegios
 podría pedir una reinstalación en cualquier momento*.
 
-<div class="plain" markdown="1">
-**En cristiano:** el fabricante había escrito, en su propio código, cuál era la frontera
+El fabricante había escrito, en su propio código, cuál era la frontera
 que quería defender. Mi reporte demostraba que esa frontera estaba rota, **citando su
 propia frase**.
 
 Esto es de lo más eficaz que puedes meter en un reporte: no es tu opinión sobre lo que
 debería pasar, es la suya.
-</div>
 
 ## El arreglo
 
@@ -222,12 +202,10 @@ debería pasar, es la suya.
 3. **Borrar la lista negra.** Con argumentos separados no hay nada que filtrar. Y una lista
    negra de metacaracteres es, de todas formas, el control equivocado.
 
-<div class="plain" markdown="1">
-**En cristiano:** identificar un proceso por su PID es inseguro por naturaleza, porque los
+Identificar un proceso por su PID es inseguro por naturaleza, porque los
 números de proceso **se reutilizan**: un atacante puede hacer que el suyo muera y que otro
 ocupe su número justo en el momento de la comprobación. Por eso existen los tokens de
 auditoría, que identifican al proceso de forma que no se puede falsificar.
-</div>
 
 ## Cómo buscar esto tú mismo
 

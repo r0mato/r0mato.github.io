@@ -1,5 +1,5 @@
 ---
-title:       "La llave estaba debajo del felpudo: una clave AES en un fichero JavaScript público valía por todas las cuentas"
+title:       "Crítico: una clave AES en un bundle JavaScript público abría las cuentas de toda la empresa"
 summary:     "El portal interno de una multinacional firmaba sus tokens con una clave que cualquiera podía leer en un fichero JavaScript servido a internet. Con esa clave se fabricaban credenciales válidas sin tener cuenta, y la API no comprobaba de quién eran los datos que devolvía. Reporte aceptado como crítico."
 date:        2026-11-11 19:50:00 +0100
 lang:        es
@@ -47,13 +47,6 @@ me metí.
 Cuando abres una web, tu navegador se descarga ficheros `.js` con toda la lógica del lado
 cliente. Están minificados —comprimidos, sin espacios ni nombres legibles— pero **no
 cifrados**. Minificar no es proteger: es ahorrar bytes.
-
-<div class="plain" markdown="1">
-**En cristiano:** cuando entras en una web, el servidor te manda el programa que se
-ejecuta en tu navegador. Ese programa es tuyo: puedes leerlo entero. Si los
-desarrolladores metieron una contraseña ahí dentro pensando que «nadie la va a ver porque
-está todo apelmazado», se equivocaron. Está a un `Ctrl+U` de distancia.
-</div>
 
 Lo primero que hago en cualquier objetivo es bajarme todos los bundles y buscar palabras
 que delaten secretos:
@@ -117,15 +110,13 @@ fetch("/asistente/auth/v1/app-source/token", {
 });
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** la aplicación cifra un texto con esa clave y se lo manda al servidor. El
+La aplicación cifra un texto con esa clave y se lo manda al servidor. El
 servidor lo descifra, ve que el resultado tiene sentido y concluye: *«si has sabido cifrar
 esto, eres mi aplicación legítima»*. Y te da un pase de entrada.
 
 El problema es evidente en cuanto lo dices en voz alta: **si la clave está en el fichero
 que yo me he descargado, yo también sé cifrarlo.** El servidor no está comprobando quién
 eres. Está comprobando que tienes un secreto que le ha dado a todo el mundo.
-</div>
 
 <figure>
   <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/02-clave-en-el-navegador.svg' | relative_url }}"
@@ -198,8 +189,7 @@ X-Authorization: <mi token fabricado>
 
 Y llegaron. Las conversaciones de ese empleado, por cientos.
 
-<div class="plain" markdown="1">
-**En cristiano:** el token que fabriqué no dice **quién soy**. Y la API, en vez de
+El token que fabriqué no dice **quién soy**. Y la API, en vez de
 deducirlo del token, me deja escribirlo yo en el cuerpo de la petición. Es como un billete
 de tren sin nombre donde el revisor te pregunta «¿y tú cómo te llamas?» y se fía de la
 respuesta.
@@ -207,7 +197,6 @@ respuesta.
 A esto se le llama **BOLA** (*Broken Object Level Authorization*) o IDOR, y es el fallo
 número uno de las APIs modernas. La aplicación comprueba que has entrado, pero no comprueba
 que lo que pides sea tuyo.
-</div>
 
 Esta es la parte importante para quien está aprendiendo: **el hallazgo no es la clave**.
 La clave es la puerta. Lo que hace que esto sea crítico es la combinación:
@@ -254,11 +243,9 @@ ni una vez: tener la llave no te da derecho a abrir la puerta.
 | Token válido, pidiendo **mi propio** usuario canario | `200` con mis datos | Que la respuesta fuera un error genérico con pinta de éxito |
 | Token válido, pidiendo **otro** usuario | `200` con **sus** datos | Nada: esto es el fallo |
 
-<div class="plain" markdown="1">
-**En cristiano:** si uso una clave inventada, no entro. Si no mando token, no entro. Si
+Si uso una clave inventada, no entro. Si no mando token, no entro. Si
 pido lo mío, veo lo mío. Si pido lo de otro... veo lo de otro. Las tres primeras pruebas
 son las que demuestran que la cuarta significa algo.
-</div>
 
 ## El arreglo
 

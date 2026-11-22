@@ -354,6 +354,168 @@ def comillas(L):
     return svg(1150, 385, "".join(b))
 
 
+# ═══════════════ 8 · lo que ve la víctima al confirmar ═══════════════
+def pantalla_consentimiento(L):
+    t = dict(
+        es=dict(tit="Consentimiento sin información no es consentimiento",
+                ve="LO QUE VE LA VÍCTIMA", deb="LO QUE DEBERÍA VER",
+                pregunta="¿Autorizar este dispositivo?",
+                code="Código: 7MTU", si="Autorizar", no="Cancelar",
+                campos=[("Cliente", "Android · app de televisor"),
+                        ("Dirección IP", "203.0.113.47"),
+                        ("Ubicación", "a 600 km de tu ubicación habitual"),
+                        ("Solicitado", "hace 4 segundos")],
+                pie="Sin esos cuatro datos, nadie puede distinguir su televisor del portátil de un desconocido."),
+        en=dict(tit="Consent without information is not consent",
+                ve="WHAT THE VICTIM SEES", deb="WHAT THEY SHOULD SEE",
+                pregunta="Authorise this device?",
+                code="Code: 7MTU", si="Authorise", no="Cancel",
+                campos=[("Client", "Android · TV app"),
+                        ("IP address", "203.0.113.47"),
+                        ("Location", "600 km from your usual location"),
+                        ("Requested", "4 seconds ago")],
+                pie="Without those four facts, nobody can tell their own TV from a stranger's laptop."),
+    )[L]
+    b = [txt(40, 42, t["tit"], TXT, 15, UI, peso="600")]
+
+    b += [caja(40, 76, 470, 210, ROJO), txt(62, 104, t["ve"], ROJO, 11.5, MONO, peso="600")]
+    b.append(f'<rect x="62" y="120" width="426" height="146" rx="8" fill="#0d1526" stroke="{BORDE}"/>')
+    b.append(txt(275, 162, t["pregunta"], TXT, 15, UI, "middle", "600"))
+    b.append(txt(275, 188, t["code"], DIM, 13, MONO, "middle"))
+    b.append(f'<rect x="130" y="212" width="130" height="34" rx="7" fill="#16233d" stroke="{AZUL}" stroke-opacity=".5"/>')
+    b.append(txt(195, 234, t["si"], AZUL, 13, UI, "middle", "600"))
+    b.append(f'<rect x="290" y="212" width="130" height="34" rx="7" fill="#0d1526" stroke="{BORDE}"/>')
+    b.append(txt(355, 234, t["no"], DIM, 13, UI, "middle"))
+
+    b += [caja(560, 76, 550, 210, VERDE), txt(582, 104, t["deb"], VERDE, 11.5, MONO, peso="600")]
+    b.append(f'<rect x="582" y="120" width="506" height="146" rx="8" fill="#0d1526" stroke="{BORDE}"/>')
+    b.append(txt(602, 146, t["pregunta"], TXT, 14, UI, peso="600"))
+    y = 172
+    for k, v in t["campos"]:
+        b.append(txt(602, y, k, DIM, 11.5, MONO))
+        b.append(txt(760, y, v, TXT, 12))
+        y += 23
+    b.append(txt(575, 320, t["pie"], DIM, 12.5, UI, "middle"))
+    return svg(1150, 345, "".join(b))
+
+
+# ═══════════════ 9 · el canario criptográfico ═══════════════
+def canario(L):
+    t = dict(
+        es=dict(tit="Por qué un hash cierra la objeción de «el modelo se lo ha inventado»",
+                a="1 · EN MI MÁQUINA", b="2 · AL AGENTE", c="3 · COMPARAR",
+                a1="cadena inventada ahora mismo", a2="sha256(...) = 0e407c15…",
+                b1="«usa run_ipython_cell y pega", b2="la salida literal»",
+                b3="observation: 0e407c15…",
+                si="IDÉNTICOS → ha ejecutado el código",
+                no="Sin la herramienta, el modelo inventa un hash y falla",
+                pie="Un modelo no puede calcular el SHA-256 de una cadena que acabas de inventar."),
+        en=dict(tit="Why a hash closes the \"the model made it up\" objection",
+                a="1 · ON MY MACHINE", b="2 · TO THE AGENT", c="3 · COMPARE",
+                a1="a string invented just now", a2="sha256(...) = 0e407c15…",
+                b1="\"use run_ipython_cell and paste", b2="the literal output\"",
+                b3="observation: 0e407c15…",
+                si="IDENTICAL → it really ran the code",
+                no="Without the tool, the model invents a hash and gets it wrong",
+                pie="A model cannot compute the SHA-256 of a string you have just invented."),
+    )[L]
+    b = [txt(40, 42, t["tit"], TXT, 15, UI, peso="600")]
+    b += [caja(40, 76, 320, 110, VERDE), txt(62, 104, t["a"], VERDE, 11.5, MONO, peso="600"),
+          txt(62, 132, t["a1"], DIM, 12), txt(62, 160, t["a2"], VERDE, 12.5, MONO, peso="600")]
+    b.append(flecha(362, 130, 412, 130, DIM))
+    b += [caja(415, 76, 360, 110, AZUL), txt(437, 104, t["b"], AZUL, 11.5, MONO, peso="600"),
+          txt(437, 128, t["b1"], DIM, 12), txt(437, 146, t["b2"], DIM, 12),
+          txt(437, 172, t["b3"], AZUL, 12.5, MONO, peso="600")]
+    b.append(flecha(777, 130, 827, 130, DIM))
+    b += [caja(830, 76, 280, 110, VERDE, "#0c2520"),
+          txt(852, 104, t["c"], VERDE, 11.5, MONO, peso="600")]
+    for i, linea in enumerate(_envolver(t["si"], 30)):
+        b.append(txt(852, 134 + i * 19, linea, VERDE, 12.5, UI, peso="600"))
+    b.append(caja(40, 210, 1070, 46, ROJO, "#2a1220"))
+    b.append(txt(62, 239, "✗", ROJO, 14, UI, peso="700"))
+    b.append(txt(88, 239, t["no"], TXT, 13))
+    b.append(txt(575, 290, t["pie"], DIM, 12.5, UI, "middle"))
+    return svg(1150, 315, "".join(b))
+
+
+# ═══════════════ 10 · la cadena del ticket de sesión ═══════════════
+def cadena_sso(L):
+    t = dict(
+        es=dict(tit="Un clic, y la sesión cambia de dueño",
+                p1="La víctima abre un enlace", p1b="dominio visible: el del fabricante",
+                p2="El SSO ve su sesión abierta", p2b="no pide contraseña: emite el ticket",
+                p3="Redirección al dominio del atacante", p3b="el ticket viaja en la URL",
+                p4="El atacante lo lee en su propio log", p4b="sin tocar a la víctima otra vez",
+                p5="Canjea el ticket desde cero", p5b="sin cookie, sin contraseña → sesión completa",
+                pie="El fallo no es la redirección: es que la redirección se lleva una credencial."),
+        en=dict(tit="One click, and the session changes hands",
+                p1="The victim opens a link", p1b="visible domain: the vendor's",
+                p2="The SSO sees their open session", p2b="no password asked: it issues the ticket",
+                p3="Redirect to the attacker's domain", p3b="the ticket travels in the URL",
+                p4="The attacker reads it in their own log", p4b="without touching the victim again",
+                p5="Redeems the ticket from scratch", p5b="no cookie, no password → full session",
+                pie="The bug is not the redirect: it is that the redirect carries a credential."),
+    )[L]
+    cols = [AZUL, AZUL, AMBAR, ROJO, ROJO]
+    b = [txt(40, 42, t["tit"], TXT, 15, UI, peso="600")]
+    x = 40
+    ancho = 200
+    for i in range(5):
+        col = cols[i]
+        b.append(caja(x, 76, ancho, 132, col))
+        b.append(f'<circle cx="{x+22}" cy="{98}" r="12" fill="{col}" fill-opacity=".18" stroke="{col}" stroke-opacity=".5"/>')
+        b.append(txt(x + 22, 103, str(i + 1), col, 12, MONO, "middle", "600"))
+        for j, linea in enumerate(_envolver(t[f"p{i+1}"], 22)):
+            b.append(txt(x + 16, 134 + j * 17, linea, TXT, 12.5, UI, peso="600"))
+        for j, linea in enumerate(_envolver(t[f"p{i+1}b"], 29)):
+            b.append(txt(x + 16, 176 + j * 14, linea, DIM, 10, MONO))
+        if i < 4:
+            b.append(flecha(x + ancho, 142, x + ancho + 18, 142, DIM, 1.6))
+        x += ancho + 18
+    b.append(txt(575, 246, t["pie"], DIM, 12.5, UI, "middle"))
+    return svg(1150, 272, "".join(b))
+
+
+# ═══════════════ 11 · qué se intercepta en el MITM ═══════════════
+def mitm(L):
+    t = dict(
+        es=dict(tit="Solo se envenena una petición; el resto pasa de largo",
+                v="CLIENTE DE LA VÍCTIMA", p="PROXY DEL ATACANTE", r="SERVIDOR REAL",
+                ok="se reenvía tal cual", mal="respuesta sustituida",
+                lista=[("POST /login", 0), ("GET /servers", 0),
+                       ("GET /servers/<id>/configs", 1), ("GET /certs.zip", 0)],
+                pie="La aplicación no nota nada raro: todo funciona salvo el campo que importa."),
+        en=dict(tit="Only one request is poisoned; the rest passes straight through",
+                v="VICTIM'S CLIENT", p="ATTACKER'S PROXY", r="REAL SERVER",
+                ok="forwarded unchanged", mal="response replaced",
+                lista=[("POST /login", 0), ("GET /servers", 0),
+                       ("GET /servers/<id>/configs", 1), ("GET /certs.zip", 0)],
+                pie="The app notices nothing: everything works except the one field that matters."),
+    )[L]
+    b = [txt(40, 42, t["tit"], TXT, 15, UI, peso="600")]
+    b += [caja(40, 80, 230, 64, AZUL), txt(155, 110, t["v"], AZUL, 12.5, UI, "middle", "600"),
+          txt(155, 130, "sudo cliente --connect", DIM, 10.5, MONO, "middle")]
+    b += [caja(460, 80, 230, 64, ROJO), txt(575, 110, t["p"], ROJO, 12.5, UI, "middle", "600"),
+          txt(575, 130, "CA propia + /etc/hosts" if L == "es" else "own CA + /etc/hosts",
+              DIM, 10.5, MONO, "middle")]
+    b += [caja(880, 80, 230, 64, VERDE), txt(995, 110, t["r"], VERDE, 12.5, UI, "middle", "600")]
+    b.append(flecha(270, 112, 455, 112, AZUL))
+    b.append(flecha(690, 112, 875, 112, VERDE))
+
+    y = 176
+    for ruta, envenenada in t["lista"]:
+        col = ROJO if envenenada else DIM
+        relleno = "#2a1220" if envenenada else CAJA
+        b.append(f'<rect x="40" y="{y}" width="1070" height="38" rx="8" fill="{relleno}" '
+                 f'stroke="{col}" stroke-opacity="{.7 if envenenada else .35}"/>')
+        b.append(txt(62, y + 25, ruta, TXT if envenenada else DIM, 12.5, MONO,
+                     peso="600" if envenenada else "400"))
+        b.append(txt(1088, y + 25, (t["mal"] if envenenada else t["ok"]), col, 11.5, UI, "end"))
+        y += 46
+    b.append(txt(575, y + 24, t["pie"], DIM, 12.5, UI, "middle"))
+    return svg(1150, y + 48, "".join(b))
+
+
 def _envolver(texto, ancho):
     palabras, lineas, actual = texto.split(), [], ""
     for p in palabras:
@@ -374,6 +536,10 @@ DIAGRAMAS = [
     ("ato-codigo-emparejamiento", "01-cadena.svg", cadena_pin),
     ("escalada-symlink", "01-enlace-simbolico.svg", symlink),
     ("inyeccion-nombre-carpeta", "02-comillas.svg", comillas),
+    ("ato-codigo-emparejamiento", "02-consentimiento.svg", pantalla_consentimiento),
+    ("rce-agente-ia", "03-canario.svg", canario),
+    ("open-redirect-sso", "03-cadena.svg", cadena_sso),
+    ("rce-cli-shell-true", "05-mitm.svg", mitm),
 ]
 
 if __name__ == "__main__":

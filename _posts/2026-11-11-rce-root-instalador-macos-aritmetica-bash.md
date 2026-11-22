@@ -1,5 +1,5 @@
 ---
-title:       "Cómo un «+ 1» en un instalador de macOS acaba dándote root en el Mac de cualquiera"
+title:       "RCE como root en un instalador de macOS: la aritmética de bash ejecuta lo que le metas"
 summary:     "Un script de instalación sumaba uno a un número que venía del servidor. El problema es que en bash «sumar» significa «evaluar», y ese número lo podía escribir cualquiera por internet sin tener cuenta. Reporte aceptado y recompensado."
 date:        2026-11-11 19:30:00 +0100
 lang:        es
@@ -52,13 +52,11 @@ Cuando instalas un `.pkg` en macOS, el sistema puede ejecutar dos scripts: `prei
 antes de copiar los ficheros y `postinstall` después. Si el paquete lo pide, esos scripts
 se ejecutan **como root**, el usuario con control total de la máquina.
 
-<div class="plain" markdown="1">
-**En cristiano:** cuando le das a «Instalar» y metes tu contraseña, no solo estás copiando
+Cuando le das a «Instalar» y metes tu contraseña, no solo estás copiando
 ficheros. Estás dejando que un script hecho por otra persona ejecute lo que quiera en tu
 ordenador con permisos de administrador. Normalmente ese script hace cosas aburridas y
 legítimas. Pero si alguien consigue colarle una orden, esa orden se ejecuta con esos
 mismos permisos.
-</div>
 
 Y lo mejor: **un instalador es un fichero público**. Te lo descargas, lo abres y lees el
 código. No hace falta tener cuenta, ni atacar nada, ni enviar una sola petición rara. Es de
@@ -118,13 +116,11 @@ echo $((numero + 1))      # 1  (el índice vacío vale 0, más uno)
 ls -l /tmp/me-han-colado  # el fichero existe
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** le hemos pedido a bash que sume uno a una variable. Pero esa variable no
+Le hemos pedido a bash que sume uno a una variable. Pero esa variable no
 contenía un número, contenía **una orden**. Y bash, antes de sumar, ha ejecutado la orden.
 La suma devolvió un número normal y pareció que no pasaba nada — pero el fichero está
 creado. Esa es toda la vulnerabilidad: en un sitio donde esperas un número, metes una
 orden, y se ejecuta.
-</div>
 
 ¿Por qué pasa esto? Porque dentro de `$(( ))` bash permite índices de array —
 `a[algo]` — y para saber qué índice es, tiene que **resolver** lo que hay dentro de los
@@ -170,12 +166,10 @@ while IFS=':' read -r name value; do
 done <<< "$curl_data"
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** el instalador llama a un servidor, se baja un texto, busca una línea que
+El instalador llama a un servidor, se baja un texto, busca una línea que
 contiene la palabra `installCount` y se queda con lo que haya a la derecha, quitándole
 solo las comillas. Lo que sea que el servidor haya puesto ahí, acaba dentro de la
 variable. Y esa variable acaba dentro de `$(( ))`.
-</div>
 
 Es decir: **el servidor decide el valor**. Lo que me llevó a la pregunta que lo abrió todo.
 
@@ -232,12 +226,10 @@ viene:
 mdls -name kMDItemWhereFroms instalador_<install_id>.pkg
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** ese identificador viaja pegado al instalador. Va en el nombre del
+Ese identificador viaja pegado al instalador. Va en el nombre del
 fichero y en los metadatos que macOS le pone al descargarlo. Si alguien comparte su
 instalador por un chat, un foro o un enlace de afiliado, está compartiendo el
 identificador. No es un secreto: es una etiqueta.
-</div>
 
 ## La cadena completa
 
@@ -265,12 +257,10 @@ trap finish EXIT
 finish() { exit 0; }
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** el script está programado para decir siempre «todo ha ido bien», pase lo
+El script está programado para decir siempre «todo ha ido bien», pase lo
 que pase. Es una decisión cómoda para que el usuario no vea errores raros. Pero significa
 que, si tu orden se ejecuta y revienta el script a mitad, **el instalador sigue mostrando
 una marca verde de instalación correcta**. La víctima no tiene ni un indicio.
-</div>
 
 Además el script no usaba `set -u` ni `set -e`, así que un valor mal formado tampoco lo
 detenía.
@@ -290,12 +280,10 @@ cosa**: la condición de ataque.
 | Escribir en el servidor **sin** el payload | `200`, guarda el valor y lo devuelve igual | Que el servicio filtre o valide el tipo del campo |
 | El instalador de Windows, mismo campo | No afectado: parsea el valor como entero | Que el fallo sea del producto en general |
 
-<div class="plain" markdown="1">
-**En cristiano:** si pones un número normal, no pasa nada. Si usas la comparación de
+Si pones un número normal, no pasa nada. Si usas la comparación de
 POSIX, no pasa nada. Si quitas la orden, no pasa nada. Solo pasa cuando metes una orden
 dentro de un contexto aritmético. Eso demuestra que el fallo es exactamente el que digo y
 no una casualidad.
-</div>
 
 Ese último punto —que **Windows no era vulnerable**— lo incluí en el reporte por decisión
 propia, aunque me quitara alcance. El instalador de Windows parsea el mismo campo como

@@ -1,5 +1,5 @@
 ---
-title:       "Le pedí al chatbot que ejecutara código y lo hizo: RCE en producción a través de un agente de IA"
+title:       "RCE 9.8 en producción a través de un agente de IA con una herramienta que ejecuta código"
 summary:     "Un asistente conversacional interno tenía, entre sus herramientas, una que ejecutaba Python en el servidor. Cualquiera podía pedírselo. Lo demostré con un canario criptográfico, porque «el modelo se lo ha inventado» es la objeción que mata estos reportes."
 date:        2026-11-11 20:00:00 +0100
 lang:        es
@@ -41,15 +41,13 @@ Un **agente** es otra cosa. A un agente le das *herramientas*: buscar en una bas
 llamar a una API, mandar un correo, ejecutar código. El modelo decide **cuál usar** según
 lo que le pides, y el sistema **la ejecuta de verdad**.
 
-<div class="plain" markdown="1">
-**En cristiano:** un chatbot es alguien al teléfono dándote consejos. Un agente es alguien
+Un chatbot es alguien al teléfono dándote consejos. Un agente es alguien
 al teléfono **con las llaves de tu casa**. La conversación es igual de inofensiva; lo que
 cambia es lo que puede hacer mientras habla contigo.
 
 Por eso, cuando auditas un asistente de IA, la pregunta no es «¿puedo hacer que diga
 tonterías?». La pregunta es **«¿qué herramientas tiene y quién puede pedirle que las
 use?»**.
-</div>
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-agente-ia/02-chatbot-vs-agente.svg' | relative_url }}"
@@ -79,11 +77,7 @@ Entre la lista apareció una que me hizo enderezarme en la silla:
 run_ipython_cell
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** IPython es un intérprete de Python interactivo. Una herramienta llamada
-«ejecuta una celda de IPython» significa, literalmente, **«ejecuta el código Python que te
-den»**. Dentro de un asistente al que puede escribir cualquiera.
-</div>
+El nombre no deja lugar a dudas: una herramienta que «ejecuta una celda de IPython» ejecuta el código Python que le den, dentro de un asistente al que puede escribir cualquiera.
 
 ## Paso 2: la trampa en la que cae casi todo el mundo
 
@@ -120,15 +114,13 @@ python3 -c 'import hashlib; print(hashlib.sha256(b"canario-verificacion-20261017
 # 0e407c15aa4778af3f4ba76dbfa2b0d3fd990d2f365bdf3aa3d95091e4069005
 ```
 
-<div class="plain" markdown="1">
-**En cristiano:** un hash es una huella digital de un texto. Cambia una letra y la huella
+Un hash es una huella digital de un texto. Cambia una letra y la huella
 cambia entera. No hay forma de «deducirla»: hay que calcularla.
 
 Un modelo de lenguaje **no sabe calcular hashes**. Puede recitar hashes famosos que vio en
 su entrenamiento, pero no puede producir el de una cadena que me acabo de inventar. Si el
 servidor me devuelve exactamente la misma huella que calculé en mi portátil, solo hay una
 explicación posible: **ha ejecutado el código de verdad**.
-</div>
 
 Y ahora, al asistente:
 
@@ -160,6 +152,12 @@ La respuesta llegó como un flujo de eventos, y dentro venía esto:
 
 **Carácter por carácter, el mismo.** Eso cierra la discusión.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-agente-ia/03-canario.svg' | relative_url }}"
+       alt="Diagrama del canario: el hash se calcula en la máquina propia, se pide al agente que lo calcule con su herramienta, y los dos valores se comparan">
+  <figcaption>El hash se calcula antes de tocar el servidor. Si vuelve idéntico, se ha ejecutado.</figcaption>
+</figure>
+
 Y lo repetí **dos veces más, con cadenas distintas**, para descartar cualquier casualidad o
 caché. Un canario podría ser suerte; tres no lo son.
 
@@ -178,12 +176,10 @@ El resultado: **uid 0 (root)**, dentro de un contenedor de un clúster de produc
 visibilidad de red a varias decenas de servicios internos y credenciales en las variables
 de entorno del proceso.
 
-<div class="plain" markdown="1">
-**En cristiano:** el código no se ejecutaba en una caja aislada de juguete. Se ejecutaba
+El código no se ejecutaba en una caja aislada de juguete. Se ejecutaba
 como administrador dentro de la red interna de la empresa, con acceso a otros servicios que
 nunca deberían estar al alcance de internet. Desde ahí, un atacante no «habla con un
 chatbot»: **está dentro**.
-</div>
 
 <div class="note" markdown="1">
 **Dónde paré.** Leí el identificador de usuario, el nombre de la máquina y conté cuántas
@@ -208,10 +204,8 @@ Ese último punto es el argumento decisivo: aunque arreglaran la autenticación 
 cualquier empleado con acceso normal al chat seguiría pudiendo ejecutar código como root en
 producción. Son dos fallos con dos arreglos distintos.
 
-<div class="plain" markdown="1">
-**En cristiano:** una cosa es que la puerta de la calle esté abierta y otra que dentro haya
+Una cosa es que la puerta de la calle esté abierta y otra que dentro haya
 una palanca que vuela el edificio. Arreglar la puerta no quita la palanca.
-</div>
 
 ## El control negativo
 
@@ -222,12 +216,10 @@ una palanca que vuela el edificio. Arreglar la puerta no quita la palanca.
 | Repetir desde otra sesión y otro contenedor | Mismo comportamiento | Que fuera un estado raro de una instancia concreta |
 | Pedirlo sin token | `401` | Que el endpoint fuera abierto por diseño |
 
-<div class="plain" markdown="1">
-**En cristiano:** la primera fila es la clave. Cuando le pido el hash **sin** usar la
+La primera fila es la clave. Cuando le pido el hash **sin** usar la
 herramienta, el modelo se lo inventa y falla. Cuando le pido que use la herramienta,
 acierta. Esa diferencia demuestra que lo que acierta no es el modelo: es el intérprete de
 Python que hay detrás.
-</div>
 
 ## Impacto
 

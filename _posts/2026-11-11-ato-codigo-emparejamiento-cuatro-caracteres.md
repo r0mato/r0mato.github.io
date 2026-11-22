@@ -1,5 +1,5 @@
 ---
-title:       "Cuatro caracteres: cómo un código para emparejar la tele entrega la cuenta entera"
+title:       "Toma de cuenta completa con cuatro caracteres: el código de emparejamiento que no era de nadie"
 summary:     "El código que escribes para vincular la aplicación con tu televisor no estaba atado a nadie. Cualquiera podía pedir uno, convencerte de que lo teclearas y salir de ahí con una credencial permanente, tu correo y el token de recuperación de contraseña."
 date:        2026-11-11 20:20:00 +0100
 lang:        es
@@ -44,14 +44,12 @@ el mando es una tortura, casi todas usan el mismo patrón:
 3. Escribes el código.
 4. El televisor queda vinculado a tu cuenta.
 
-<div class="plain" markdown="1">
-**En cristiano:** es el mismo patrón que usan las aplicaciones de las *smart TV* de medio
+Es el mismo patrón que usan las aplicaciones de las *smart TV* de medio
 mundo. Lo has hecho veinte veces. Y funciona porque se asume que **quien escribe el código
 está mirando la pantalla donde aparece** — es decir, que los dos aparatos están en la misma
 habitación.
 
 Ese supuesto es el que se rompe aquí.
-</div>
 
 ## Parte 1: pedir un código sin tener cuenta
 
@@ -71,13 +69,11 @@ x-app-key: <clave pública del cliente, extraída del instalador>
 
 Fíjate en el detalle que lo decide todo: **`users_id: null`**.
 
-<div class="plain" markdown="1">
-**En cristiano:** el servidor me acaba de dar un código **que no pertenece a nadie**. Es un
+El servidor me acaba de dar un código **que no pertenece a nadie**. Es un
 hueco vacío esperando a que alguien lo rellene. Y lo rellena quien lo teclee.
 
 Un código así no debería existir sin estar atado desde el primer segundo a la sesión del
 aparato que lo pidió.
-</div>
 
 ## Parte 2: la pantalla que no dice qué estás autorizando
 
@@ -88,15 +84,19 @@ Cuando la víctima teclea el código en su aplicación, aparece una confirmació
 confirmación **no decía nada del aparato que lo había pedido**: ni nombre, ni tipo, ni
 dirección IP, ni ubicación aproximada.
 
-<div class="plain" markdown="1">
-**En cristiano:** la víctima ve algo parecido a *«¿Autorizar este dispositivo?»* y un botón.
+La víctima ve algo parecido a *«¿Autorizar este dispositivo?»* y un botón.
 No hay forma humana de distinguir su propio televisor del portátil de un desconocido al
 otro lado del país. No es que la víctima sea descuidada: **es que no le están dando la
 información para decidir**.
 
 Por eso una pantalla de consentimiento que no describe lo que estás autorizando no es una
 protección. Es un trámite.
-</div>
+
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/02-consentimiento.svg' | relative_url }}"
+       alt="Comparación entre la pantalla de confirmación real, que solo muestra la pregunta y el código, y una que incluiría cliente, dirección IP, ubicación y hora de la solicitud">
+  <figcaption>A la izquierda, lo que se le pedía autorizar. A la derecha, lo que hacía falta para poder decidir.</figcaption>
+</figure>
 
 Un atacante solo necesita una excusa creíble para que alguien teclee cuatro caracteres:
 soporte técnico, una «verificación de cuenta», un sorteo, un compañero de trabajo. El
@@ -120,11 +120,9 @@ x-app-key: <clave pública>
 Y el servidor entregó una credencial completa de dispositivo —un token y su secreto— **sin
 cabecera de autenticación, sin cookie y sin firma de ningún tipo**.
 
-<div class="plain" markdown="1">
-**En cristiano:** el servidor no comprueba quién recoge el premio. Comprueba que alguien ha
+El servidor no comprueba quién recoge el premio. Comprueba que alguien ha
 dicho «sí» a ese código, y entonces se lo da **a quien lo pida**. Es un cheque al portador:
 no lleva nombre, lo cobra quien lo tenga en la mano.
-</div>
 
 Y esa credencial es **permanente**: identifica a «un dispositivo de esta cuenta» y sigue
 valiendo indefinidamente.
@@ -142,15 +140,13 @@ Authorization: <firma con el token y el secreto del dispositivo>
 Y en la respuesta, además del correo de la víctima, había un campo que no debería haber
 estado ahí: **el token de recuperación de contraseña**.
 
-<div class="plain" markdown="1">
-**En cristiano:** el token de recuperación es ese código que te llega por correo cuando
+El token de recuperación es ese código que te llega por correo cuando
 pulsas «he olvidado mi contraseña». Es, a todos los efectos, **equivalente a la
 contraseña**: quien lo tiene, puede cambiarla.
 
 Y aquí se podía **leer** desde una credencial de dispositivo. Un aparato vinculado no
 debería poder leer el mecanismo que sirve para recuperar la cuenta. Son dos niveles de
 confianza completamente distintos.
-</div>
 
 Lo verifiqué con el control que le da sentido: **antes** de pedir una recuperación, ese
 campo venía vacío. Después de pedirla desde el formulario público —con solo una dirección
@@ -166,12 +162,10 @@ POST /api/recover/puk          ← canjear el token leído
 Y al seguir esa sesión hasta la pantalla de cambio de contraseña, el formulario traía el
 campo oculto de «contraseña actual» **ya relleno** con el mismo token.
 
-<div class="plain" markdown="1">
-**En cristiano:** el último obstáculo para cambiar una contraseña suele ser *«escribe la
+El último obstáculo para cambiar una contraseña suele ser *«escribe la
 actual»*. Aquí la página lo rellenaba sola, porque considera que quien llega con el token
 de recuperación ya ha demostrado quién es. **Nunca hace falta conocer la contraseña
 original.**
-</div>
 
 ## La cadena completa
 
@@ -202,15 +196,13 @@ recomienda: **cambiar la contraseña**. Aquí eso **no echa al atacante**, porqu
 tiene no es la contraseña: es la credencial de dispositivo del paso 3. Y esa credencial
 **sobrevive al cambio de contraseña**.
 
-<div class="plain" markdown="1">
-**En cristiano:** la víctima hace todo lo que le dirían en cualquier guía de seguridad,
+La víctima hace todo lo que le dirían en cualquier guía de seguridad,
 cree que ha cerrado el incidente, y el atacante sigue dentro. Peor aún: con esa credencial
 puede repetir la cadena entera y volver a cambiar la contraseña cuando quiera.
 
 La única limpieza real es **borrar el dispositivo concreto** de la lista de dispositivos
 vinculados — algo que a nadie se le ocurre, porque nadie relaciona «me han entrado en la
 cuenta» con «tengo un televisor de más en la lista».
-</div>
 
 ## El control negativo
 
@@ -220,11 +212,9 @@ cuenta» con «tengo un televisor de más en la lista».
 | Pedir el código **sin** la clave pública de la aplicación | `401` | Que el endpoint estuviera completamente abierto |
 | Leer el perfil **antes** de solicitar recuperación | El campo del token viene **vacío** | Que ese campo llevara siempre un valor: aparece justo cuando se dispara el flujo |
 
-<div class="plain" markdown="1">
-**En cristiano:** la primera prueba es la que demuestra que no estoy explotando un fallo
+La primera prueba es la que demuestra que no estoy explotando un fallo
 del servidor, sino **el diseño del flujo**. Todo funciona como está programado. El problema
 es que lo que está programado entrega la cuenta.
-</div>
 
 ## Impacto
 

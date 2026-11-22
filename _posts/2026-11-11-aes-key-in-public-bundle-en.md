@@ -128,6 +128,12 @@ downloaded, I also know how to encrypt it.** The server is not checking who you 
 checking you hold a secret it handed to everybody.
 </div>
 
+<figure>
+  <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/02-clave-en-el-navegador-en.svg' | relative_url }}"
+       alt="Diagram: the server sends the JavaScript file with the key inside to both the legitimate browser and the attacker, and both can sign valid requests">
+  <figcaption>The same file reaches both. And with it, the same key.</figcaption>
+</figure>
+
 ## Step 3: minting a pass without an account
 
 I reproduced the signature outside the browser. No user, no password, no cookie:

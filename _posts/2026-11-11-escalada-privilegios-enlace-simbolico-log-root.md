@@ -112,6 +112,12 @@ Así que si yo pongo un acceso directo donde tú vas a escribir, y tú eres root
 donde yo te diga**.
 </div>
 
+<figure>
+  <img src="{{ '/assets/img/writeups/escalada-symlink/01-enlace-simbolico.svg' | relative_url }}"
+       alt="Diagrama: el usuario planta un enlace simbólico en la ruta predecible del registro y el proceso root, al escribir ahí, acaba creando un fichero del sistema con permisos para todos">
+  <figcaption>El proceso root escribe en una ruta que tú controlas. Tú decides a dónde apunta.</figcaption>
+</figure>
+
 Y sí: `touch` y `chmod` siguen los enlaces.
 
 <div class="note" markdown="1">

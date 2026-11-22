@@ -6,7 +6,7 @@ lang:        es
 ref:         rce-instalador-macos-aritmetica
 
 severity:    high
-cvss:        "8.0"
+cvss:        "8.8"
 cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
 cwe:         "CWE-78 · CWE-306"
 vuln_class:  "Inyección"
@@ -114,15 +114,16 @@ Hasta aquí ninguna sorpresa. Ahora, lo que no es tan normal:
 
 ```bash
 numero='a[$(touch /tmp/me-han-colado)]'
-echo $((numero + 1))      # 0
+echo $((numero + 1))      # 1  (el índice vacío vale 0, más uno)
 ls -l /tmp/me-han-colado  # el fichero existe
 ```
 
 <div class="plain" markdown="1">
 **En cristiano:** le hemos pedido a bash que sume uno a una variable. Pero esa variable no
 contenía un número, contenía **una orden**. Y bash, antes de sumar, ha ejecutado la orden.
-La suma dio `0` y pareció que no pasaba nada — pero el fichero está creado. Esa es toda la
-vulnerabilidad: en un sitio donde esperas un número, metes una orden, y se ejecuta.
+La suma devolvió un número normal y pareció que no pasaba nada — pero el fichero está
+creado. Esa es toda la vulnerabilidad: en un sitio donde esperas un número, metes una
+orden, y se ejecuta.
 </div>
 
 ¿Por qué pasa esto? Porque dentro de `$(( ))` bash permite índices de array —

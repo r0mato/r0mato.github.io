@@ -112,6 +112,12 @@ So if I put a shortcut where you are about to write, and you are root… **you w
 I tell you to.**
 </div>
 
+<figure>
+  <img src="{{ '/assets/img/writeups/escalada-symlink/01-enlace-simbolico-en.svg' | relative_url }}"
+       alt="Diagram: the user plants a symlink at the predictable log path and the root process, writing there, ends up creating a system file writable by everyone">
+  <figcaption>The root process writes to a path you control. You decide where it points.</figcaption>
+</figure>
+
 And yes: `touch` and `chmod` follow links.
 
 <div class="note" markdown="1">

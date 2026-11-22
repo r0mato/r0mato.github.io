@@ -127,6 +127,12 @@ que yo me he descargado, yo también sé cifrarlo.** El servidor no está compro
 eres. Está comprobando que tienes un secreto que le ha dado a todo el mundo.
 </div>
 
+<figure>
+  <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/02-clave-en-el-navegador.svg' | relative_url }}"
+       alt="Diagrama: el servidor envía el fichero JavaScript con la clave dentro tanto al navegador legítimo como al atacante, y los dos pueden firmar peticiones válidas">
+  <figcaption>El mismo fichero llega a los dos. Y con él, la misma clave.</figcaption>
+</figure>
+
 ## Paso 3: fabricar un pase, sin tener cuenta
 
 Reproduje la firma fuera del navegador. Sin usuario, sin contraseña, sin cookie:

@@ -103,6 +103,12 @@ codesign -d --verbose=4 '/tmp/p'$(mi-script)'' 2>&1
 #                        └ cierra ┘└ se ejecuta ┘
 ```
 
+<figure>
+  <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/02-comillas.svg' | relative_url }}"
+       alt="Diagrama comparando la orden que el programa espera, con la ruta entre comillas como texto literal, y la que recibe, donde una comilla dentro del nombre cierra el entrecomillado y lo siguiente se ejecuta">
+  <figcaption>Arriba, lo que el programa cree que está ejecutando. Abajo, lo que ejecuta de verdad.</figcaption>
+</figure>
+
 ## La idea: que la inyección sea el nombre de la carpeta
 
 Aquí está lo bonito. La «ruta» no me la invento: es **dónde está mi programa**. Así que

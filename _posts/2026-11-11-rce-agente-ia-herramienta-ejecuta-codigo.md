@@ -51,6 +51,12 @@ tonterías?». La pregunta es **«¿qué herramientas tiene y quién puede pedir
 use?»**.
 </div>
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-agente-ia/02-chatbot-vs-agente.svg' | relative_url }}"
+       alt="Diagrama comparando un chatbot, que solo devuelve texto, con un agente, que tiene una lista de herramientas entre las que hay una que ejecuta código en el servidor">
+  <figcaption>Un chatbot responde. Un agente actúa. Y la lista de lo que puede hacer es la superficie de ataque.</figcaption>
+</figure>
+
 ## El objetivo
 
 El asistente interno de un portal corporativo. Ya había encontrado antes cómo hablar con

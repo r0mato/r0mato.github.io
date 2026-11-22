@@ -7,7 +7,7 @@ ref:         open-redirect-sso-ticket
 
 severity:    high
 cvss:        "8.1"
-cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N"
+cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
 cwe:         "CWE-601 · CWE-287"
 vuln_class:  "Autenticación"
 target_type: "SSO web"
@@ -78,13 +78,19 @@ en `.marca.com`?»* o, peor, *«¿lo contiene?»*.
 Suena razonable. Falla por una razón sutil: **una URL no es una cadena de texto, es una
 estructura**, y el navegador la parte por sitios que una comparación de texto ignora.
 
-Mira estas tres y piensa cuál es el servidor de destino:
+Mira estos tres valores y piensa dónde acaba el usuario:
 
-| URL | A dónde va el navegador |
-|---|---|
-| `https://app.marca.com/` | a `app.marca.com` ✅ |
-| `https://atacante.com/.marca.com` | a **`atacante.com`** ⚠ |
-| `https://atacante.com%2F.marca.com` | a **`atacante.com`** ⚠ |
+| Valor del parámetro | Lo que ve la comprobación | Dónde acaba el navegador |
+|---|---|---|
+| `app.marca.com` | contiene `.marca.com` ✅ | `app.marca.com` ✅ |
+| `atacante.com/.marca.com` | contiene `.marca.com` ✅ | **`atacante.com`** ⚠ |
+| `atacante.com%2F.marca.com` | tras decodificar, igual que el anterior | **`atacante.com`** ⚠ |
+
+<figure>
+  <img src="{{ '/assets/img/writeups/open-redirect-sso/02-anatomia-url.svg' | relative_url }}"
+       alt="Diagrama de una URL: el servidor de destino es lo que hay antes de la primera barra, y el resto es la ruta; la comprobación de texto mira la cadena entera">
+  <figcaption>El navegador corta en la primera barra. La comprobación mira la cadena entera. Ahí está el hueco.</figcaption>
+</figure>
 
 <div class="plain" markdown="1">
 **En cristiano:** el navegador decide el destino con lo que hay **antes de la primera
@@ -96,8 +102,10 @@ Pero si el servidor solo mira si el texto *contiene* `.marca.com`... lo contiene
 control. Y te manda a casa del atacante.
 </div>
 
-El `%2F` del tercer ejemplo es la barra escrita en código de URL. Sirve para colarla en
-sitios donde una barra normal sería rechazada antes de llegar a la comprobación.
+El `%2F` del tercer ejemplo es la barra escrita en código de URL. El servidor la
+**decodifica** antes de comparar y antes de construir la redirección, así que acaba siendo
+una barra de verdad — pero por el camino se cuela en validaciones que habrían rechazado
+una barra literal.
 
 Esa fue la llave:
 

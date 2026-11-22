@@ -7,7 +7,7 @@ ref:         rce-instalador-macos-aritmetica
 permalink:   /en/writeups/macos-installer-arithmetic-rce/
 
 severity:    high
-cvss:        "8.0"
+cvss:        "8.8"
 cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
 cwe:         "CWE-78 · CWE-306"
 vuln_class:  "Injection"
@@ -114,15 +114,15 @@ No surprises. Now the not-so-normal case:
 
 ```bash
 number='a[$(touch /tmp/i-got-in)]'
-echo $((number + 1))      # 0
+echo $((number + 1))      # 1  (the empty index is 0, plus one)
 ls -l /tmp/i-got-in       # the file exists
 ```
 
 <div class="plain" markdown="1">
 **In plain words:** we asked bash to add one to a variable. But the variable did not hold a
-number, it held **an order**. And bash, before adding, ran the order. The sum returned `0`
-and looked like nothing happened — but the file is there. That is the whole vulnerability:
-in a place expecting a number you put an order, and it runs.
+number, it held **an order**. And bash, before adding, ran the order. The sum returned a
+perfectly normal number and it looked like nothing happened — but the file is there. That
+is the whole vulnerability: in a place expecting a number you put an order, and it runs.
 </div>
 
 Why does this happen? Because inside `$(( ))` bash allows array indices — `a[something]` —

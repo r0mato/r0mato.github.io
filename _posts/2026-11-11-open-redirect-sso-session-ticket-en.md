@@ -8,7 +8,7 @@ permalink:   /en/writeups/open-redirect-sso-session-ticket/
 
 severity:    high
 cvss:        "8.1"
-cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N"
+cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
 cwe:         "CWE-601 · CWE-287"
 vuln_class:  "Authentication"
 target_type: "Web SSO"
@@ -79,13 +79,19 @@ end in `.brand.com`?"* or, worse, *"does it contain it?"*.
 It sounds reasonable. It fails for a subtle reason: **a URL is not a string, it is a
 structure**, and the browser splits it at places a text comparison ignores.
 
-Look at these three and think about which server is the destination:
+Look at these three parameter values and think about where the user ends up:
 
-| URL | Where the browser goes |
-|---|---|
-| `https://app.brand.com/` | to `app.brand.com` ✅ |
-| `https://attacker.com/.brand.com` | to **`attacker.com`** ⚠ |
-| `https://attacker.com%2F.brand.com` | to **`attacker.com`** ⚠ |
+| Parameter value | What the check sees | Where the browser lands |
+|---|---|---|
+| `app.brand.com` | contains `.brand.com` ✅ | `app.brand.com` ✅ |
+| `attacker.com/.brand.com` | contains `.brand.com` ✅ | **`attacker.com`** ⚠ |
+| `attacker.com%2F.brand.com` | after decoding, same as above | **`attacker.com`** ⚠ |
+
+<figure>
+  <img src="{{ '/assets/img/writeups/open-redirect-sso/02-anatomia-url-en.svg' | relative_url }}"
+       alt="Diagram of a URL: the destination server is whatever comes before the first slash, the rest is the path; the text check looks at the whole string">
+  <figcaption>The browser cuts at the first slash. The check looks at the whole string. That is the gap.</figcaption>
+</figure>
 
 <div class="plain" markdown="1">
 **In plain words:** the browser decides the destination using whatever comes **before the
@@ -96,8 +102,10 @@ But if the server only checks whether the text *contains* `.brand.com`… it con
 passes the check. And it sends you to the attacker's house.
 </div>
 
-The `%2F` in the third example is a slash written in URL encoding. It is useful for
-sneaking one past places where a plain slash would be rejected before the check runs.
+The `%2F` in the third example is a slash written in URL encoding. The server
+**decodes** it before comparing and before building the redirect, so it ends up being a
+real slash — but on the way it slips past validations that would have rejected a literal
+one.
 
 That was the key:
 

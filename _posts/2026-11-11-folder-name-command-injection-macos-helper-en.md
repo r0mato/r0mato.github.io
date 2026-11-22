@@ -103,6 +103,12 @@ codesign -d --verbose=4 '/tmp/p'$(my-script)'' 2>&1
 #                        └ closes ┘└ executes ┘
 ```
 
+<figure>
+  <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/02-comillas-en.svg' | relative_url }}"
+       alt="Diagram comparing the command the program expects, with the path quoted as literal text, and the one it gets, where a quote inside the name closes the quoting and what follows runs">
+  <figcaption>Above, what the program thinks it is running. Below, what it actually runs.</figcaption>
+</figure>
+
 ## The idea: make the injection the folder's name
 
 Here is the beautiful part. The "path" is not something I make up: it is **where my program

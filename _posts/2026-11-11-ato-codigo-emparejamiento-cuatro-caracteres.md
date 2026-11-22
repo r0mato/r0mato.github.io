@@ -187,6 +187,12 @@ Sin cuenta de ningún tipo
 
 **Seis peticiones HTTP y cuatro caracteres tecleados por la víctima.**
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/01-cadena.svg' | relative_url }}"
+       alt="Diagrama de los seis pasos de la cadena, desde pedir un código sin cuenta hasta cambiar la contraseña sin conocer la anterior">
+  <figcaption>Cada paso es razonable por separado. Puestos en fila, entregan la cuenta.</figcaption>
+</figure>
+
 ## El detalle que lo hace peor: cambiar la contraseña no sirve
 
 Esta es la parte que más me interesó al redactar el impacto.

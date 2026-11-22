@@ -6,7 +6,7 @@ lang:        es
 ref:         rce-cli-shell-true
 
 severity:    high
-cvss:        "8.8"
+cvss:        "8.0"
 cvss_vector: "CVSS:3.1/AV:A/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
 cwe:         "CWE-78 · CWE-88"
 vuln_class:  "Inyección"
@@ -89,6 +89,12 @@ subprocess.run(["ping", "-c1", objetivo])          # ping falla, no se crea nada
 # forma insegura: la shell interpreta el punto y coma
 subprocess.run(f"ping -c1 {objetivo}", shell=True) # el fichero aparece
 ```
+
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/04-shell-true.svg' | relative_url }}"
+       alt="Diagrama: a la izquierda una lista de argumentos, donde el punto y coma es un carácter más; a la derecha una cadena con shell=True, donde la shell lo interpreta como separador de órdenes">
+  <figcaption>La misma orden por los dos caminos. A la izquierda los datos siguen siendo datos; a la derecha se han vuelto código.</figcaption>
+</figure>
 
 ## ¿Y qué metía dentro de esa cadena?
 

@@ -51,6 +51,12 @@ That is why, when auditing an AI assistant, the question is not "can I make it s
 things?". The question is **"what tools does it have and who can ask it to use them?"**.
 </div>
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-agente-ia/02-chatbot-vs-agente-en.svg' | relative_url }}"
+       alt="Diagram comparing a chatbot, which only returns text, with an agent, which has a list of tools including one that runs code on the server">
+  <figcaption>A chatbot answers. An agent acts. And its list of tools is the attack surface.</figcaption>
+</figure>
+
 ## The target
 
 The internal assistant of a corporate portal. I had already found how to talk to it without

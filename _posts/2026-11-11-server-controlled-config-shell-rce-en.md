@@ -7,7 +7,7 @@ ref:         rce-cli-shell-true
 permalink:   /en/writeups/server-controlled-config-shell-rce/
 
 severity:    high
-cvss:        "8.8"
+cvss:        "8.0"
 cvss_vector: "CVSS:3.1/AV:A/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
 cwe:         "CWE-78 · CWE-88"
 vuln_class:  "Injection"
@@ -88,6 +88,12 @@ subprocess.run(["ping", "-c1", target])          # ping fails, nothing created
 # unsafe form: the shell interprets the semicolon
 subprocess.run(f"ping -c1 {target}", shell=True) # the file appears
 ```
+
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/04-shell-true-en.svg' | relative_url }}"
+       alt="Diagram: on the left an argument list, where the semicolon is just a character; on the right a string with shell=True, where the shell reads it as a command separator">
+  <figcaption>The same order down both paths. On the left data stays data; on the right it has become code.</figcaption>
+</figure>
 
 ## And what was it putting inside that string?
 

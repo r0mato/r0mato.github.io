@@ -187,6 +187,12 @@ No account of any kind
 
 **Six HTTP requests and four characters typed by the victim.**
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/01-cadena-en.svg' | relative_url }}"
+       alt="Diagram of the six steps of the chain, from requesting a code with no account to changing the password without knowing the old one">
+  <figcaption>Each step is reasonable on its own. Lined up, they hand over the account.</figcaption>
+</figure>
+
 ## The detail that makes it worse: changing the password does not help
 
 This is the part that interested me most when writing the impact section.

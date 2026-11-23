@@ -1,7 +1,7 @@
 ---
 title:       "Local root escalation via symlink: the log a privileged process leaves in your folder"
 summary:     "A service running as root wrote its log into the directory of the user who launched it, with a predictable name, and gave it write permissions for everyone. That is all it takes to create any system file and have root execute it."
-date:        2026-11-11 20:30:00 +0100
+date:        2026-11-05 16:45:00 +0100
 lang:        en
 ref:         escalada-symlink-log-root
 image:       /assets/img/og/escalada-symlink-log-root-en.png

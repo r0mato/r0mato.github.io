@@ -1,7 +1,7 @@
 ---
 title:       "Crítico: una clave AES en un bundle JavaScript público abría las cuentas de toda la empresa"
 summary:     "El portal interno de una multinacional firmaba sus tokens con una clave que cualquiera podía leer en un fichero JavaScript servido a internet. Con esa clave se fabricaban credenciales válidas sin tener cuenta, y la API no comprobaba de quién eran los datos que devolvía. Reporte aceptado como crítico."
-date:        2026-11-11 19:50:00 +0100
+date:        2026-10-16 13:35:00 +0100
 lang:        es
 ref:         clave-aes-bundle-js
 image:       /assets/img/og/clave-aes-bundle-js-es.png

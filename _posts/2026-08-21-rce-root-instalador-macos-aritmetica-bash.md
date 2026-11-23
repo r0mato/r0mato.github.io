@@ -1,7 +1,7 @@
 ---
 title:       "RCE como root en un instalador de macOS: la aritmética de bash ejecuta lo que le metas"
 summary:     "Un script de instalación sumaba uno a un número que venía del servidor. El problema es que en bash «sumar» significa «evaluar», y ese número lo podía escribir cualquiera por internet sin tener cuenta. Reporte aceptado y recompensado."
-date:        2026-11-11 19:30:00 +0100
+date:        2026-08-21 18:40:00 +0100
 lang:        es
 ref:         rce-instalador-macos-aritmetica
 image:       /assets/img/og/rce-instalador-macos-aritmetica-es.png

@@ -1,7 +1,7 @@
 ---
 title:       "Inyección de comandos como root por MITM: el servidor escribe tu línea de comandos"
 summary:     "Una herramienta de consola que se ejecuta con sudo descargaba su configuración del servidor y la pegaba, tal cual, dentro de una llamada a la shell. Un punto y coma en el sitio correcto y el atacante es root. Reporte aceptado y recompensado."
-date:        2026-11-11 19:40:00 +0100
+date:        2026-10-29 21:10:00 +0100
 lang:        es
 ref:         rce-cli-shell-true
 image:       /assets/img/og/rce-cli-shell-true-es.png

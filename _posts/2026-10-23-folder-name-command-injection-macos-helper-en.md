@@ -1,7 +1,7 @@
 ---
 title:       "Command injection in a privileged macOS helper: the payload is the folder's name"
 summary:     "A service running as root checked who was calling it by resolving their path and dropping it, in quotes, into a shell command. All it took was creating a folder whose name carried the injection. A four-character blacklist was not enough."
-date:        2026-11-11 20:40:00 +0100
+date:        2026-10-23 08:30:00 +0100
 lang:        en
 ref:         inyeccion-nombre-carpeta-helper
 image:       /assets/img/og/inyeccion-nombre-carpeta-helper-en.png

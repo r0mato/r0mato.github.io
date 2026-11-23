@@ -1,7 +1,7 @@
 ---
 title:       "Toma de cuenta con un clic: el open redirect del SSO entregaba el ticket de sesión"
 summary:     "Un parámetro `host` del SSO aceptaba dominios ajenos si les pegabas una barra en el sitio justo. Lo que se iba al dominio del atacante no era al usuario: era su ticket de sesión. Un clic y la cuenta cambia de dueño."
-date:        2026-11-11 20:10:00 +0100
+date:        2026-10-18 12:05:00 +0100
 lang:        es
 ref:         open-redirect-sso-ticket
 image:       /assets/img/og/open-redirect-sso-ticket-es.png

@@ -1,7 +1,7 @@
 ---
 title:       "Escalada local a root por enlace simbólico: el log que un proceso privilegiado deja en tu carpeta"
 summary:     "Un servicio que corre como root guardaba su registro en el directorio del usuario que lo lanzaba, con un nombre predecible, y le ponía permisos de escritura para todo el mundo. Eso es todo lo que hace falta para crear cualquier fichero del sistema y que lo ejecute root."
-date:        2026-11-11 20:30:00 +0100
+date:        2026-11-05 16:45:00 +0100
 lang:        es
 ref:         escalada-symlink-log-root
 image:       /assets/img/og/escalada-symlink-log-root-es.png

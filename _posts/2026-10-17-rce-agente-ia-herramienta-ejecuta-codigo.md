@@ -1,7 +1,7 @@
 ---
 title:       "RCE 9.8 en producción a través de un agente de IA con una herramienta que ejecuta código"
 summary:     "Un asistente conversacional interno tenía, entre sus herramientas, una que ejecutaba Python en el servidor. Cualquiera podía pedírselo. Lo demostré con un canario criptográfico, porque «el modelo se lo ha inventado» es la objeción que mata estos reportes."
-date:        2026-11-11 20:00:00 +0100
+date:        2026-10-17 17:20:00 +0100
 lang:        es
 ref:         rce-agente-ia-tool
 image:       /assets/img/og/rce-agente-ia-tool-es.png

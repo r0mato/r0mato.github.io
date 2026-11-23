@@ -1,7 +1,7 @@
 ---
 title:       "Root RCE in a macOS installer: bash arithmetic runs whatever you put in it"
 summary:     "An installation script added one to a number that came from the server. The problem is that in bash \"adding\" means \"evaluating\", and that number could be written by anyone on the internet without an account. Report accepted and rewarded."
-date:        2026-11-11 19:30:00 +0100
+date:        2026-08-21 18:40:00 +0100
 lang:        en
 ref:         rce-instalador-macos-aritmetica
 image:       /assets/img/og/rce-instalador-macos-aritmetica-en.png

@@ -1,7 +1,7 @@
 ---
 title:       "Toma de cuenta completa con cuatro caracteres: el código de emparejamiento que no era de nadie"
 summary:     "El código que escribes para vincular la aplicación con tu televisor no estaba atado a nadie. Cualquiera podía pedir uno, convencerte de que lo teclearas y salir de ahí con una credencial permanente, tu correo y el token de recuperación de contraseña."
-date:        2026-11-11 20:20:00 +0100
+date:        2026-10-20 19:15:00 +0100
 lang:        es
 ref:         ato-codigo-emparejamiento
 image:       /assets/img/og/ato-codigo-emparejamiento-es.png

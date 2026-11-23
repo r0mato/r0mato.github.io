@@ -1,7 +1,7 @@
 ---
 title:       "Critical: an AES key in a public JavaScript bundle opened every account in the company"
 summary:     "A multinational's internal portal signed its tokens with a key anyone could read in a JavaScript file served to the internet. With that key you could mint valid credentials without an account, and the API never checked whose data it was returning. Accepted as critical."
-date:        2026-11-11 19:50:00 +0100
+date:        2026-10-16 13:35:00 +0100
 lang:        en
 ref:         clave-aes-bundle-js
 image:       /assets/img/og/clave-aes-bundle-js-en.png

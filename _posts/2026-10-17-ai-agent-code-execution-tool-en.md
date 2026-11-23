@@ -1,7 +1,7 @@
 ---
 title:       "9.8 RCE in production through an AI agent with a code-execution tool"
 summary:     "An internal conversational assistant had, among its tools, one that executed Python on the server. Anyone could ask for it. I proved it with a cryptographic canary, because \"the model made that up\" is the objection that kills these reports."
-date:        2026-11-11 20:00:00 +0100
+date:        2026-10-17 17:20:00 +0100
 lang:        en
 ref:         rce-agente-ia-tool
 image:       /assets/img/og/rce-agente-ia-tool-en.png

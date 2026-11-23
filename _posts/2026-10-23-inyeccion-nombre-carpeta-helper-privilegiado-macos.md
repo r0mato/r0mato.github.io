@@ -1,7 +1,7 @@
 ---
 title:       "Inyección de comandos en un helper privilegiado de macOS: el payload es el nombre de la carpeta"
 summary:     "Un servicio con permisos de root comprobaba quién le llamaba resolviendo su ruta y metiéndola entre comillas dentro de una orden de shell. Bastó con crear una carpeta cuyo nombre contenía la inyección. Una lista negra de cuatro caracteres no fue suficiente."
-date:        2026-11-11 20:40:00 +0100
+date:        2026-10-23 08:30:00 +0100
 lang:        es
 ref:         inyeccion-nombre-carpeta-helper
 image:       /assets/img/og/inyeccion-nombre-carpeta-helper-es.png

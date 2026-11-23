@@ -1,7 +1,7 @@
 ---
 title:       "One-click account takeover: the SSO open redirect handed over the session ticket"
 summary:     "An SSO `host` parameter accepted foreign domains if you stuck a slash in the right place. What went to the attacker's domain was not the user — it was their session ticket. One click and the account changes hands."
-date:        2026-11-11 20:10:00 +0100
+date:        2026-10-18 12:05:00 +0100
 lang:        en
 ref:         open-redirect-sso-ticket
 image:       /assets/img/og/open-redirect-sso-ticket-en.png

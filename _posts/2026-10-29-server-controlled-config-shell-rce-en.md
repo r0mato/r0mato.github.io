@@ -1,7 +1,7 @@
 ---
 title:       "Root command injection over MITM: the server writes your command line"
 summary:     "A console tool running under sudo downloaded its configuration from the server and pasted it, verbatim, into a shell call. One semicolon in the right place and the attacker is root. Report accepted and rewarded."
-date:        2026-11-11 19:40:00 +0100
+date:        2026-10-29 21:10:00 +0100
 lang:        en
 ref:         rce-cli-shell-true
 image:       /assets/img/og/rce-cli-shell-true-en.png

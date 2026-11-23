@@ -132,12 +132,6 @@ Y eso es exactamente lo que la comprobación miraba.
 
 Es decir: comprueba que el carnet lleve el nombre de la empresa, no que lo haya emitido ella.
 
-<figure>
-  <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/01-root-conseguido.png' | relative_url }}"
-       alt="Terminal de un usuario sin privilegios: su propio identificador es uid=501, y el fichero canario de /tmp, creado por root, contiene uid=0(root)">
-  <figcaption>Desde una cuenta normal (<code>uid=501</code>): el canario de <code>/tmp</code> lo escribió <code>uid=0(root)</code>. Las listas de grupos y el nombre del binario van tapados.</figcaption>
-</figure>
-
 ## Qué se alcanza desde ahí
 
 Con el código ejecutándose como root pude comprobar —leyendo, nunca modificando— que se

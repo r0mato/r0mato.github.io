@@ -131,12 +131,6 @@ what the check looked at.
 
 In other words: it checks the badge says the company's name, not that the company issued it.
 
-<figure>
-  <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/01-root-conseguido.png' | relative_url }}"
-       alt="Unprivileged user's terminal: their own id is uid=501, and the canary file in /tmp, created by root, contains uid=0(root)">
-  <figcaption>From a normal account (<code>uid=501</code>): the canary in <code>/tmp</code> was written by <code>uid=0(root)</code>. Group lists and the binary name are redacted.</figcaption>
-</figure>
-
 ## What it reaches from there
 
 With code running as root I was able to confirm — by reading, never modifying — that it

@@ -181,13 +181,11 @@ configuration. That one I answer myself.
   <figcaption>Three of the four requests pass untouched. Only the response that matters is replaced.</figcaption>
 </figure>
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/rce-cli-shell-true/01-setup-atacante.png' | relative_url }}"
        alt="Attacker terminal: own CA installed in the system trust store, domain redirected in /etc/hosts and proxy listening on port 443">
   <figcaption>The attacker's setup: own CA trusted, domain redirected and proxy listening.</figcaption>
 </figure>
-{% endcomment %}
 
 ## The payload
 
@@ -218,14 +216,6 @@ day.
 And then something happened that I did not expect and that improved the report: **the
 program failed and, on failing, printed the command it had built**.
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/02-victima-rce.png' | relative_url }}"
-       alt="Victim terminal: the documented command runs and the error message shows the full line with the injected payload">
-  <figcaption>The error message shows the exact string the shell had just interpreted. The program gives itself away.</figcaption>
-</figure>
-{% endcomment %}
-
 The system binary died because the hash left its order half-finished. On
 dying, the program printed an error containing the full sentence it had tried to run —
 **with my payload inside, in plain sight**. The program's failure is the proof of the
@@ -235,13 +225,11 @@ happened, the tool shows it.
 And the important bit: the commands **had already run** before the binary died. The shell
 interprets the list from left to right.
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/rce-cli-shell-true/03-verificacion-root.png' | relative_url }}"
        alt="The marker files exist, are owned by root and the contents show uid=0(root), while the user who ran the command is still a normal user">
   <figcaption>The markers exist and belong to <code>root</code>. The person who ran the command was an ordinary user.</figcaption>
 </figure>
-{% endcomment %}
 
 That is the proof that counts: **the file was created by `uid=0`**, not by the user. And no
 connection was established, so the user just saw a connection error and tried again —
@@ -261,13 +249,11 @@ connection **towards me** and hand me a console. From then on I type in my termi
 commands run on their machine, as root. It is not a metaphor: it is their computer, on my
 screen.
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/rce-cli-shell-true/04-shell-inversa.png' | relative_url }}"
        alt="Attacker terminal with an interactive session: id returns uid=0(root), whoami returns root, and files in the victim's /root are listed">
   <figcaption>Interactive session as <code>root</code> on the victim's machine. <code>id</code> and <code>whoami</code> leave no doubt.</figcaption>
 </figure>
-{% endcomment %}
 
 Demonstrating the jump from "I can run a command" to "I have a session" is what turns a
 *Medium* into a *High*. Same bug, very different impact in the eyes of whoever triages it.

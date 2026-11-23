@@ -132,13 +132,11 @@ Y eso es exactamente lo que la comprobación miraba.
 
 Es decir: comprueba que el carnet lleve el nombre de la empresa, no que lo haya emitido ella.
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/01-root-conseguido.png' | relative_url }}"
-       alt="Terminal del usuario sin privilegios mostrando el fichero canario escrito por root y la lectura de ficheros que solo root puede leer">
-  <figcaption>Desde una cuenta sin privilegios: ficheros que solo root puede leer, en pantalla.</figcaption>
+       alt="Terminal de un usuario sin privilegios: su propio identificador es uid=501, y el fichero canario de /tmp, creado por root, contiene uid=0(root)">
+  <figcaption>Desde una cuenta normal (<code>uid=501</code>): el canario de <code>/tmp</code> lo escribió <code>uid=0(root)</code>. Las listas de grupos y el nombre del binario van tapados.</figcaption>
 </figure>
-{% endcomment %}
 
 ## Qué se alcanza desde ahí
 

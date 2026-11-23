@@ -131,13 +131,11 @@ what the check looked at.
 
 In other words: it checks the badge says the company's name, not that the company issued it.
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/01-root-conseguido.png' | relative_url }}"
-       alt="Unprivileged user's terminal showing the canary file written by root and the contents of root-only files">
-  <figcaption>From an unprivileged account: files only root can read, on screen.</figcaption>
+       alt="Unprivileged user's terminal: their own id is uid=501, and the canary file in /tmp, created by root, contains uid=0(root)">
+  <figcaption>From a normal account (<code>uid=501</code>): the canary in <code>/tmp</code> was written by <code>uid=0(root)</code>. Group lists and the binary name are redacted.</figcaption>
 </figure>
-{% endcomment %}
 
 ## What it reaches from there
 

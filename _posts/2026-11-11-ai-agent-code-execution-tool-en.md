@@ -4,6 +4,7 @@ summary:     "An internal conversational assistant had, among its tools, one tha
 date:        2026-11-11 20:00:00 +0100
 lang:        en
 ref:         rce-agente-ia-tool
+image:       /assets/img/og/rce-agente-ia-tool-en.png
 permalink:   /en/writeups/ai-agent-code-execution-tool/
 
 severity:    critical

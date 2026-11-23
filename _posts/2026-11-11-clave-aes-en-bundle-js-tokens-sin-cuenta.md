@@ -4,6 +4,7 @@ summary:     "El portal interno de una multinacional firmaba sus tokens con una 
 date:        2026-11-11 19:50:00 +0100
 lang:        es
 ref:         clave-aes-bundle-js
+image:       /assets/img/og/clave-aes-bundle-js-es.png
 
 severity:    critical
 cvss:        "9.1"

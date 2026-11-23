@@ -397,6 +397,32 @@ Si le pones otro nombre tendrás que cambiar las rutas en `sobre-mi.md`, `en/abo
 > queda pequeña dentro del marco, la foto se verá «más pequeña» que el logo aunque el
 > marco sea idéntico: recorta tú el cuadrado pegado a la cara antes de pasarlo al script.
 
+### Las tarjetas de cada writeup
+
+Hay **dos** tarjetas sociales distintas y no se pisan:
+
+| Script | Qué genera | Cuándo sale |
+|---|---|---|
+| `./generar-og.sh` | `assets/img/brand/og.png`, una sola | al compartir la portada, `/writeups/`, contacto… |
+| `./generar-og-writeups.sh` | `assets/img/og/<ref>-<idioma>.png`, una por writeup | al compartir el enlace de **un writeup concreto** |
+
+La segunda lee el `title`, la `severity` y el `cvss` del frontmatter, dibuja la tarjeta con
+el titular en grande y la banda del color de la severidad, y escribe sola la línea
+`image:` en el writeup para que se use esa y no la general. Es idempotente: lánzalo las
+veces que quieras.
+
+```bash
+./generar-og-writeups.sh
+```
+
+**Lánzalo cada vez que publiques un writeup nuevo o le cambies el título o la severidad.**
+Si no, el enlace seguirá enseñando el titular viejo. Las tarjetas de writeups borrados se
+limpian solas.
+
+> Lo que se ve al pegar el enlace lo cachean LinkedIn, X y Slack durante días. Si acabas
+> de cambiar un título, su depurador de previsualizaciones es la única forma de forzar
+> que lo relean.
+
 ---
 
 ## 5. Borradores

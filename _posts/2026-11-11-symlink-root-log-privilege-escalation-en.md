@@ -4,6 +4,7 @@ summary:     "A service running as root wrote its log into the directory of the 
 date:        2026-11-11 20:30:00 +0100
 lang:        en
 ref:         escalada-symlink-log-root
+image:       /assets/img/og/escalada-symlink-log-root-en.png
 permalink:   /en/writeups/symlink-root-log-privilege-escalation/
 
 severity:    high

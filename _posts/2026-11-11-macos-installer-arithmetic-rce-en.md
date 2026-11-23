@@ -4,6 +4,7 @@ summary:     "An installation script added one to a number that came from the se
 date:        2026-11-11 19:30:00 +0100
 lang:        en
 ref:         rce-instalador-macos-aritmetica
+image:       /assets/img/og/rce-instalador-macos-aritmetica-en.png
 permalink:   /en/writeups/macos-installer-arithmetic-rce/
 
 severity:    high

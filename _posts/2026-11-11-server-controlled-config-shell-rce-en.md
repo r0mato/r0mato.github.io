@@ -4,6 +4,7 @@ summary:     "A console tool running under sudo downloaded its configuration fro
 date:        2026-11-11 19:40:00 +0100
 lang:        en
 ref:         rce-cli-shell-true
+image:       /assets/img/og/rce-cli-shell-true-en.png
 permalink:   /en/writeups/server-controlled-config-shell-rce/
 
 severity:    high

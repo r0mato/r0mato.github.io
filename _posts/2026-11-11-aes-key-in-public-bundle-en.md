@@ -4,6 +4,7 @@ summary:     "A multinational's internal portal signed its tokens with a key any
 date:        2026-11-11 19:50:00 +0100
 lang:        en
 ref:         clave-aes-bundle-js
+image:       /assets/img/og/clave-aes-bundle-js-en.png
 permalink:   /en/writeups/aes-key-in-public-bundle/
 
 severity:    critical

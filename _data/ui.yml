@@ -20,6 +20,8 @@ es:
     menu: "Abrir menú"
     theme: "Cambiar tema"
     lang: "Cambiar idioma"
+    foto: "Retrato de Francisco Javier Alcaide Deus"
+    logo: "Logo de r0mato: la rana Gustavo vestida de general"
 
   hero:
     eyebrow: "Security Research · Bug Bounty"
@@ -36,6 +38,7 @@ es:
     focus_value: "Web · API"
     specialty_value: "Lógica de negocio · IDOR · Auth"
     location_value: "España"
+    place: "Málaga, España"
 
   platforms_label: "Activo en"
   platforms_private: "Programas privados"
@@ -111,6 +114,8 @@ en:
     menu: "Open menu"
     theme: "Toggle theme"
     lang: "Switch language"
+    foto: "Portrait of Francisco Javier Alcaide Deus"
+    logo: "r0mato logo: Kermit the Frog dressed as a general"
 
   hero:
     eyebrow: "Security Research · Bug Bounty"
@@ -127,6 +132,7 @@ en:
     focus_value: "Web · API"
     specialty_value: "Business logic · IDOR · Auth"
     location_value: "Spain"
+    place: "Málaga, Spain"
 
   platforms_label: "Active on"
   platforms_private: "Private programs"

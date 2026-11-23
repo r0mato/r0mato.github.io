@@ -3,38 +3,17 @@
 {%- if L == 'en' -%}{%- assign wu = '/en/writeups/' -%}{%- assign co = '/en/contact/' -%}
 {%- else -%}{%- assign wu = '/writeups/' -%}{%- assign co = '/contacto/' -%}{%- endif -%}
 
-<!-- ───────────────────────── HERO ───────────────────────── -->
+<!-- ───────── QUIEN SOY · lo primero que ve quien entra ───────── -->
 <section class="hero">
   <div class="wrap">
-    <div class="hero__grid">
-      <div>
-        <span class="eyebrow">{{ t.hero.eyebrow }}</span>
-        <h1>{{ page.headline }} <em>{{ page.headline_em }}</em> {{ page.headline_tail }}</h1>
-        <p class="lede">{{ page.lede }}</p>
-        <div class="hero__actions">
-          <a class="btn btn--primary" href="{{ wu | relative_url }}">
-            {{ t.hero.cta_primary }}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </a>
-          <a class="btn btn--ghost" href="{{ co | relative_url }}">{{ t.hero.cta_secondary }}</a>
-        </div>
-      </div>
+    {% include identidad.html hero=true %}
 
-      <div class="card-id">
-        <div class="card-id__top">
-          <span class="card-id__dot"></span>
-          <span>{{ t.card.status }}</span>
-        </div>
-        <div class="card-id__body">
-          <dl>
-            <div class="card-id__row"><dt>{{ t.card.researcher }}</dt><dd>{{ site.author.name }}</dd></div>
-            <div class="card-id__row"><dt>{{ t.card.focus }}</dt><dd>{{ t.card.focus_value }}</dd></div>
-            <div class="card-id__row"><dt>{{ t.card.specialty }}</dt><dd>{{ t.card.specialty_value }}</dd></div>
-            <div class="card-id__row"><dt>{{ t.card.location }}</dt><dd>{{ t.card.location_value }}</dd></div>
-            <div class="card-id__row"><dt>{{ t.card.disclosure }}</dt><dd>{{ t.card.disclosure_value }}</dd></div>
-          </dl>
-        </div>
-      </div>
+    <div class="hero__actions hero__actions--centro">
+      <a class="btn btn--primary" href="{{ wu | relative_url }}">
+        {{ t.hero.cta_primary }}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a class="btn btn--ghost" href="{{ co | relative_url }}">{{ t.hero.cta_secondary }}</a>
     </div>
 
     <dl class="stats">

@@ -4,6 +4,7 @@ summary:     "An SSO `host` parameter accepted foreign domains if you stuck a sl
 date:        2026-11-11 20:10:00 +0100
 lang:        en
 ref:         open-redirect-sso-ticket
+image:       /assets/img/og/open-redirect-sso-ticket-en.png
 permalink:   /en/writeups/open-redirect-sso-session-ticket/
 
 severity:    high

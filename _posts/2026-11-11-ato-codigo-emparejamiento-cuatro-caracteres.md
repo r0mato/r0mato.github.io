@@ -4,6 +4,7 @@ summary:     "El código que escribes para vincular la aplicación con tu televi
 date:        2026-11-11 20:20:00 +0100
 lang:        es
 ref:         ato-codigo-emparejamiento
+image:       /assets/img/og/ato-codigo-emparejamiento-es.png
 
 severity:    high
 cvss:        "8.8"

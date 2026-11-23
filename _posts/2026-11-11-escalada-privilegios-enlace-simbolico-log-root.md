@@ -4,6 +4,7 @@ summary:     "Un servicio que corre como root guardaba su registro en el directo
 date:        2026-11-11 20:30:00 +0100
 lang:        es
 ref:         escalada-symlink-log-root
+image:       /assets/img/og/escalada-symlink-log-root-es.png
 
 severity:    high
 cvss:        "7.8"

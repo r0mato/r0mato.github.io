@@ -630,12 +630,41 @@ p  { margin: 0 0 1.15rem; }
 .prose .about-photo { border-radius: 14px; }
 .prose .about-logo  { border-radius: 14px; }
 
+/* ── La misma ficha, en grande, abriendo la portada ──
+   Quien entra tiene que ver de quien es el sitio antes que nada, asi que el
+   retrato crece y el nombre pasa a ser el h1 de la pagina. */
+.about-top--hero {
+  border: 0; background: none; box-shadow: none;
+  padding: 0; margin-bottom: 34px; gap: 34px;
+}
+.about-top--hero .about-photo,
+.about-top--hero .about-logo { width: 168px; height: 168px; }
+.about-top--hero .about-intro { text-align: left; }
+.about-top--hero .eyebrow { color: var(--accent); margin-bottom: 14px; }
+.about-top--hero .about-name {
+  font-size: clamp(2rem, 1.2rem + 2.6vw, 3.1rem);
+  font-weight: 720; letter-spacing: -.035em; line-height: 1.04;
+  margin: 0 0 2px;
+}
+.about-top--hero .about-aka  { font-size: 1rem; }
+.about-top--hero .about-role { font-size: 1.08rem; color: var(--text); }
+.about-top--hero .about-where { font-size: .8rem; }
+.hero__actions--centro { margin: 0 0 40px; }
+
 @media (max-width: 560px) {
   /* retrato y logo en una fila arriba; el texto, centrado, debajo */
   .about-top { gap: 16px; padding: 22px 20px; justify-content: center; }
   .about-photo, .about-logo { width: 104px; height: 104px; }
   .about-intro { order: 3; flex: 0 0 100%; }
   .about-name { font-size: 1.2rem; }
+
+  .about-top--hero { padding: 0; gap: 18px; }
+  .about-top--hero .about-photo,
+  .about-top--hero .about-logo { width: 116px; height: 116px; }
+  .about-top--hero .about-intro { text-align: center; }
+  .about-top--hero .eyebrow { justify-content: center; }
+  /* con el texto centrado, los botones alineados a la izquierda bailan */
+  .hero__actions--centro { justify-content: center; }
 }
 
 /* En móvil el selector de idioma se queda junto a los botones de la barra */

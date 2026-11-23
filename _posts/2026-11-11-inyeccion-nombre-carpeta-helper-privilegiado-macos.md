@@ -4,6 +4,7 @@ summary:     "Un servicio con permisos de root comprobaba quién le llamaba reso
 date:        2026-11-11 20:40:00 +0100
 lang:        es
 ref:         inyeccion-nombre-carpeta-helper
+image:       /assets/img/og/inyeccion-nombre-carpeta-helper-es.png
 
 severity:    high
 cvss:        "7.8"

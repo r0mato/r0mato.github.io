@@ -10,18 +10,7 @@ description: "Who is behind r0mato: from a game controller at the age of two to 
 image: /assets/img/brand/r0mato-perfil.jpg
 ---
 
-<div class="about-top">
-  <img class="about-photo" src="{{ '/assets/img/brand/r0mato-perfil.jpg' | relative_url }}"
-       alt="Portrait of {{ site.author.full_name }}" width="640" height="640">
-  <div class="about-intro">
-    <p class="about-name">{{ site.author.full_name }}</p>
-    <p class="about-aka">aka <strong>{{ site.author.name }}</strong></p>
-    <p class="about-role">{{ site.author.role }}</p>
-    <p class="about-where">Málaga · Web · API</p>
-  </div>
-  <img class="about-logo" src="{{ '/assets/img/brand/r0mato-logo.jpg' | relative_url }}"
-       alt="r0mato logo: Kermit the Frog dressed as a general" width="300" height="300">
-</div>
+{% include identidad.html %}
 
 ## This is my story
 

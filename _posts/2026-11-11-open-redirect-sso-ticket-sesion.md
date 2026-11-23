@@ -4,6 +4,7 @@ summary:     "Un parámetro `host` del SSO aceptaba dominios ajenos si les pegab
 date:        2026-11-11 20:10:00 +0100
 lang:        es
 ref:         open-redirect-sso-ticket
+image:       /assets/img/og/open-redirect-sso-ticket-es.png
 
 severity:    high
 cvss:        "8.1"

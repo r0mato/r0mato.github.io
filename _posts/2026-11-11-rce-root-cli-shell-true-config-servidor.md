@@ -4,6 +4,7 @@ summary:     "Una herramienta de consola que se ejecuta con sudo descargaba su c
 date:        2026-11-11 19:40:00 +0100
 lang:        es
 ref:         rce-cli-shell-true
+image:       /assets/img/og/rce-cli-shell-true-es.png
 
 severity:    high
 cvss:        "8.0"

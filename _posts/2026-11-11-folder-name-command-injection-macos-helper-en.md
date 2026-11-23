@@ -4,6 +4,7 @@ summary:     "A service running as root checked who was calling it by resolving 
 date:        2026-11-11 20:40:00 +0100
 lang:        en
 ref:         inyeccion-nombre-carpeta-helper
+image:       /assets/img/og/inyeccion-nombre-carpeta-helper-en.png
 permalink:   /en/writeups/folder-name-command-injection-macos-helper/
 
 severity:    high

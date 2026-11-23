@@ -4,6 +4,7 @@ summary:     "The code you type to link the app with your television was not bou
 date:        2026-11-11 20:20:00 +0100
 lang:        en
 ref:         ato-codigo-emparejamiento
+image:       /assets/img/og/ato-codigo-emparejamiento-en.png
 permalink:   /en/writeups/four-character-pairing-code-ato/
 
 severity:    high

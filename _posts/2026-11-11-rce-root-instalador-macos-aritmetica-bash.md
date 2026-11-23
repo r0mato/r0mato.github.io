@@ -4,6 +4,7 @@ summary:     "Un script de instalación sumaba uno a un número que venía del s
 date:        2026-11-11 19:30:00 +0100
 lang:        es
 ref:         rce-instalador-macos-aritmetica
+image:       /assets/img/og/rce-instalador-macos-aritmetica-es.png
 
 severity:    high
 cvss:        "8.8"

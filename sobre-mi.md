@@ -10,18 +10,7 @@ description: "Quién hay detrás de r0mato: de un mando de videojuego a los dos 
 image: /assets/img/brand/r0mato-perfil.jpg
 ---
 
-<div class="about-top">
-  <img class="about-photo" src="{{ '/assets/img/brand/r0mato-perfil.jpg' | relative_url }}"
-       alt="Retrato de {{ site.author.full_name }}" width="640" height="640">
-  <div class="about-intro">
-    <p class="about-name">{{ site.author.full_name }}</p>
-    <p class="about-aka">aka <strong>{{ site.author.name }}</strong></p>
-    <p class="about-role">{{ site.author.role }}</p>
-    <p class="about-where">Málaga · Web · API</p>
-  </div>
-  <img class="about-logo" src="{{ '/assets/img/brand/r0mato-logo.jpg' | relative_url }}"
-       alt="Logo de r0mato: la rana Gustavo vestida de general" width="300" height="300">
-</div>
+{% include identidad.html %}
 
 ## Esta es mi historia
 

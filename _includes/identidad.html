@@ -1,0 +1,29 @@
+{%- comment -%}
+  Quien es r0mato: retrato, nombre, alias, rol y sitio. Lo usan la portada y la
+  pagina "Sobre mi", para que no se separen con el tiempo.
+
+  include.hero = true  ->  version grande de la portada, con el nombre de h1.
+  Sin parametro        ->  ficha compacta, la de "Sobre mi".
+{%- endcomment -%}
+{%- assign L = page.lang | default: 'es' -%}
+{%- assign t = site.data.ui[L] -%}
+
+<div class="about-top{% if include.hero %} about-top--hero{% endif %}">
+  <img class="about-photo" src="{{ '/assets/img/brand/r0mato-perfil.jpg' | relative_url }}"
+       alt="{{ t.a11y.foto }}" width="640" height="640">
+
+  <div class="about-intro">
+    {%- if include.hero %}
+    <span class="eyebrow">{{ t.hero.eyebrow }}</span>
+    <h1 class="about-name">{{ site.author.full_name }}</h1>
+    {%- else %}
+    <p class="about-name">{{ site.author.full_name }}</p>
+    {%- endif %}
+    <p class="about-aka">aka <strong>{{ site.author.name }}</strong></p>
+    <p class="about-role">{{ site.author.role }}</p>
+    <p class="about-where">{{ t.card.place }} · {{ t.card.focus_value }}</p>
+  </div>
+
+  <img class="about-logo" src="{{ '/assets/img/brand/r0mato-logo.jpg' | relative_url }}"
+       alt="{{ t.a11y.logo }}" width="300" height="300">
+</div>

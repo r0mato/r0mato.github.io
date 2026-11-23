@@ -4,6 +4,7 @@ summary:     "Un asistente conversacional interno tenía, entre sus herramientas
 date:        2026-11-11 20:00:00 +0100
 lang:        es
 ref:         rce-agente-ia-tool
+image:       /assets/img/og/rce-agente-ia-tool-es.png
 
 severity:    critical
 cvss:        "9.8"

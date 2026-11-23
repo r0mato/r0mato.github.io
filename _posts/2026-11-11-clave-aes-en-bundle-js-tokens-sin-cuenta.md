@@ -164,13 +164,17 @@ HTTP/2 200 OK
 {"code":"000000","data":{"access_token":"eyJhbGciOi..."}}
 ```
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
 <figure>
   <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/01-token-sin-cuenta.png' | relative_url }}"
-       alt="Burp Repeater: petición sin cookie ni cabecera de autorización, respuesta 200 con un access_token, y el token decodificado mostrando scope read write">
-  <figcaption>Sin cuenta, sin cookie, sin contraseña. Y el token decodificado trae <code>scope: "read write"</code>.</figcaption>
+       alt="Burp Repeater: la petición solo lleva Content-Type, el código de sistema y la firma; no hay cabecera Authorization ni cookie. La respuesta es 200 con un access_token">
+  <figcaption>Ni cabecera <code>Authorization</code> ni cookie: solo la firma que acabo de fabricar. La respuesta trae el token.</figcaption>
 </figure>
-{% endcomment %}
+
+<figure>
+  <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/03-jwt-decodificado.png' | relative_url }}"
+       alt="El mismo token decodificado en un visor de JWT: la carga útil muestra el campo scope con el valor read write, resaltado">
+  <figcaption>El mismo token, decodificado: <code>scope: "read write"</code>.</figcaption>
+</figure>
 
 Un token válido. Con permisos de **lectura y escritura**.
 

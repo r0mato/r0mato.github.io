@@ -181,12 +181,6 @@ configuration. That one I answer myself.
   <figcaption>Three of the four requests pass untouched. Only the response that matters is replaced.</figcaption>
 </figure>
 
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/01-setup-atacante.png' | relative_url }}"
-       alt="Attacker terminal: own CA installed in the system trust store, domain redirected in /etc/hosts and proxy listening on port 443">
-  <figcaption>The attacker's setup: own CA trusted, domain redirected and proxy listening.</figcaption>
-</figure>
-
 ## The payload
 
 The fake server returns the configuration with one poisoned line:
@@ -225,12 +219,6 @@ happened, the tool shows it.
 And the important bit: the commands **had already run** before the binary died. The shell
 interprets the list from left to right.
 
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/03-verificacion-root.png' | relative_url }}"
-       alt="The marker files exist, are owned by root and the contents show uid=0(root), while the user who ran the command is still a normal user">
-  <figcaption>The markers exist and belong to <code>root</code>. The person who ran the command was an ordinary user.</figcaption>
-</figure>
-
 That is the proof that counts: **the file was created by `uid=0`**, not by the user. And no
 connection was established, so the user just saw a connection error and tried again —
 firing the payload once more.
@@ -248,12 +236,6 @@ Instead of creating a file, I tell the victim's computer to open a
 connection **towards me** and hand me a console. From then on I type in my terminal and the
 commands run on their machine, as root. It is not a metaphor: it is their computer, on my
 screen.
-
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/04-shell-inversa.png' | relative_url }}"
-       alt="Attacker terminal with an interactive session: id returns uid=0(root), whoami returns root, and files in the victim's /root are listed">
-  <figcaption>Interactive session as <code>root</code> on the victim's machine. <code>id</code> and <code>whoami</code> leave no doubt.</figcaption>
-</figure>
 
 Demonstrating the jump from "I can run a command" to "I have a session" is what turns a
 *Medium* into a *High*. Same bug, very different impact in the eyes of whoever triages it.

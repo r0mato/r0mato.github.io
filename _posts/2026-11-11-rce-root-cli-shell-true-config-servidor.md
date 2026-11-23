@@ -182,12 +182,6 @@ la que trae la configuración. Esa la contesto yo.
   <figcaption>Tres de las cuatro peticiones pasan intactas. Solo se sustituye la respuesta que importa.</figcaption>
 </figure>
 
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/01-setup-atacante.png' | relative_url }}"
-       alt="Terminal del atacante: CA propia instalada en el almacén del sistema, dominio redirigido en /etc/hosts y proxy escuchando en el puerto 443">
-  <figcaption>El montaje del atacante: CA propia confiada, dominio redirigido y proxy escuchando.</figcaption>
-</figure>
-
 ## El payload
 
 El servidor falso devuelve la configuración con una línea envenenada:
@@ -226,12 +220,6 @@ pasó, lo enseña la propia herramienta.
 Y lo importante: los comandos **ya se habían ejecutado** antes de que el binario muriera.
 La shell interpreta la lista de izquierda a derecha.
 
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/03-verificacion-root.png' | relative_url }}"
-       alt="Los ficheros marcador existen, pertenecen a root y el contenido muestra uid=0(root), mientras el usuario que lanzó el comando sigue siendo el usuario normal">
-  <figcaption>Los marcadores existen y son de <code>root</code>. Quien lanzó el comando era un usuario normal.</figcaption>
-</figure>
-
 Esa es la prueba que vale: **el fichero lo creó `uid=0`**, no el usuario. Y no se levantó
 ninguna conexión, así que el usuario solo vio un error de conexión y volvió a intentarlo —
 disparando el payload otra vez.
@@ -249,12 +237,6 @@ En lugar de crear un fichero, le digo al ordenador de la víctima que
 abra una conexión **hacia mí** y me entregue una consola. A partir de ahí escribo en mi
 terminal y los comandos se ejecutan en su máquina, como root. No es una metáfora: es su
 ordenador, en mi pantalla.
-
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-cli-shell-true/04-shell-inversa.png' | relative_url }}"
-       alt="Terminal del atacante con una sesión interactiva: id devuelve uid=0(root), whoami devuelve root, y se listan ficheros del directorio /root de la víctima">
-  <figcaption>Sesión interactiva como <code>root</code> en la máquina de la víctima. El <code>id</code> y el <code>whoami</code> no dejan lugar a dudas.</figcaption>
-</figure>
 
 Demostrar el salto de «ejecuto un comando» a «tengo una sesión» es lo que convierte un
 *Medium* en un *High*. Mismo fallo, impacto muy distinto a ojos de quien lo tría.

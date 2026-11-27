@@ -246,6 +246,12 @@ Summed up in five steps:
 4. The parsing loop puts it in a variable, stripping only the quotes.
 5. `$((install_count + 1))` **evaluates** it, and the order runs as root.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-instalador-macos/01-callback.png' | relative_url }}"
+       alt="Out-of-band listener receiving two callbacks from the machine where the install ran: a DNS interaction and, a second later, an HTTP POST request. The source IP addresses are covered">
+  <figcaption>A second after the install, the machine calls my listener: first it resolves the domain, then it sends the <code>POST</code>. The code ran. The source IPs are mine and are covered.</figcaption>
+</figure>
+
 ## The part that unsettled me most: the victim sees nothing
 
 Reading the rest of the script I found this:

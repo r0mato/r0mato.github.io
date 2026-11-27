@@ -143,6 +143,12 @@ alcanzaba:
 - **El propio servicio privilegiado del producto**, que root puede reescribir. Es decir:
   el atacante puede reemplazar el mayordomo por uno suyo.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/01-root-desde-cuenta-normal.png' | relative_url }}"
+       alt="Terminal de una cuenta sin privilegios (uid 502). El codigo ejecutado responde whoami -> root y uid=0(root), escribe y borra un fichero canario en un directorio solo de root, y lee la base de datos de cuentas del sistema">
+  <figcaption>Desde una cuenta normal (<code>uid=502</code>): <code>whoami → root</code>. Escribe un canario en un directorio reservado a root <strong>y lo borra</strong>, y lee el fichero de cuentas del sistema. La lista de grupos va tapada porque incluye uno del producto.</figcaption>
+</figure>
+
 Una vez eres root en un Mac, el producto que estabas atacando es lo de
 menos. Tienes la máquina. Y en este caso, además, tienes la capacidad de modificar el
 propio componente privilegiado, con lo que te quedas dentro aunque desinstalen la

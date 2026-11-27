@@ -247,6 +247,12 @@ Resumido en cinco pasos:
 4. El bucle de parseo lo mete en una variable, quitándole solo las comillas.
 5. `$((install_count + 1))` lo **evalúa**, y la orden se ejecuta como root.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-instalador-macos/01-callback.png' | relative_url }}"
+       alt="Oyente fuera de banda recibiendo dos llamadas desde la maquina donde se instalo: una interaccion DNS y, un segundo despues, una peticion HTTP POST. Las direcciones IP de origen van tapadas">
+  <figcaption>Un segundo después de instalar, la máquina llama a mi oyente: primero resuelve el dominio y luego hace el <code>POST</code>. El código se ejecutó. Las IP de origen son mías y van tapadas.</figcaption>
+</figure>
+
 ## La parte que más me inquietó: la víctima no ve nada
 
 Mientras leía el resto del script encontré esto:

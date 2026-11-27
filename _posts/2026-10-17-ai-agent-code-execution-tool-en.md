@@ -178,6 +178,12 @@ The result: **uid 0 (root)**, inside a container on a production cluster, with n
 reach to several dozen internal services and credentials sitting in the process
 environment.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-agente-ia/01-root.png' | relative_url }}"
+       alt="Excerpt of the agent response: the arguments field carries the code import os as o;print(o.popen(whoami).read().strip()) and the observation field returns root, boxed in red">
+  <figcaption>The agent runs the line and returns the output: <code>observation: "root"</code>. Excerpt of the response; the rest carries product identifiers.</figcaption>
+</figure>
+
 The code was not running in an isolated toy box. It ran as administrator
 inside the company's internal network, with access to other services that should never be
 reachable from the internet. From there, an attacker is not "chatting with a bot": **they

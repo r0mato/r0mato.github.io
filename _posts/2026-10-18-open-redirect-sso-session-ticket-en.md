@@ -108,6 +108,12 @@ https://sso.example.tld/doLogin?host=attacker-example.com%2F.brand-example.com
 
 Accepted. Redirect to the attacker's domain.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/open-redirect-sso/01-ticket-al-atacante.png' | relative_url }}"
+       alt="Top: the login request with the host parameter set to atk.example.com%2F. followed by the victim domain, redacted. Bottom: the server response, whose redirectUrl field points at atk.example.com and carries the au= ticket in the URL">
+  <figcaption>Top, what I sent; bottom, what the server answered. The <code>redirectUrl</code> points at the attacker domain with the <code>au=</code> ticket attached. Two excerpts of the same exchange, with the host, the account and the victim domain covered.</figcaption>
+</figure>
+
 ## And this is where it stops being an open redirect
 
 A plain open redirect is small change: you send someone to a site they did not expect. It

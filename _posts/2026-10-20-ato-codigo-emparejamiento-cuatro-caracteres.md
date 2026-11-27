@@ -68,6 +68,12 @@ x-app-key: <clave pública del cliente, extraída del instalador>
 { "users_id": null, "pin": "7MTU" }
 ```
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/01-pin-sin-dueno.png' | relative_url }}"
+       alt="Terminal: una peticion curl con solo la cabecera x-app-key, sin sesion, al endpoint de pin de dispositivos. La respuesta es users_id null y pin 7MTU">
+  <figcaption>Una petición con la clave pública de la aplicación y nada más. El servidor emite el código: <code>users_id: null</code>, <code>pin: "7MTU"</code>. Van tapados la clave y el host.</figcaption>
+</figure>
+
 Fíjate en el detalle que lo decide todo: **`users_id: null`**.
 
 El servidor me acaba de dar un código **que no pertenece a nadie**. Es un

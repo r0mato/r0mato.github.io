@@ -177,6 +177,12 @@ El resultado: **uid 0 (root)**, dentro de un contenedor de un clúster de produc
 visibilidad de red a varias decenas de servicios internos y credenciales en las variables
 de entorno del proceso.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-agente-ia/01-root.png' | relative_url }}"
+       alt="Fragmento de la respuesta del agente: el campo arguments lleva el codigo import os as o;print(o.popen(whoami).read().strip()) y el campo observation devuelve root, recuadrado en rojo">
+  <figcaption>El agente ejecuta la línea y devuelve la salida: <code>observation: "root"</code>. Recorte de la respuesta; el resto lleva identificadores del producto.</figcaption>
+</figure>
+
 El código no se ejecutaba en una caja aislada de juguete. Se ejecutaba
 como administrador dentro de la red interna de la empresa, con acceso a otros servicios que
 nunca deberían estar al alcance de internet. Desde ahí, un atacante no «habla con un

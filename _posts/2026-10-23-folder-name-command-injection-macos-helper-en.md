@@ -141,6 +141,12 @@ reached:
 - **The product's own privileged service**, which root can rewrite. In other words: the
   attacker can replace the butler with one of their own.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/01-root-desde-cuenta-normal.png' | relative_url }}"
+       alt="Terminal of an unprivileged account (uid 502). The executed code answers whoami -> root and uid=0(root), writes and deletes a canary file in a root-only directory, and reads the system accounts database">
+  <figcaption>From a normal account (<code>uid=502</code>): <code>whoami → root</code>. It writes a canary into a root-only directory <strong>and deletes it again</strong>, and reads the system accounts file. The group list is covered because it includes one of the product's.</figcaption>
+</figure>
+
 Once you are root on a Mac, the product you were attacking is the least
 of it. You have the machine. And in this case you can also modify the privileged component
 itself, which means you stay in even if the application is uninstalled.

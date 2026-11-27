@@ -69,6 +69,12 @@ x-app-key: <client public key, extracted from the installer>
 { "users_id": null, "pin": "7MTU" }
 ```
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/01-pin-sin-dueno.png' | relative_url }}"
+       alt="Terminal: a curl request carrying only the x-app-key header, with no session, to the device pin endpoint. The response is users_id null and pin 7MTU">
+  <figcaption>A request with the app's public key and nothing else. The server issues the code: <code>users_id: null</code>, <code>pin: "7MTU"</code>. The key and the host are covered.</figcaption>
+</figure>
+
 Note the detail that decides everything: **`users_id: null`**.
 
 The server just handed me a code **that belongs to nobody**. It is an

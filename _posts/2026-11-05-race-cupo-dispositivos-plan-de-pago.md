@@ -43,17 +43,17 @@ en vez de en uno. El plan se llama, literalmente, «7 dispositivos».
 Cuando instalas la aplicación en un aparato nuevo, esta llama a un endpoint de alta:
 
 ```http
-POST /api/oauth/access_token
+POST /oauth/access_token
 Content-Type: application/json
 
-{"device_id":"portatil-salon","device_name":"portatil-salon",
- "auth_mode":"client_auth","username":"<correo>","password":"<contraseña>","reset":0}
+{"x_auth_machineid":"portatil-salon","x_auth_machinename":"portatil-salon",
+ "x_auth_mode":"client_auth","x_auth_username":"<correo>","x_auth_password":"<contraseña>","reset":0}
 ```
 
 Si queda hueco, responde `200` con un token de dispositivo. Si no:
 
 ```
-403   límite de dispositivos del plan alcanzado
+403 Forbidden
 ```
 
 Ese `403` es el producto haciendo su trabajo. La comprobación **existe, funciona y está
@@ -68,14 +68,14 @@ No es «¿puedo saltarme la comprobación?». Es otra, bastante más barata:
 Porque el código, en el 99 % de los sitios donde he visto esto, tiene esta forma:
 
 ```python
-usados = db.query("SELECT active_devices FROM users WHERE id = ?", uid)
+usados = db.query("SELECT activateddevices FROM users WHERE id = ?", uid)
 limite = db.query("SELECT max_devices FROM plans WHERE id = ?", plan)
 
 if usados >= limite:                 # ── comprobar ──
     return error(403, "límite de dispositivos del plan alcanzado")
 
 token = crear_token_de_dispositivo(uid)              # ── actuar ──
-db.execute("UPDATE users SET active_devices = active_devices + 1 WHERE id = ?", uid)
+db.execute("UPDATE users SET activateddevices = activateddevices + 1 WHERE id = ?", uid)
 return token
 ```
 
@@ -159,24 +159,36 @@ arriba; el resto es fontanería atada a un producto concreto.
 
 ## Lo que devolvió el servidor
 
+<figure>
+  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/02-seis-en-paralelo.png' | relative_url }}"
+       alt="Historial de Burp con seis peticiones POST al mismo endpoint, todas con la marca de tiempo 12:29:04: dos responden 200 y cuatro responden 403">
+  <figcaption>Seis altas soltadas en el mismo instante: las seis marcan <code>12:29:04</code> y dos salen con <code>200</code>, en una cuenta de un dispositivo. Se han recortado las columnas intermedias y tapado el host.</figcaption>
+</figure>
+
 Nueve tandas, dos hosts de la API y dos planes distintos. Las dos más claras:
 
 | Plan | Ya en uso | En paralelo | Aceptadas | El servidor informa |
 |---|---|---|---|---|
-| 7 dispositivos | 3 | 10 | **10** | `active_devices=13`, `max_devices=7` |
-| 1 dispositivo | 0 | 10 | **10** | `active_devices=10`, `max_devices=1` |
+| 7 dispositivos | 3 | 10 | **10** | `activateddevices=13`, `max_devices=7` |
+| 1 dispositivo | 0 | 10 | **10** | `activateddevices=10`, `max_devices=1` |
 
 Me interesa subrayar la última columna, porque no es una deducción mía: es el propio
-servidor, en su respuesta a `GET /api/users/me`, diciendo que tiene **diez dispositivos
+servidor, en su respuesta a `GET /users/me`, diciendo que tiene **diez dispositivos
 activos en un plan que permite uno**. No hace falta interpretar nada.
 
 Y no son sesiones ni conexiones simultáneas. Cada una de las diez es un alta persistente:
 
-- cuenta en `active_devices`,
+- cuenta en `activateddevices`,
 - tiene su propio token de larga duración, con un identificador distinto,
-- y pidiendo `GET /api/certificate` devuelve `200` con su propia credencial de cliente.
+- y pidiendo `GET /certificate` devuelve `200` con su propia credencial de cliente.
 
 Es decir: exactamente lo que `max_devices` existe para limitar.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/03-contador-2-de-1.png' | relative_url }}"
+       alt="Respuesta del servidor con dos campos recuadrados en rojo: activateddevices con valor 2 y max_devices con valor 1">
+  <figcaption>No es una deducción mía: lo dice el servidor. <code>activateddevices: 2</code> sobre <code>max_devices: 1</code>.</figcaption>
+</figure>
 
 ## El control negativo, que aquí es el 80 % del trabajo
 
@@ -188,16 +200,22 @@ cupo no era el que creías. Tres controles:
 dispositivos:
 
 ```
-403   límite de dispositivos del plan alcanzado
+403 Forbidden
 ```
 
 El cupo **se respeta**. Lo que falla no es la regla.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/01-control-403.png' | relative_url }}"
+       alt="Burp Repeater: una sola alta de dispositivo, enviada normalmente con la cuenta llena, recibe HTTP/2 403 Forbidden. Las cabeceras y el cuerpo del mensaje de error van tapados">
+  <figcaption>Una sola, con la cuenta llena: <code>403</code>. El cuerpo dice que se alcanzó el límite de activaciones; va tapado porque su redacción exacta identifica al producto.</figcaption>
+</figure>
 
 **Dos — en serie, ya por encima del límite.** Con la cuenta en `13/7` después de la
 carrera, mando una más, normal:
 
 ```
-403   límite de dispositivos del plan alcanzado
+403 Forbidden
 ```
 
 Precioso, porque demuestra que la comprobación sigue viva y sigue leyendo bien el
@@ -260,7 +278,7 @@ explícitamente el abuso de cuotas y de funciones de pago.
 </div>
 
 Lo que sí es innegociable es el lado del ingeniero: una cuenta en un estado que su propio
-esquema de datos considera imposible (`active_devices > max_devices`) es un bug, y de los
+esquema de datos considera imposible (`activateddevices > max_devices`) es un bug, y de los
 que se arrastran. Cada contador que puede desincronizarse así termina apareciendo en
 sitios peores — en el de créditos, en el de invitaciones, en el de intentos de un código
 de un solo uso.
@@ -272,9 +290,9 @@ propia base de datos.
 
 ```sql
 UPDATE users
-   SET active_devices = active_devices + 1
+   SET activateddevices = activateddevices + 1
  WHERE id = :uid
-   AND active_devices < :max_devices;
+   AND activateddevices < :max_devices;
 -- si affected_rows == 0  ->  403 y NO se crea el token
 ```
 
@@ -283,7 +301,7 @@ hueco entre leer y escribir. La alternativa es tomar un cerrojo por usuario
 (`SELECT ... FOR UPDATE`) al principio del alta.
 
 Y, porque este fallo deja rastro, conviene además un trabajo periódico que revoque los
-tokens más nuevos de cualquier cuenta donde `active_devices > max_devices`: arreglar el
+tokens más nuevos de cualquier cuenta donde `activateddevices > max_devices`: arreglar el
 código no arregla las cuentas que ya quedaron por encima.
 
 ## Cómo buscar esto tú mismo

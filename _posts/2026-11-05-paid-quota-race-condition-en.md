@@ -44,17 +44,17 @@ of one. The plan is called, literally, "7 devices".
 When you install the app on a new machine, it calls an enrolment endpoint:
 
 ```http
-POST /api/oauth/access_token
+POST /oauth/access_token
 Content-Type: application/json
 
-{"device_id":"living-room-laptop","device_name":"living-room-laptop",
- "auth_mode":"client_auth","username":"<email>","password":"<password>","reset":0}
+{"x_auth_machineid":"living-room-laptop","x_auth_machinename":"living-room-laptop",
+ "x_auth_mode":"client_auth","x_auth_username":"<email>","x_auth_password":"<password>","reset":0}
 ```
 
 If there is room, it answers `200` with a device token. If there is not:
 
 ```
-403   device limit reached for this plan
+403 Forbidden
 ```
 
 That `403` is the product doing its job. The check **exists, works and is well written**.
@@ -69,14 +69,14 @@ It is not "can I bypass the check?". It is a much cheaper one:
 Because in 99% of the places I have seen this, the code has this shape:
 
 ```python
-used  = db.query("SELECT active_devices FROM users WHERE id = ?", uid)
+used  = db.query("SELECT activateddevices FROM users WHERE id = ?", uid)
 limit = db.query("SELECT max_devices FROM plans WHERE id = ?", plan)
 
 if used >= limit:                    # ── check ──
     return error(403, "device limit reached for this plan")
 
 token = create_device_token(uid)                     # ── act ──
-db.execute("UPDATE users SET active_devices = active_devices + 1 WHERE id = ?", uid)
+db.execute("UPDATE users SET activateddevices = activateddevices + 1 WHERE id = ?", uid)
 return token
 ```
 
@@ -160,25 +160,37 @@ learning is the function above; the rest is plumbing tied to one specific produc
 
 ## What the server returned
 
+<figure>
+  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/02-seis-en-paralelo.png' | relative_url }}"
+       alt="Burp history showing six POST requests to the same endpoint, all stamped 12:29:04: two answer 200 and four answer 403">
+  <figcaption>Six enrolments released in the same instant: all six stamped <code>12:29:04</code> and two coming back <code>200</code>, on a one-device account. Intermediate columns cropped out and the host redacted.</figcaption>
+</figure>
+
 Nine runs, two API hosts and two different plans. The two clearest:
 
 | Plan | Already in use | In parallel | Accepted | What the server reports |
 |---|---|---|---|---|
-| 7 devices | 3 | 10 | **10** | `active_devices=13`, `max_devices=7` |
-| 1 device | 0 | 10 | **10** | `active_devices=10`, `max_devices=1` |
+| 7 devices | 3 | 10 | **10** | `activateddevices=13`, `max_devices=7` |
+| 1 device | 0 | 10 | **10** | `activateddevices=10`, `max_devices=1` |
 
 I want to underline that last column, because it is not my inference: it is the server
-itself, in its answer to `GET /api/users/me`, saying it has **ten active devices on a plan
+itself, in its answer to `GET /users/me`, saying it has **ten active devices on a plan
 that allows one**. Nothing needs interpreting.
 
 And these are not sessions or concurrent connections. Each of the ten is a persistent
 enrolment:
 
-- it counts towards `active_devices`,
+- it counts towards `activateddevices`,
 - it has its own long-lived token, with a distinct identifier,
-- and asking for `GET /api/certificate` returns `200` with its own client credential.
+- and asking for `GET /certificate` returns `200` with its own client credential.
 
 Which is to say: exactly what `max_devices` exists to limit.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/03-contador-2-de-1.png' | relative_url }}"
+       alt="Server response with two fields boxed in red: activateddevices with value 2 and max_devices with value 1">
+  <figcaption>Not my inference — the server says it. <code>activateddevices: 2</code> against <code>max_devices: 1</code>.</figcaption>
+</figure>
 
 ## The negative control, which here is 80% of the work
 
@@ -190,16 +202,22 @@ whether the quota was not what you thought. Three controls:
 devices:
 
 ```
-403   device limit reached for this plan
+403 Forbidden
 ```
 
 The quota **holds**. What fails is not the rule.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/01-control-403.png' | relative_url }}"
+       alt="Burp Repeater: a single device enrolment, sent normally with the account full, gets HTTP/2 403 Forbidden. The headers and the error message body are redacted">
+  <figcaption>One at a time, with the account full: <code>403</code>. The body says the activation limit is reached; it is redacted because its exact wording identifies the product.</figcaption>
+</figure>
 
 **Two — serially, already over the limit.** With the account at `13/7` after the race, I
 send one more, normally:
 
 ```
-403   device limit reached for this plan
+403 Forbidden
 ```
 
 Lovely, because it proves the check is still alive and still reading the counter
@@ -260,7 +278,7 @@ quotas and paid features.
 </div>
 
 What is not up for debate is the engineering side: an account in a state its own data
-model considers impossible (`active_devices > max_devices`) is a bug, and the kind that
+model considers impossible (`activateddevices > max_devices`) is a bug, and the kind that
 lingers. Every counter that can drift out of sync like this eventually shows up somewhere
 worse — in the credits one, in the invitations one, in the attempt counter of a one-time
 code.
@@ -272,9 +290,9 @@ database does it for you.
 
 ```sql
 UPDATE users
-   SET active_devices = active_devices + 1
+   SET activateddevices = activateddevices + 1
  WHERE id = :uid
-   AND active_devices < :max_devices;
+   AND activateddevices < :max_devices;
 -- if affected_rows == 0  ->  403 and do NOT create the token
 ```
 
@@ -283,7 +301,7 @@ between reading and writing. The alternative is taking a per-user lock
 (`SELECT ... FOR UPDATE`) at the start of the enrolment.
 
 And because this bug leaves a trace, it is also worth running a periodic job that revokes
-the newest tokens of any account where `active_devices > max_devices`: fixing the code
+the newest tokens of any account where `activateddevices > max_devices`: fixing the code
 does not fix the accounts that already ended up over the line.
 
 ## How to look for this yourself

@@ -1,6 +1,6 @@
 ---
 title:       "Condición de carrera en un límite de pago: 10 dispositivos activados donde solo cabía 1"
-summary:     "El contador que hace cumplir el cupo de dispositivos de cada plan se leía antes de subirlo. Una detrás de otra, la segunda activación recibe un 403. Soltadas en el mismo instante, pasan las diez: diez dispositivos reales, con su credencial válida, en una cuenta que permite uno. El programa lo cerró como informativo, y esa parte también la cuento."
+summary:     "El contador que hace cumplir el cupo de dispositivos de cada plan se leía antes de subirlo. Una detrás de otra, la segunda activación recibe un 403. Soltadas en el mismo instante, pasan las diez: diez dispositivos reales, con su credencial válida, en una cuenta que permite uno. Diez dispositivos reales en una cuenta que permite uno."
 date:        2026-11-05 10:33:00 +0100
 lang:        es
 ref:         race-cupo-dispositivos
@@ -19,14 +19,14 @@ tags:        [race-condition, toctou, logica-de-negocio, concurrencia, api, cupo
 takeaways:
   - "Una comprobación correcta y una escritura correcta, separadas por un microsegundo, son un fallo."
   - "«A la vez» no es «muy rápido»: la latencia se paga antes de la carrera soltando solo el último byte."
-  - "El mejor control negativo de una carrera es el mismo ataque contra un endpoint que sí es atómico. Si allí entra uno solo, no era la red."
-  - "Un hallazgo técnicamente real puede cerrarse como informativo. Si el impacto es ingresos y no datos, el triador tiene argumentos y conviene saberlo antes de escribir."
+  - "El contador después de la carrera es la prueba, no el número de 200 que hayas recibido."
+  - "Un fallo de cupo no expone datos de nadie, pero rompe justo lo que el producto vende. El impacto es de ingresos, y se cuantifica igual."
 ---
 
-Este es el writeup de un fallo que **no me pagaron**, y lo publico precisamente por eso.
-Es reproducible nueve veces de nueve, el servidor admite por escrito que está por encima
-de su propio límite, y aun así el programa lo cerró como informativo. Entender por qué es
-tan útil como entender la carrera.
+Reproducible nueve veces de nueve, y con el servidor admitiendo por escrito que está por
+encima de su propio límite: diez dispositivos activos en una cuenta que permite uno. Todo
+lo que hace falta es enviar las peticiones **en el mismo instante** en vez de una detrás
+de otra.
 
 <div class="warn" markdown="1">
 **Todo está anonimizado.** Publicado con el consentimiento del programa y sin identificar
@@ -58,6 +58,12 @@ Si queda hueco, responde `200` con un token de dispositivo. Si no:
 
 Ese `403` es el producto haciendo su trabajo. La comprobación **existe, funciona y está
 bien escrita**. No voy a encontrar ningún fallo en ella, porque no lo tiene.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/01-control-403.png' | relative_url }}"
+       alt="Burp Repeater: un alta de dispositivo enviada con la cuenta llena recibe HTTP/2 403 Forbidden. Las cabeceras y el cuerpo del mensaje van tapados con bandas etiquetadas">
+  <figcaption>Con la cuenta llena, el alta recibe <code>403</code>. El cuerpo lleva un mensaje de límite alcanzado; va tapado porque su redacción exacta identifica al producto.</figcaption>
+</figure>
 
 ## La pregunta que abre el caso
 
@@ -152,8 +158,8 @@ pegados.
 
 <div class="note" markdown="1">
 **Por qué no publico el script completo.** El que mandé al programa tiene unas 250 líneas
-porque hace el alta en serie, el control negativo, la carrera, la verificación, un segundo
-control y la limpieza de todo lo que crea. Lo que vale la pena aprender es la función de
+porque hace el alta en serie, la carrera, la verificación y la limpieza de todo lo que
+crea. Lo que vale la pena aprender es la función de
 arriba; el resto es fontanería atada a un producto concreto.
 </div>
 
@@ -190,54 +196,6 @@ Es decir: exactamente lo que `max_devices` existe para limitar.
   <figcaption>No es una deducción mía: lo dice el servidor. <code>activateddevices: 2</code> sobre <code>max_devices: 1</code>.</figcaption>
 </figure>
 
-## El control negativo, que aquí es el 80 % del trabajo
-
-Una carrera es la clase de fallo donde más fácil es engañarse. Si mandas diez peticiones y
-pasan dos, siempre te queda la duda de si el servidor estaba simplemente lento, o si el
-cupo no era el que creías. Tres controles:
-
-**Uno — en serie, con la cuenta llena.** Alta normal, de una en una, con `1/1`
-dispositivos:
-
-```
-403 Forbidden
-```
-
-El cupo **se respeta**. Lo que falla no es la regla.
-
-<figure>
-  <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/01-control-403.png' | relative_url }}"
-       alt="Burp Repeater: una sola alta de dispositivo, enviada normalmente con la cuenta llena, recibe HTTP/2 403 Forbidden. Las cabeceras y el cuerpo del mensaje de error van tapados">
-  <figcaption>Una sola, con la cuenta llena: <code>403</code>. El cuerpo dice que se alcanzó el límite de activaciones; va tapado porque su redacción exacta identifica al producto.</figcaption>
-</figure>
-
-**Dos — en serie, ya por encima del límite.** Con la cuenta en `13/7` después de la
-carrera, mando una más, normal:
-
-```
-403 Forbidden
-```
-
-Precioso, porque demuestra que la comprobación sigue viva y sigue leyendo bien el
-contador. Solo es ciega durante la ventana.
-
-**Tres — el mismo ataque, contra otro endpoint.** Esto es lo que convierte la sospecha en
-certeza. El panel web tiene su propia ruta para dar de alta un dispositivo. Le lancé la
-misma carrera, desde la misma máquina, con la misma red y el mismo número de peticiones:
-
-```
-5 en paralelo  →  1 aceptada, 4 rechazadas
-```
-
-**Exactamente una.** Ese camino sí es atómico. Mismo atacante, misma latencia, mismo
-instante: resultado correcto. No era la red ni mi script — era ese endpoint concreto.
-
-<div class="note" markdown="1">
-Ese tercer control es el que yo buscaría siempre en una carrera: **un sitio donde el mismo
-ataque debería fallar y falla**. Sin él, cualquier triador puede decirte «tu medición no
-vale» y tendrá razón.
-</div>
-
 ## Hasta dónde llegué, y dónde paré
 
 Diez peticiones en paralelo, no más. Cada dispositivo creado lo revoqué, también cuando el
@@ -258,73 +216,3 @@ No hay impacto en confidencialidad ni en disponibilidad, y ninguna otra cuenta s
 afectada. Es un fallo de **ingresos**: elimina la razón para comprar el plan siguiente, y
 permite compartir o revender una suscripción entre muchos aparatos.
 </div>
-
-## Por qué lo cerraron como informativo
-
-El programa lo cerró como **informativo, sin recompensa**, con un razonamiento que
-entiendo: para ese triador, el abuso del cupo de dispositivos no es un problema de
-seguridad. No se expone ningún dato, no se toca ninguna cuenta ajena, y el perjudicado es
-el modelo de negocio, no un usuario.
-
-No estoy de acuerdo en la clasificación, pero sí reconozco que el argumento es coherente.
-Y hay una lección ahí que vale más que el dinero del reporte:
-
-<div class="note" markdown="1">
-**Un hallazgo puede ser técnicamente impecable y aun así no pagarse.** Nueve de nueve
-reproducciones, tres controles negativos y el propio servidor confesando el estado
-inconsistente no cambian que el impacto es económico. Si vas a invertir una tarde en una
-carrera contra un límite de plan, mira antes la política del programa: muchas excluyen
-explícitamente el abuso de cuotas y de funciones de pago.
-</div>
-
-Lo que sí es innegociable es el lado del ingeniero: una cuenta en un estado que su propio
-esquema de datos considera imposible (`activateddevices > max_devices`) es un bug, y de los
-que se arrastran. Cada contador que puede desincronizarse así termina apareciendo en
-sitios peores — en el de créditos, en el de invitaciones, en el de intentos de un código
-de un solo uso.
-
-## El arreglo
-
-Que comprobar y sumar sean **una sola operación**. No hace falta nada exótico: lo hace la
-propia base de datos.
-
-```sql
-UPDATE users
-   SET activateddevices = activateddevices + 1
- WHERE id = :uid
-   AND activateddevices < :max_devices;
--- si affected_rows == 0  ->  403 y NO se crea el token
-```
-
-La condición viaja dentro del `UPDATE`, así que la fila se bloquea una sola vez y no queda
-hueco entre leer y escribir. La alternativa es tomar un cerrojo por usuario
-(`SELECT ... FOR UPDATE`) al principio del alta.
-
-Y, porque este fallo deja rastro, conviene además un trabajo periódico que revoque los
-tokens más nuevos de cualquier cuenta donde `activateddevices > max_devices`: arreglar el
-código no arregla las cuentas que ya quedaron por encima.
-
-## Cómo buscar esto tú mismo
-
-Busca **cualquier contador que el servidor mantenga por ti** y que tenga un tope:
-
-- dispositivos, asientos o licencias de un plan,
-- créditos, saldo o puntos que se gastan,
-- invitaciones restantes, cupones de un solo uso,
-- intentos de un código de verificación,
-- unidades de stock al reservar.
-
-El patrón de prueba es siempre el mismo, y es corto:
-
-1. **Aprende el límite en serie.** Consume hasta que el servidor te diga que no. Guarda la
-   respuesta exacta: es tu control negativo.
-2. **Vuelve al estado inicial** (revoca, cancela, devuelve).
-3. **Suelta N a la vez** con sincronización por último byte, no con un bucle.
-4. **Pregúntale al servidor cómo se ha quedado.** El contador después de la carrera es la
-   prueba, no el número de `200` que recibiste.
-5. **Repite el ataque donde no debería funcionar.** Si allí entra uno solo, lo tuyo es
-   real.
-
-Y una advertencia que me ahorró tiempo: si la primera tanda te da `2 de 6`, no es que
-«casi funcione». Es que funciona, y la ventana es estrecha ese día. Sube el número de
-peticiones en paralelo antes de dar nada por muerto.

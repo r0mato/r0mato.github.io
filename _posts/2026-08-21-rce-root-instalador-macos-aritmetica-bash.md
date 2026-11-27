@@ -45,7 +45,6 @@ lo único que no vas a encontrar aquí es a quién le pasó.
 1. Por qué los instaladores de escritorio son un sitio estupendo donde mirar.
 2. Qué hace realmente `$(( ))` en bash y por qué es un intérprete disfrazado de suma.
 3. Cómo se traza un valor hacia atrás hasta descubrir quién lo controla.
-4. Qué es un **control negativo** y por qué sin él esto no habría sido un reporte.
 
 ## Por qué miré un instalador
 
@@ -145,7 +144,7 @@ con `[[ "$x" -ge 10 ]]`, que mucha gente usa creyendo que es una comparación se
 Fíjate en el detalle: con `[ "$x" -ge 10 ]` — **corchete simple**, que es el `test` de
 POSIX — esto **no** ocurre: te da un error de «se esperaba un entero» y no ejecuta nada.
 Es decir, el fallo no es «cosa de shell» en general: es específico de `$(( ))` y de
-`[[ ]]`. Ese matiz me sirvió después como control negativo, y lo verás en un momento.
+`[[ ]]`. Ese matiz es justo lo que separa un parámetro peligroso de uno inofensivo.
 
 ## ¿De dónde salía ese número?
 
@@ -266,31 +265,6 @@ una marca verde de instalación correcta**. La víctima no tiene ni un indicio.
 Además el script no usaba `set -u` ni `set -e`, así que un valor mal formado tampoco lo
 detenía.
 
-## El control negativo: lo que convierte esto en un reporte
-
-Aquí está la parte que más me ha enseñado del bug bounty, y la que más gente se salta.
-
-Ver que algo «funciona» no basta. Tienes que demostrar que funciona **por la razón que tú
-dices** y no por otra. Para eso repites exactamente la misma prueba cambiando **una sola
-cosa**: la condición de ataque.
-
-| Qué probé | Qué pasó | Qué descarta |
-|---|---|---|
-| El mismo camino con un valor numérico normal (`"5"`) | La aritmética resuelve, **no se ejecuta nada** | Que el mecanismo se dispare con cualquier entrada |
-| `[ "$v" -ge 10 ]` — corchete simple, `test` de POSIX | Error: *se esperaba un entero*. No ejecuta | Que sea algo genérico de todas las comparaciones de shell |
-| Escribir en el servidor **sin** el payload | `200`, guarda el valor y lo devuelve igual | Que el servicio filtre o valide el tipo del campo |
-| El instalador de Windows, mismo campo | No afectado: parsea el valor como entero | Que el fallo sea del producto en general |
-
-Si pones un número normal, no pasa nada. Si usas la comparación de
-POSIX, no pasa nada. Si quitas la orden, no pasa nada. Solo pasa cuando metes una orden
-dentro de un contexto aritmético. Eso demuestra que el fallo es exactamente el que digo y
-no una casualidad.
-
-Ese último punto —que **Windows no era vulnerable**— lo incluí en el reporte por decisión
-propia, aunque me quitara alcance. El instalador de Windows parsea el mismo campo como
-entero, así que una cadena nunca llega a ningún intérprete. Acotar tu propio hallazgo da
-muchísima credibilidad ante quien lo tría, y evita que te lo devuelvan por exagerado.
-
 ## Impacto
 
 <div class="impact" markdown="1">
@@ -298,47 +272,4 @@ muchísima credibilidad ante quien lo tría, y evita que te lo devuelvan por exa
 instalar o reinstalar. Control total del equipo: lectura de cualquier fichero, instalación
 de persistencia, robo de credenciales. Sin cuenta por parte del atacante y sin un solo
 indicio visible para la víctima, que ve una instalación terminada con éxito.
-</div>
-
-## El arreglo
-
-Es de una línea conceptual: **valida que es un número antes de que toque un contexto
-aritmético.**
-
-```bash
-install_count="${value//\"/}"
-case "$install_count" in
-    ''|*[!0-9]*) install_count=0 ;;   # si no es un número, se descarta
-esac
-```
-
-Y lo que recomendé además:
-
-1. La misma guarda en **todos** los sitios donde se lea ese contador, no solo en este.
-2. Exigir autenticación en el `POST`, para que un tercero no pueda escribir el registro de
-   otra instalación.
-3. Rechazar en el servidor los valores no numéricos de ese campo.
-4. Tratar como **no confiable** todo dato que venga de ese servidor, en todos los
-   consumidores. La validación en el cliente y en el servidor no se sustituyen: se suman.
-
-## Cómo buscar esto tú mismo
-
-Si quieres practicar, esto es literalmente un `grep`:
-
-```bash
-pkgutil --expand-full cualquier-instalador.pkg /tmp/x
-grep -rnE '\$\(\(|\[\[ .* -(ge|gt|le|lt|eq) ' /tmp/x --include=postinstall --include=preinstall
-```
-
-Y para cada resultado, las dos preguntas de siempre:
-
-1. **¿De dónde viene ese valor?** Si lo calcula el propio script, olvídalo. Si viene de un
-   fichero, de una variable de entorno o de la red, sigue.
-2. **¿Quién puede escribir en ese origen?** Si la respuesta es «cualquiera», ya lo tienes.
-
-<div class="note" markdown="1">
-**Hazlo solo donde tengas permiso.** Leer un instalador que te has descargado es tuyo y es
-legal. Escribir en la API de producción de una empresa **no lo es** salvo que estés dentro
-del alcance de un programa que lo autorice, y usando datos canario tuyos. Yo usé un
-identificador desechable propio y lo borré al terminar.
 </div>

@@ -179,19 +179,6 @@ crear uno inofensivo**. Apuntar a `/etc/shadow` no demuestra nada más y convier
 reporte en un incidente. La diferencia entre un investigador y un problema es exactamente
 dónde decide parar.
 
-## El control negativo
-
-| Qué probé | Qué pasó | Qué descarta |
-|---|---|---|
-| El mismo flujo **sin** plantar el enlace | El registro se crea normalmente en la carpeta del usuario | Que el programa fallara por sí solo |
-| Comprobar el otro modo de conexión del mismo producto | **No** usa esa secuencia y escribe en una carpeta propia de root | Que fuera un fallo general del producto: está acotado a una ruta |
-| Protecciones del kernel activadas | El ataque **funciona igual** | Que el sistema operativo ya lo cubriera |
-
-La segunda fila es la que más credibilidad da. Comprobé el camino
-hermano del mismo programa y **no era vulnerable**, y lo dije en el reporte aunque me
-quitara alcance. Acotar tu propio hallazgo es lo que hace que el triador se fíe del resto
-de lo que cuentas.
-
 ## Impacto
 
 <div class="impact" markdown="1">
@@ -203,43 +190,3 @@ de administración, máquinas de laboratorio—, que es exactamente donde dar un
 acotado en vez de root completo es la práctica **correcta**. El fallo castiga precisamente
 a quien hizo bien su trabajo.
 </div>
-
-## El arreglo
-
-1. **Escribir los registros en una carpeta de root**, tipo `/var/log/aplicacion/`, y no en
-   la casa del usuario. Es el arreglo de una línea y resuelve el fallo entero.
-2. Si tienen que quedarse en la carpeta del usuario, **abrir el fichero desde el lenguaje**
-   con las banderas que impiden seguir enlaces y exigen crear un fichero nuevo:
-
-   ```python
-   os.open(ruta, os.O_NOFOLLOW | os.O_CREAT | os.O_EXCL, 0o644)
-   ```
-
-3. **Quitar el `chmod 666`** por completo. No hay ninguna razón para que un registro sea
-   escribible por todo el mundo.
-4. **Dejar de construir comandos como texto**: pasar una lista de argumentos en vez de una
-   frase a la shell.
-
-## Cómo buscar esto tú mismo
-
-Esta clase se caza con dos comandos en cualquier aplicación que se ejecute con privilegios:
-
-```bash
-# 1 · ¿qué ficheros toca cuando corre como root?
-sudo strace -f -e trace=openat,open,chmod,chown /usr/bin/aplicacion 2>&1 \
-  | grep -vE '/usr/|/lib/|/proc/'
-
-# 2 · ¿alguno está en una ruta que yo controlo?
-```
-
-Y las preguntas, en este orden:
-
-1. **¿Escribe en algún sitio bajo mi control?** Tu carpeta personal, `/tmp`, un directorio
-   del que eres dueño.
-2. **¿El nombre es predecible?** Una hora, un contador, un PID. Si lleva algo aleatorio de
-   verdad, se complica mucho.
-3. **¿Sigue enlaces?** `touch`, `chmod`, `chown`, `cp`, `>` de la shell: todos siguen.
-4. **¿Qué fichero del sistema me interesa crear o volver escribible?** `/etc/profile.d/`,
-   un servicio del sistema, una tarea programada.
-
-Si las cuatro respuestas te acompañan, tienes una escalada a root.

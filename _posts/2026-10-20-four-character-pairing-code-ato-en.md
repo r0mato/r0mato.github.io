@@ -205,18 +205,6 @@ The only real cleanup is **deleting the specific device** from the list of linke
 something nobody thinks of, because nobody connects "someone got into my account" with "I
 have one television too many on the list".
 
-## The negative control
-
-| What I tried | What happened | What it rules out |
-|---|---|---|
-| Redeeming the code **before** the victim confirms | Rejected: *user not valid* | That the endpoint gave credentials to anyone: the only thing changing the outcome is the confirmation |
-| Requesting the code **without** the app's public key | `401` | That the endpoint was completely open |
-| Reading the profile **before** requesting a recovery | The token field comes back **empty** | That the field always carried a value: it appears exactly when the flow is triggered |
-
-The first test is what proves I am not exploiting a server bug but
-**the design of the flow**. Everything works as programmed. The problem is that what is
-programmed hands over the account.
-
 ## Impact
 
 <div class="impact" markdown="1">
@@ -227,34 +215,3 @@ permanent device credential and the ability to change the password. The legitima
 locked out of an account whose password they never changed, and the standard advice —
 change it again — does not expel the attacker.
 </div>
-
-## The fix
-
-1. **Bind the code to whoever requested it.** Redemption must require the same client
-   session, or a secret only the originating device holds. The code alone cannot be enough.
-2. **Single use and short lived**, and invalidated as soon as the resulting device is
-   deleted.
-3. **Tell the victim what they are authorising**: client name, device type, approximate
-   location and time. Without that, the confirmation is not consent.
-4. **Stop returning the recovery token** from any endpoint authenticated only with a device
-   credential. Make it single use with a short expiry.
-5. **Revoke device credentials when the password changes.** Otherwise the password change
-   is theatre.
-
-## How to look for this yourself
-
-Any product that pairs with a TV, a console, a watch or any keyboard-less device uses this
-pattern. The questions are always the same:
-
-1. **Can I request a code without an account?** If the response has an empty or null user
-   field, keep digging.
-2. **What does redeeming it take?** If the code alone suffices, it is a bearer cheque.
-3. **What does the victim see when confirming?** If they cannot see device name, IP or
-   location, they cannot tell you apart from their own television.
-4. **What does the resulting credential return?** Request the profile and read **every**
-   field, one by one. Recovery tokens show up in surprising places.
-5. **Does it survive a password change?** Change it and repeat the request. If it still
-   works, you have one more piece for the report.
-
-Step 4 is usually where the prize is and the one almost nobody does: people check the
-response is a `200` and move on. **Read the whole thing.**

@@ -208,20 +208,6 @@ producción. Son dos fallos con dos arreglos distintos.
 Una cosa es que la puerta de la calle esté abierta y otra que dentro haya
 una palanca que vuela el edificio. Arreglar la puerta no quita la palanca.
 
-## El control negativo
-
-| Qué probé | Qué pasó | Qué descarta |
-|---|---|---|
-| Pedir el hash **sin** invocar la herramienta | El modelo devuelve un hash **incorrecto** | Que el modelo supiera calcularlo: la prueba es la ejecución |
-| Mismo canario, **otra** cadena | Devuelve el hash correcto de la nueva | Caché o respuesta memorizada |
-| Repetir desde otra sesión y otro contenedor | Mismo comportamiento | Que fuera un estado raro de una instancia concreta |
-| Pedirlo sin token | `401` | Que el endpoint fuera abierto por diseño |
-
-La primera fila es la clave. Cuando le pido el hash **sin** usar la
-herramienta, el modelo se lo inventa y falla. Cuando le pido que use la herramienta,
-acierta. Esa diferencia demuestra que lo que acierta no es el modelo: es el intérprete de
-Python que hay detrás.
-
 ## Impacto
 
 <div class="impact" markdown="1">
@@ -230,38 +216,4 @@ alcanzable desde internet y sin necesidad de cuenta. Desde esa posición: lectur
 credenciales del proceso, movimiento lateral hacia los servicios internos visibles,
 y acceso a los datos que esos servicios custodian. En la práctica, el peor resultado
 posible para una aplicación expuesta.
-</div>
-
-## El arreglo
-
-1. **Quitar del agente cualquier herramienta que ejecute código.** Si no se puede quitar
-   porque es parte del producto, aislarla: contenedor efímero sin red, sin credenciales,
-   usuario sin privilegios, límites de CPU y memoria, y sin montajes del sistema anfitrión.
-2. **No ejecutar como root.** Nunca, pero menos aún algo que interpreta entrada de usuario.
-3. **Autorizar por herramienta**, no solo por conversación: que quien puede chatear no
-   pueda, por eso solo, invocar cualquier cosa del catálogo.
-4. **Registrar cada invocación** con quién, qué herramienta y qué argumentos. En este caso
-   no había forma de saber si alguien lo había usado antes que yo, que es la pregunta que
-   toda empresa hace después de un reporte así.
-5. Y lo de siempre: arreglar también la puerta de entrada.
-
-## Cómo auditar un agente de IA
-
-Un guion corto que puedes seguir en cualquier asistente dentro de alcance:
-
-1. **Pregúntale qué herramientas tiene.** Sorprende lo a menudo que las enumera.
-2. **Busca las peligrosas por nombre:** cualquier cosa con `exec`, `run`, `shell`, `code`,
-   `python`, `sql`, `query`, `http`, `fetch`, `file`, `read`, `write`.
-3. **Comprueba quién puede invocarlas.** ¿Hace falta ser administrador? ¿Hace falta tener
-   cuenta siquiera?
-4. **Si ejecuta algo, demuéstralo con un canario criptográfico.** Nunca con una salida que
-   el modelo pueda inventarse.
-5. **Mide el entorno con lo mínimo:** usuario, máquina, red. Y para ahí.
-
-<div class="note" markdown="1">
-**Lo que NO es un hallazgo.** Conseguir que el asistente diga una barbaridad, escriba algo
-ofensivo o te recite su *prompt* de sistema **no es una vulnerabilidad** por sí solo. Sin
-secretos dentro, sin una herramienta detrás y sin datos de otro, es como mucho un
-informativo. Lo que se paga es lo que la capa de **herramientas, datos e identidad**
-permite hacer — no lo que el modelo dice.
 </div>

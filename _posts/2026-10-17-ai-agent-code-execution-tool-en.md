@@ -210,20 +210,6 @@ different fixes.
 It is one thing for the front door to be open and another for there to
 be a lever inside that blows up the building. Fixing the door does not remove the lever.
 
-## The negative control
-
-| What I tried | What happened | What it rules out |
-|---|---|---|
-| Asking for the hash **without** invoking the tool | The model returns an **incorrect** hash | That the model could compute it: the proof is the execution |
-| Same canary, **different** string | Returns the correct hash for the new one | Caching or a memorised answer |
-| Repeating from another session and another container | Same behaviour | That it was an odd state of one particular instance |
-| Asking without a token | `401` | That the endpoint was open by design |
-
-The first row is the key. When I ask for the hash **without** the tool,
-the model invents it and gets it wrong. When I ask it to use the tool, it gets it right.
-That difference proves what is getting it right is not the model: it is the Python
-interpreter behind it.
-
 ## Impact
 
 <div class="impact" markdown="1">
@@ -231,38 +217,4 @@ interpreter behind it.
 the internet and with no account required. From that position: reading the process
 credentials, lateral movement to the visible internal services, and access to the data
 those services hold. In practice, the worst possible outcome for an exposed application.
-</div>
-
-## The fix
-
-1. **Remove any code-executing tool from the agent.** If it cannot be removed because it is
-   part of the product, isolate it: ephemeral container, no network, no credentials,
-   unprivileged user, CPU and memory limits, and no host mounts.
-2. **Do not run as root.** Ever, but least of all something interpreting user input.
-3. **Authorise per tool**, not just per conversation: whoever can chat should not, by that
-   fact alone, be able to invoke anything in the catalogue.
-4. **Log every invocation** with who, which tool and which arguments. In this case there was
-   no way to know whether anyone had used it before me, which is the question every company
-   asks after a report like this.
-5. And the obvious one: fix the front door too.
-
-## How to audit an AI agent
-
-A short script you can follow on any assistant within scope:
-
-1. **Ask it what tools it has.** It is surprising how often it lists them.
-2. **Look for the dangerous ones by name:** anything with `exec`, `run`, `shell`, `code`,
-   `python`, `sql`, `query`, `http`, `fetch`, `file`, `read`, `write`.
-3. **Check who can invoke them.** Do you need to be an administrator? Do you need an account
-   at all?
-4. **If it executes something, prove it with a cryptographic canary.** Never with output the
-   model could have invented.
-5. **Measure the environment with the minimum:** user, host, network. And stop there.
-
-<div class="note" markdown="1">
-**What is NOT a finding.** Getting the assistant to say something outrageous, write
-something offensive or recite its system prompt **is not a vulnerability** on its own.
-Without secrets inside, without a tool behind it and without someone else's data, it is an
-informative at best. What gets paid is what the **tools, data and identity** layer allows —
-not what the model says.
 </div>

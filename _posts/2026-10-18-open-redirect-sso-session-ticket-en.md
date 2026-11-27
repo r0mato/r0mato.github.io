@@ -192,21 +192,6 @@ not "some session": it is **that person's identity**.
 And I stopped there. No devices touched, nothing modified, nothing accessed beyond the test
 account.
 
-## The negative control
-
-Three counter-tests, and the first is the one that really matters:
-
-| What I tried | What happened | What it rules out |
-|---|---|---|
-| The same domain **without** the slash: `host=attacker-example.com` | **Rejected** | That the parameter was wide open: there is a real control and I am bypassing it |
-| Same endpoint with a **fabricated** session id | `401` | That the API answered anyone |
-| Same endpoint with **no** session id | `401` | That this data was public |
-
-The first row is the jewel of the report. It proves the server
-**validates** that parameter, and that the only thing standing between a rejection and a
-stolen session is **one slash**. That turns "I put my domain in and it worked" into "I found
-how to bypass your control". Two very different reports to whoever triages them.
-
 ## A bonus: the cookie that cancelled the protection
 
 Looking at the cookies set when the ticket is redeemed, I saw that one of them carried
@@ -222,37 +207,3 @@ visible domain is the vendor's legitimate one. The attacker obtains the complete
 unmasked personal data, email, user id and access to whatever else that session reaches. No
 password, no second factor, and nothing for the victim to fill in.
 </div>
-
-## The fix
-
-1. **Stop comparing `host` as text.** Parse it as a URL, extract the registrable domain and
-   compare it **exactly** against an allowlist. Reject outright any value containing `/`,
-   `?`, `#`, `\`, `@` or user information.
-2. **Bind the ticket to the destination that asked for it.** A ticket minted for one origin
-   should not be redeemable from another. Then, even if someone diverts the redirect, the
-   ticket is useless to them.
-3. **Set `HttpOnly` and `Secure`** on any cookie carrying the session id. Better still,
-   stop putting it in a second cookie.
-
-Point 2 is the important one: it is what makes the bug **unexploitable** even if someone
-finds another allowlist bypass tomorrow. Fixing only point 1 is playing cat and mouse with
-URL parsers, and that is a game you always lose.
-
-## How to look for this yourself
-
-When you see a parameter that decides a destination — `host`, `redirect`, `return`, `next`,
-`callback`, `url`, `continue`, `dest` — try **in this order**:
-
-```
-1. ?host=attacker.com                      does it accept it outright?
-2. ?host=attacker.com/.brand.com           is CONTAINING the domain enough?
-3. ?host=attacker.com%2F.brand.com         and with the slash encoded?
-4. ?host=//attacker.com                    does it read the double slash as a scheme?
-5. ?host=https://brand.com@attacker.com    does it keep what is before the at sign?
-6. ?host=brand.com.attacker.com            does it only check the beginning?
-```
-
-And then the question that changes everything: **does the redirect carry something with
-it?** Look at the final URL and at the `Referer` header. If a token, a ticket, an
-authorisation code or anything that smells like a credential travels there, what you are
-holding is not an open redirect. It is an account takeover.

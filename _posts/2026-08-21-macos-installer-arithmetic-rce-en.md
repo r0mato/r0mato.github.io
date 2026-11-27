@@ -45,7 +45,6 @@ the only thing you will not find here is who it happened to.
 1. Why desktop installers are a great place to look.
 2. What `$(( ))` really does in bash and why it is an interpreter in disguise.
 3. How to trace a value backwards until you find who controls it.
-4. What a **negative control** is and why without one this would not have been a report.
 
 ## Why I looked at an installer
 
@@ -144,7 +143,7 @@ arithmetic context **the content is evaluated anyway**. The same goes for
 Note the detail: with `[ "$x" -ge 10 ]` — **single bracket**, which is POSIX `test` — this
 does **not** happen: you get an "integer expression expected" error and nothing runs. In
 other words, the bug is not a "shell thing" in general: it is specific to `$(( ))` and
-`[[ ]]`. That nuance later served as my negative control, as you will see.
+`[[ ]]`. That nuance is exactly what separates a dangerous parameter from a harmless one.
 
 ## Where did that number come from?
 
@@ -265,31 +264,6 @@ The victim gets not a single hint.
 The script also used neither `set -u` nor `set -e`, so a malformed value did not stop it
 either.
 
-## The negative control: what turns this into a report
-
-Here is the part bug bounty taught me the most, and the one most people skip.
-
-Seeing that something "works" is not enough. You have to prove it works **for the reason
-you say** and not another. For that you repeat exactly the same test changing **one single
-thing**: the attack condition.
-
-| What I tried | What happened | What it rules out |
-|---|---|---|
-| The same path with a normal numeric value (`"5"`) | The arithmetic resolves, **nothing runs** | That the mechanism fires on any input |
-| `[ "$v" -ge 10 ]` — single bracket, POSIX `test` | Error: *integer expression expected*. Nothing runs | That it is generic to all shell comparisons |
-| Writing to the server **without** the payload | `200`, stores the value and returns it unchanged | That the service filters or type-checks the field |
-| The Windows installer, same field | Not affected: parses the value as an integer | That the bug belongs to the product in general |
-
-Put a normal number in, nothing happens. Use the POSIX comparison,
-nothing happens. Remove the order, nothing happens. It only happens when you put an order
-inside an arithmetic context. That proves the bug is exactly the one I say it is and not a
-coincidence.
-
-That last point — that **Windows was not vulnerable** — I included by choice, even though
-it narrowed my own finding. The Windows installer parses the same field as an integer, so a
-string never reaches any interpreter. Scoping your own finding buys enormous credibility
-with whoever triages it, and stops it coming back as overstated.
-
 ## Impact
 
 <div class="impact" markdown="1">
@@ -297,46 +271,4 @@ with whoever triages it, and stops it coming back as overstated.
 reinstalling. Total control of the machine: reading any file, installing persistence,
 stealing credentials. No account on the attacker's side and not a single visible hint for
 the victim, who sees an installation that finished successfully.
-</div>
-
-## The fix
-
-Conceptually one line: **validate it is a number before it touches an arithmetic context.**
-
-```bash
-install_count="${value//\"/}"
-case "$install_count" in
-    ''|*[!0-9]*) install_count=0 ;;   # not a number -> discard
-esac
-```
-
-And what I also recommended:
-
-1. The same guard **everywhere** that counter is read, not just here.
-2. Require authentication on the `POST`, so a third party cannot write another
-   installation's record.
-3. Reject non-numeric values for that field server-side.
-4. Treat everything coming from that server as **untrusted**, in every consumer. Client and
-   server validation do not replace each other: they add up.
-
-## How to look for this yourself
-
-If you want to practise, this is literally a `grep`:
-
-```bash
-pkgutil --expand-full any-installer.pkg /tmp/x
-grep -rnE '\$\(\(|\[\[ .* -(ge|gt|le|lt|eq) ' /tmp/x --include=postinstall --include=preinstall
-```
-
-And for each hit, the same two questions:
-
-1. **Where does that value come from?** If the script computes it, forget it. If it comes
-   from a file, an environment variable or the network, keep going.
-2. **Who can write to that source?** If the answer is "anyone", you have it.
-
-<div class="note" markdown="1">
-**Only do this where you have permission.** Reading an installer you downloaded is yours
-and it is legal. Writing to a company's production API **is not**, unless you are inside
-the scope of a program that authorises it, and using your own canary data. I used a
-disposable identifier of my own and deleted it when I was done.
 </div>

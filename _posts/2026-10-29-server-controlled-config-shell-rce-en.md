@@ -241,22 +241,6 @@ screen.
 Demonstrating the jump from "I can run a command" to "I have a session" is what turns a
 *Medium* into a *High*. Same bug, very different impact in the eyes of whoever triages it.
 
-## The negative control
-
-I repeated **exactly the same thing** changing one single item: the payload for a clean
-configuration line.
-
-```
-cipher aes-256-gcm
-```
-
-Result: no marker files, no connection, no execution. The application connects normally.
-
-If I remove the two semicolons and leave the normal configuration,
-absolutely nothing happens. That proves the bug is those characters reaching the shell
-unfiltered, and not something else about the setup — not my fake CA, not the proxy, not the
-virtual machine.
-
 ## Impact
 
 <div class="impact" markdown="1">
@@ -267,55 +251,4 @@ persistence (`authorized_keys`, a scheduled task, a system service) in milliseco
 Changing the account password achieves nothing: the attacker is no longer in the account,
 they are on the machine. The only reliable cleanup is reinstalling the operating system,
 and the victim has no reason to suspect it.
-</div>
-
-## The fix
-
-Three measures, and all three are needed:
-
-**1. Do not build commands as text.** Pass an argument list:
-
-```python
-subprocess.run([binary, "--option", value], shell=False)
-```
-
-That way a semicolon inside `value` is a semicolon, not a separator. This alone kills the
-attack.
-
-**2. An allowlist of options.** The client must accept **only** the options it needs from
-the server, and reject every other line. This matters especially with tools that support
-options capable of running programs: if the server can send one of those, no injection is
-needed at all.
-
-Filtering odd characters is not enough. There are configuration options
-that **by design** execute programs. If you accept any option the server sends, the attacker
-needs no trick: they send you the legitimate option that runs their program. That is why the
-allowlist comes first and the filtering second.
-
-**3. Pin the server's certificate** on every connection, not just some. Then a foreign CA —
-even one the system trusts — is not enough to impersonate the server.
-
-## How to look for this yourself
-
-In any Python code that comes your way:
-
-```bash
-grep -rnE 'shell\s*=\s*True|os\.system|os\.popen' .
-```
-
-And for each hit, the two questions:
-
-1. **Does any part of that string come from outside?** The network, a file, an environment
-   variable, an argument.
-2. **Who controls that "outside"?** If the answer includes "a server I can answer for", you
-   have it.
-
-The equivalent in other languages: `exec`/`system`/`passthru` in PHP, `child_process.exec`
-in Node (versus `execFile`), `Runtime.exec(String)` in Java, backticks in Ruby and Perl. The
-pattern is identical everywhere: **a string that ends up in an interpreter**.
-
-<div class="note" markdown="1">
-**Only do this where you have permission.** Running a MITM against yourself on your own
-virtual machine is a lab. Doing it against someone else's traffic is a crime, and it is not
-even necessary: to demonstrate the bug, your own machine and your own account are enough.
 </div>

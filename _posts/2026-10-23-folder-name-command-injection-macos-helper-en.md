@@ -149,17 +149,6 @@ And a detail that makes it worse: when the helper rejects a caller it does not r
 it **exits immediately**. The result is that any legitimate installation in progress fails
 with a generic installer error. It looks like an installer glitch, not an attack.
 
-## The negative control
-
-| What I tried | What happened | What it rules out |
-|---|---|---|
-| The same program from a **normal** path | Works: no extra execution | That the helper ran things by itself |
-| The injected path but **without** the ad hoc signature | Rejected before reaching it | That the signature check did not exist |
-| Repeating the whole thing **again**, new canary and new name | Same result | That it was an odd state of one particular run |
-
-Repeating it from scratch with **a different canary name** is what turns "it happened once"
-into "this is reproducible". A triager who cannot reproduce your bug closes it.
-
 ## The argument that closes the report
 
 Reading the product's own installer scripts, I found a comment from its developers saying,
@@ -171,50 +160,3 @@ sentence**.
 
 This is one of the most effective things you can put in a report: it is not your opinion
 about what should happen, it is theirs.
-
-## The fix
-
-1. **Do not build a shell command.** The binary already contained a safe way to launch
-   programs with an argument list. Using it removes the entire class:
-
-   ```c
-   - std::string cmd = "/usr/bin/codesign -d --verbose=4 '" + path + "' 2>&1";
-   - runWithOutput(cmd);                      // popen() → /bin/sh -c
-   + const char *argv[] = {"/usr/bin/codesign", "-d", "--verbose=4", path, NULL};
-   + runWithOutputArgv(argv);                 // no shell: nothing to escape
-   ```
-
-2. **Identify the caller by audit token**, not by PID and path. macOS provides a
-   cryptographic mechanism for this that cannot be spoofed. The product **already used it**
-   in another part of the same binary: it only had to be applied here too.
-
-3. **Delete the blacklist.** With separate arguments there is nothing to filter. And a
-   metacharacter blacklist is the wrong control anyway.
-
-Identifying a process by PID is inherently unsafe, because process
-numbers **get reused**: an attacker can make theirs die and have another take its number
-right at the moment of the check. That is why audit tokens exist — they identify the
-process in a way that cannot be forged.
-
-## How to look for this yourself
-
-On any privileged macOS service:
-
-1. **Find them:** `ls -la /Library/PrivilegedHelperTools/` and `ls /Library/LaunchDaemons/`.
-2. **Look at which functions it imports:** if `popen`, `system` or `exec` show up alongside
-   string building, raise the alarm.
-   ```bash
-   nm -u /Library/PrivilegedHelperTools/com.example.helper | grep -E 'popen|system|exec'
-   ```
-3. **Find how it identifies the caller:** if you see `xpc_connection_get_pid` and
-   `proc_pidpath` but **not** `SecCodeCreateWithAuditToken`, identification is PID-based and
-   spoofable.
-4. **Ask which part of that string you control.** Your own binary's path is the first one —
-   and you choose it by creating folders.
-
-<div class="note" markdown="1">
-**Only on your own machine.** This is researched on your own VM, with your own accounts,
-and you stop the moment the primitive is demonstrated. A harmless canary proves exactly the
-same thing as a real attack, and leaves nobody in a compromised position — starting with
-you.
-</div>

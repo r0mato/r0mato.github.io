@@ -179,19 +179,6 @@ enough**. Pointing at `/etc/shadow` proves nothing extra and turns your report i
 incident. The difference between a researcher and a problem is exactly where you decide to
 stop.
 
-## The negative control
-
-| What I tried | What happened | What it rules out |
-|---|---|---|
-| The same flow **without** planting the link | The log is created normally in the user's folder | That the program broke on its own |
-| Checking the product's other connection mode | It does **not** use that sequence and writes into a root-owned folder | That it was a general product failure: it is scoped to one path |
-| Kernel protections enabled | The attack **works anyway** | That the OS already covered it |
-
-The second row is what buys the most credibility. I checked the sibling
-path in the same program and it **was not vulnerable**, and I said so in the report even
-though it narrowed my own finding. Scoping your own bug is what makes the triager trust the
-rest of what you are telling them.
-
 ## Impact
 
 <div class="impact" markdown="1">
@@ -202,42 +189,3 @@ access to every other user's files. The natural setting for this client is share
 instead of full root is the **correct** practice. The bug punishes precisely the people who
 did their job properly.
 </div>
-
-## The fix
-
-1. **Write logs into a root-owned directory** such as `/var/log/application/`, not into the
-   user's home. That is the one-line fix and it closes the whole thing.
-2. If they must stay in the user's home, **open the file from the language** with the flags
-   that refuse to follow links and demand creating a fresh file:
-
-   ```python
-   os.open(path, os.O_NOFOLLOW | os.O_CREAT | os.O_EXCL, 0o644)
-   ```
-
-3. **Drop the `chmod 666`** entirely. There is no reason for a log to be world-writable.
-4. **Stop building commands as strings**: pass an argument list instead of a sentence to a
-   shell.
-
-## How to look for this yourself
-
-This class is hunted with two commands on any application that runs with privileges:
-
-```bash
-# 1 · which files does it touch when running as root?
-sudo strace -f -e trace=openat,open,chmod,chown /usr/bin/application 2>&1 \
-  | grep -vE '/usr/|/lib/|/proc/'
-
-# 2 · is any of them in a path I control?
-```
-
-And the questions, in this order:
-
-1. **Does it write anywhere under my control?** Your home folder, `/tmp`, any directory you
-   own.
-2. **Is the name predictable?** A timestamp, a counter, a PID. If it carries real
-   randomness, it gets much harder.
-3. **Does it follow links?** `touch`, `chmod`, `chown`, `cp`, shell `>`: they all do.
-4. **Which system file do I want created or made writable?** `/etc/profile.d/`, a system
-   service, a scheduled task.
-
-If all four answers go your way, you have a root escalation.

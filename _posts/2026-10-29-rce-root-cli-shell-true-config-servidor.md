@@ -242,23 +242,6 @@ ordenador, en mi pantalla.
 Demostrar el salto de «ejecuto un comando» a «tengo una sesión» es lo que convierte un
 *Medium* en un *High*. Mismo fallo, impacto muy distinto a ojos de quien lo tría.
 
-## El control negativo
-
-Repetí **exactamente lo mismo** cambiando una sola cosa: el payload por una línea de
-configuración limpia.
-
-```
-cipher aes-256-gcm
-```
-
-Resultado: ningún fichero marcador, ninguna conexión, ninguna ejecución. La aplicación se
-conecta con normalidad.
-
-Si quito los dos puntos y coma y dejo la configuración normal, no pasa
-absolutamente nada. Eso prueba que el fallo son esos caracteres pasando sin filtrar hasta
-la shell, y no cualquier otra cosa del montaje — ni mi CA falsa, ni el proxy, ni la
-máquina virtual.
-
 ## Impacto
 
 <div class="impact" markdown="1">
@@ -269,55 +252,4 @@ conexión, así que puede instalar persistencia (`authorized_keys`, una tarea pr
 servicio del sistema) en milisegundos. Cambiar la contraseña de la cuenta no sirve de
 nada: el atacante ya no está en la cuenta, está en la máquina. La única limpieza fiable es
 reinstalar el sistema operativo, y la víctima no tiene ningún motivo para sospecharlo.
-</div>
-
-## El arreglo
-
-Tres medidas, y hacen falta las tres:
-
-**1. No construyas comandos como texto.** Pasa una lista de argumentos:
-
-```python
-subprocess.run([binario, "--opcion", valor], shell=False)
-```
-
-Así un punto y coma dentro de `valor` es un punto y coma, no un separador. Esto por sí
-solo mata el ataque.
-
-**2. Lista blanca de opciones.** El cliente debe aceptar del servidor **solo** las opciones
-que necesita, y rechazar cualquier otra línea. Es especialmente grave con herramientas que
-admiten opciones capaces de ejecutar programas: si el servidor puede mandar una de esas,
-no hace falta ni inyectar nada.
-
-No basta con filtrar caracteres raros. Hay opciones de configuración que
-**por diseño** ejecutan programas. Si aceptas cualquier opción que te mande el servidor,
-el atacante no necesita trucos: te manda la opción legítima que ejecuta su programa. Por
-eso la lista blanca va primero y el filtrado después.
-
-**3. Fijar el certificado** del servidor en todas las conexiones, no solo en algunas. Así
-una CA ajena —aunque el sistema la considere válida— no basta para suplantar al servidor.
-
-## Cómo buscar esto tú mismo
-
-En cualquier código Python que caiga en tus manos:
-
-```bash
-grep -rnE 'shell\s*=\s*True|os\.system|os\.popen' .
-```
-
-Y por cada resultado, las dos preguntas:
-
-1. **¿Alguna parte de esa cadena viene de fuera?** De la red, de un fichero, de una
-   variable de entorno, de un argumento.
-2. **¿Quién controla ese «fuera»?** Si la respuesta incluye «un servidor al que puedo
-   responder yo», ya lo tienes.
-
-El equivalente en otros lenguajes: `exec`/`system`/`passthru` en PHP, `child_process.exec`
-en Node (frente a `execFile`), `Runtime.exec(String)` en Java, backticks en Ruby y Perl.
-El patrón es idéntico en todos: **una cadena que acaba en un intérprete**.
-
-<div class="note" markdown="1">
-**Hazlo solo donde tengas permiso.** Montar un MITM contra ti mismo en una máquina virtual
-tuya es un laboratorio. Hacerlo contra el tráfico de otra persona es un delito, y además no
-hace falta: para demostrar el fallo basta con tu propia máquina y tu propia cuenta.
 </div>

@@ -152,17 +152,6 @@ Y un detalle que lo hace peor: cuando el ayudante rechaza a un llamante que no r
 **termina de golpe**. Resultado: la instalación legítima que estuviera en curso falla con
 un error genérico de instalación. Parece un fallo del instalador, no un ataque.
 
-## El control negativo
-
-| Qué probé | Qué pasó | Qué descarta |
-|---|---|---|
-| El mismo programa desde una ruta **normal** | Funciona: ninguna ejecución extra | Que el ayudante ejecutara cosas por su cuenta |
-| La ruta con la inyección pero **sin** la firma improvisada | Rechazado antes de llegar | Que la comprobación de firma no existiera |
-| Repetirlo entero **otra vez**, con otro canario y otro nombre | Mismo resultado | Que fuera un estado raro de una ejecución concreta |
-
-Repetirlo desde cero con **otro nombre de canario** es lo que convierte «me ha pasado una
-vez» en «esto es reproducible». Un triador que no puede reproducir tu fallo, lo cierra.
-
 ## El argumento que cierra el reporte
 
 Al leer los scripts del propio instalador del producto, encontré un comentario de sus
@@ -175,51 +164,3 @@ propia frase**.
 
 Esto es de lo más eficaz que puedes meter en un reporte: no es tu opinión sobre lo que
 debería pasar, es la suya.
-
-## El arreglo
-
-1. **No construir una orden de shell.** El binario ya tenía dentro una forma segura de
-   lanzar programas con una lista de argumentos. Usarla elimina la clase entera:
-
-   ```c
-   - std::string cmd = "/usr/bin/codesign -d --verbose=4 '" + ruta + "' 2>&1";
-   - ejecutarConSalida(cmd);                 // popen() → /bin/sh -c
-   + const char *argv[] = {"/usr/bin/codesign", "-d", "--verbose=4", ruta, NULL};
-   + ejecutarConSalidaArgv(argv);            // sin shell: no hay nada que escapar
-   ```
-
-2. **Identificar al llamante por su token de auditoría**, no por su PID y su ruta. macOS
-   ofrece un mecanismo criptográfico para esto que no se puede suplantar. El producto
-   **ya lo usaba** en otra parte del mismo binario: solo había que aplicarlo también aquí.
-
-3. **Borrar la lista negra.** Con argumentos separados no hay nada que filtrar. Y una lista
-   negra de metacaracteres es, de todas formas, el control equivocado.
-
-Identificar un proceso por su PID es inseguro por naturaleza, porque los
-números de proceso **se reutilizan**: un atacante puede hacer que el suyo muera y que otro
-ocupe su número justo en el momento de la comprobación. Por eso existen los tokens de
-auditoría, que identifican al proceso de forma que no se puede falsificar.
-
-## Cómo buscar esto tú mismo
-
-En cualquier servicio privilegiado de macOS:
-
-1. **Encuéntralos:** `ls -la /Library/PrivilegedHelperTools/` y
-   `ls /Library/LaunchDaemons/`.
-2. **Mira qué funciones importa:** si aparece `popen`, `system` o `exec` + construcción de
-   cadenas, enciende la alarma.
-   ```bash
-   nm -u /Library/PrivilegedHelperTools/com.ejemplo.helper | grep -E 'popen|system|exec'
-   ```
-3. **Busca cómo identifica al llamante:** si ves `xpc_connection_get_pid` y `proc_pidpath`
-   pero **no** `SecCodeCreateWithAuditToken`, la identificación es por PID y es
-   suplantable.
-4. **Pregúntate qué parte de esa cadena controlas tú.** La ruta de tu propio binario es lo
-   primero: y la eliges creando carpetas.
-
-<div class="note" markdown="1">
-**Hazlo solo en tu propia máquina.** Esto se investiga en una máquina virtual tuya, con
-cuentas tuyas, y se para en cuanto la primitiva está demostrada. Un canario inofensivo
-prueba exactamente lo mismo que un ataque real, y no deja a nadie en una situación
-comprometida — empezando por ti.
-</div>

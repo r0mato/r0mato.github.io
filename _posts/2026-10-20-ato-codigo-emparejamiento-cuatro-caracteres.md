@@ -205,18 +205,6 @@ La única limpieza real es **borrar el dispositivo concreto** de la lista de dis
 vinculados — algo que a nadie se le ocurre, porque nadie relaciona «me han entrado en la
 cuenta» con «tengo un televisor de más en la lista».
 
-## El control negativo
-
-| Qué probé | Qué pasó | Qué descarta |
-|---|---|---|
-| Canjear el código **antes** de que la víctima confirme | Rechazado: *user not valid* | Que el endpoint diera credenciales a cualquiera: lo único que cambia el resultado es la confirmación |
-| Pedir el código **sin** la clave pública de la aplicación | `401` | Que el endpoint estuviera completamente abierto |
-| Leer el perfil **antes** de solicitar recuperación | El campo del token viene **vacío** | Que ese campo llevara siempre un valor: aparece justo cuando se dispara el flujo |
-
-La primera prueba es la que demuestra que no estoy explotando un fallo
-del servidor, sino **el diseño del flujo**. Todo funciona como está programado. El problema
-es que lo que está programado entrega la cuenta.
-
 ## Impacto
 
 <div class="impact" markdown="1">
@@ -227,34 +215,3 @@ permanente de dispositivo y la capacidad de cambiar la contraseña. El propietar
 queda fuera de una cuenta cuya contraseña él nunca cambió, y el consejo habitual —cambiarla
 de nuevo— no expulsa al atacante.
 </div>
-
-## El arreglo
-
-1. **Atar el código a quien lo pide.** El canje debe exigir la misma sesión de cliente, o
-   un secreto que solo tenga el aparato que originó el código. El código por sí solo no
-   puede bastar.
-2. **Un solo uso y vida corta**, e invalidarlo en cuanto se borra el dispositivo resultante.
-3. **Decirle a la víctima qué está autorizando**: nombre del cliente, tipo de aparato,
-   ubicación aproximada y hora. Sin eso, la confirmación no es consentimiento.
-4. **Dejar de devolver el token de recuperación** desde cualquier endpoint autenticado solo
-   con una credencial de dispositivo. Hacerlo de un solo uso y con caducidad corta.
-5. **Revocar las credenciales de dispositivo cuando cambia la contraseña.** Si no, el
-   cambio de contraseña es teatro.
-
-## Cómo buscar esto tú mismo
-
-Cualquier producto que se empareje con una tele, una consola, un reloj o un aparato sin
-teclado usa este patrón. Las preguntas son siempre las mismas:
-
-1. **¿Puedo pedir un código sin tener cuenta?** Si la respuesta trae un campo de usuario
-   vacío o nulo, sigue mirando.
-2. **¿Qué hace falta para canjearlo?** Si basta el código, es un cheque al portador.
-3. **¿Qué ve la víctima al confirmar?** Si no ve el nombre del aparato, la IP o la
-   ubicación, no puede distinguirte de su propio televisor.
-4. **¿Qué devuelve la credencial resultante?** Pide el perfil y lee **todos** los campos,
-   uno por uno. Los tokens de recuperación aparecen en sitios sorprendentes.
-5. **¿Sobrevive al cambio de contraseña?** Cámbiala y repite la petición. Si sigue
-   funcionando, tienes una pieza más para el reporte.
-
-El paso 4 es donde suele estar el premio y el que casi nadie hace: la gente mira que la
-respuesta sea un `200` y pasa a otra cosa. **Léela entera.**

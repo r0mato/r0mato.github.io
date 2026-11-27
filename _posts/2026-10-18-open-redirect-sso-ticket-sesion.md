@@ -193,21 +193,6 @@ tengo en la mano no es «una sesión cualquiera»: es **la identidad de esa pers
 Y ahí paré. No toqué dispositivos, no modifiqué nada, no entré en nada que no fuera la
 cuenta de prueba.
 
-## El control negativo
-
-Tres contrapruebas, y la primera es la que de verdad importa:
-
-| Qué probé | Qué pasó | Qué descarta |
-|---|---|---|
-| El mismo dominio **sin** la barra: `host=atacante-ejemplo.com` | **Rechazado** | Que el parámetro estuviera abierto: hay un control real y lo que hago es saltármelo |
-| Mismo endpoint con un identificador de sesión **inventado** | `401` | Que la API respondiera a cualquiera |
-| Mismo endpoint **sin** identificador de sesión | `401` | Que esos datos fueran públicos |
-
-La primera fila es la joya del reporte. Demuestra que el servidor
-**valida** ese parámetro, y que lo único que cambia entre un rechazo y un robo de sesión es
-**una barra**. Eso convierte «he puesto mi dominio y funcionó» en «he encontrado cómo
-saltarme vuestro control». Son dos reportes muy distintos a ojos de quien los tría.
-
 ## Un regalo extra: la cookie que anulaba la protección
 
 Mirando las cookies que se establecían al canjear el ticket, vi que una de ellas llevaba
@@ -225,37 +210,3 @@ sesión completa: datos personales sin enmascarar, correo, identificador de usua
 al resto de recursos que esa sesión alcanza. No hace falta contraseña, ni segundo factor,
 ni que la víctima rellene nada.
 </div>
-
-## El arreglo
-
-1. **Dejar de comparar el `host` como texto.** Parsearlo como URL, extraer el dominio
-   registrable y compararlo **exactamente** contra una lista blanca. Rechazar de entrada
-   cualquier valor que contenga `/`, `?`, `#`, `\`, `@` o información de usuario.
-2. **Atar el ticket al destino que lo pidió.** Un ticket emitido para un origen no debería
-   poder canjearse desde otro. Así, aunque alguien consiga desviar la redirección, el
-   ticket no le sirve.
-3. **Poner `HttpOnly` y `Secure`** a cualquier cookie que lleve el identificador de sesión.
-   O, mejor, dejar de meterlo en una segunda cookie.
-
-El punto 2 es el importante: es el que hace que el fallo **no sea explotable** aunque
-alguien encuentre otro bypass de la lista mañana. Arreglar solo el 1 es jugar al gato y al
-ratón con los parsers de URL, y ese juego lo pierdes siempre.
-
-## Cómo buscar esto tú mismo
-
-Cuando veas un parámetro que decide un destino —`host`, `redirect`, `return`, `next`,
-`callback`, `url`, `continue`, `dest`—, prueba **en este orden**:
-
-```
-1. ?host=atacante.com                    ¿lo acepta a secas?
-2. ?host=atacante.com/.marca.com         ¿le vale con que CONTENGA el dominio?
-3. ?host=atacante.com%2F.marca.com       ¿y con la barra escapada?
-4. ?host=//atacante.com                  ¿interpreta las dos barras como protocolo?
-5. ?host=https://marca.com@atacante.com  ¿se queda con lo de antes de la arroba?
-6. ?host=marca.com.atacante.com          ¿comprueba solo el principio?
-```
-
-Y después, la pregunta que lo cambia todo: **¿la redirección se lleva algo encima?** Mira
-la URL final y la cabecera `Referer`. Si ahí viaja un token, un ticket, un código de
-autorización o cualquier cosa que parezca una credencial, lo que tienes entre manos no es
-un *open redirect*. Es una toma de cuenta.

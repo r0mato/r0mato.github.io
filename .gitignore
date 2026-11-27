@@ -18,3 +18,7 @@ _ritmo/
 # Sistema
 .DS_Store
 *.swp
+
+# cache de Python del panel
+__pycache__/
+*.pyc

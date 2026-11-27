@@ -81,6 +81,7 @@ defaults:
       image: /assets/img/brand/og.png
 
 exclude:
+  - __pycache__
   - Gemfile
   - Gemfile.lock
   - vendor

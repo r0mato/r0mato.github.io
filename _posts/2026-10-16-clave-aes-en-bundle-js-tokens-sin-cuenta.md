@@ -194,6 +194,12 @@ X-Authorization: <mi token fabricado>
 
 Y llegaron. Las conversaciones de ese empleado, por cientos.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/04-datos-de-otro.png' | relative_url }}"
+       alt="Peticion con el token fabricado y, en el cuerpo, el nombre de otro empleado. La respuesta devuelve conversaciones cuyo userId es ese mismo empleado, y el buscador cuenta 300 coincidencias">
+  <figcaption>Basta con escribir el nombre de otro en el cuerpo. La respuesta trae sus conversaciones —el <code>userId</code> es el suyo, no el mío— y el buscador cuenta <strong>300</strong>. El usuario real va tapado; es una persona.</figcaption>
+</figure>
+
 El token que fabriqué no dice **quién soy**. Y la API, en vez de
 deducirlo del token, me deja escribirlo yo en el cuerpo de la petición. Es como un billete
 de tren sin nombre donde el revisor te pregunta «¿y tú cómo te llamas?» y se fía de la

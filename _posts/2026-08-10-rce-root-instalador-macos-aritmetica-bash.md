@@ -198,6 +198,12 @@ GET /v2/feedback/<mi-id-canario>?plain=1
 custom.installCount:"a[$(id > /tmp/canario_root)]"
 ```
 
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-instalador-macos/02-payload-en-el-servidor.png' | relative_url }}"
+       alt="Terminal: al consultar el registro guardado, el campo installationCounter contiene a[$(echo ...base64... | openssl base64 -d -A | bash)]">
+  <figcaption>El valor, ya guardado en el servidor y leído de vuelta. Donde debería haber un número hay una sustitución de orden: <code>a[$(…)]</code>. Lo que va en base64 es un <code>id</code> y una llamada a mi propio servidor.</figcaption>
+</figure>
+
 ## ¿Y cómo sabe el atacante mi identificador?
 
 Buena pregunta, y es la que separa un hallazgo teórico de uno real. El `install_id` podría
@@ -230,6 +236,12 @@ Resumido en cinco pasos:
 3. El `postinstall`, corriendo **como root**, se descarga ese valor.
 4. El bucle de parseo lo mete en una variable, quitándole solo las comillas.
 5. `$((install_count + 1))` lo **evalúa**, y la orden se ejecuta como root.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-instalador-macos/03-bash-evalua.png' | relative_url }}"
+       alt="Terminal de macOS: se expande el paquete firmado, se ejecuta su postinstall con sudo, y bash falla con «syntax error: operand expected» al intentar evaluar como aritmetica el contenido descargado del servidor">
+  <figcaption>El <code>postinstall</code> del paquete firmado, corriendo como root. Bash se queja de <code>syntax error: operand expected</code> intentando <strong>evaluar</strong> lo que acaba de descargarse: la prueba de que ese valor entra en <code>$(( ))</code>.</figcaption>
+</figure>
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-instalador-macos/01-callback.png' | relative_url }}"

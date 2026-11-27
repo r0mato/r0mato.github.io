@@ -195,6 +195,12 @@ X-Authorization: <my minted token>
 
 And they arrived. That employee's conversations, by the hundred.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/04-datos-de-otro.png' | relative_url }}"
+       alt="Request with the minted token and another employee's name in the body. The response returns conversations whose userId is that same employee, and the search counts 300 matches">
+  <figcaption>Just write someone else's name in the body. The response brings their conversations — the <code>userId</code> is theirs, not mine — and the search counts <strong>300</strong>. The real username is covered; it is a person.</figcaption>
+</figure>
+
 The token I minted does not say **who I am**. And the API, instead of
 deducing it from the token, lets me write it in the request body. It is like an unnamed
 train ticket where the inspector asks "and what is your name?" and takes your word for it.

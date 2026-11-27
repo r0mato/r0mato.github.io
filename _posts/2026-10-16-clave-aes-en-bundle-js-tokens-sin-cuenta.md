@@ -238,3 +238,22 @@ investigador y un problema es exactamente esta línea.
 También encontré, por el mismo camino, un endpoint que devolvía **sin ninguna
 autenticación** la clave de un servicio externo de pago. Esa la reporté tachada, sin usarla
 ni una vez: tener la llave no te da derecho a abrir la puerta.
+
+## Impacto
+
+<div class="impact" markdown="1">
+Cualquiera con un navegador podía fabricarse un pase válido —la clave estaba en un fichero
+servido a internet— y, con él, **leer las conversaciones de cualquier empleado de la
+empresa** indicando su nombre de usuario en el cuerpo de la petición. Sin cuenta, sin
+contraseña y sin que nadie se lo concediera.
+
+No es una lectura de metadatos: son los mensajes completos, con sus adjuntos y los ficheros
+que la gente había subido al asistente interno. En un portal corporativo eso es
+correspondencia privada, documentos de trabajo y lo que cada uno haya pegado en un chat
+creyéndolo interno.
+
+El mismo pase servía para **escribir**: renombrar y borrar conversaciones ajenas. Y por el
+mismo camino quedaba expuesta, sin autenticación, la clave de un servicio externo de pago.
+
+Severidad **crítica (CVSS 9.1)**, y aceptada como tal.
+</div>

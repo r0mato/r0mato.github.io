@@ -170,3 +170,23 @@ propia frase**.
 
 Esto es de lo más eficaz que puedes meter en un reporte: no es tu opinión sobre lo que
 debería pasar, es la suya.
+
+## Impacto
+
+<div class="impact" markdown="1">
+Una cuenta de usuario normal de ese Mac —sin contraseña de administrador y sin poder usar
+`sudo`— pasa a **ejecutar código como root**. No hace falta engañar a nadie ni esperar a
+nada: basta con crear una carpeta con el nombre adecuado y pedirle al ayudante que haga su
+trabajo.
+
+Siendo root en la máquina se alcanzan la base de datos local de credenciales y el fichero
+de cuentas del sistema, y se puede escribir en directorios reservados al sistema, que es
+donde vive el arranque automático.
+
+Lo que lo agrava: el atacante puede **reescribir el propio componente privilegiado**. A
+partir de ahí sigue dentro aunque la víctima desinstale la aplicación, porque lo que queda
+instalado ya no es del fabricante.
+
+Severidad **alta (CVSS 7.8)**. Local, pero completa: cualquier cuenta del equipo es
+administrador del equipo.
+</div>

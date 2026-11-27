@@ -238,3 +238,22 @@ problem is exactly this line.
 Along the same path I also found an endpoint that returned, **with no authentication at
 all**, the API key of an external paid service. I reported that one redacted, without using
 it once: holding the key does not entitle you to open the door.
+
+## Impact
+
+<div class="impact" markdown="1">
+Anyone with a browser could mint a valid pass — the key sat in a file served to the
+internet — and use it to **read any employee's conversations** by naming their username in
+the request body. No account, no password, and nobody granting them anything.
+
+This is not metadata: it is the full messages, their attachments and the files people had
+uploaded to the internal assistant. On a corporate portal that means private
+correspondence, work documents and whatever anyone pasted into a chat believing it was
+internal.
+
+The same pass also allowed **writes**: renaming and deleting other people's conversations.
+And along the same path, an external paid service's key was exposed with no authentication
+at all.
+
+Rated **critical (CVSS 9.1)**, and accepted as such.
+</div>

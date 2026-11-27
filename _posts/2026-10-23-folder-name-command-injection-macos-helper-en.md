@@ -166,3 +166,22 @@ sentence**.
 
 This is one of the most effective things you can put in a report: it is not your opinion
 about what should happen, it is theirs.
+
+## Impact
+
+<div class="impact" markdown="1">
+An ordinary user account on that Mac — with no admin password and unable to use `sudo` —
+gets to **run code as root**. Nobody has to be tricked and nothing has to be waited for:
+create a folder with the right name and ask the helper to do its job.
+
+As root on the machine, the local credential store and the system accounts file are within
+reach, and so is writing into system-reserved directories, which is where automatic startup
+lives.
+
+What makes it worse: the attacker can **rewrite the privileged component itself**. From
+there they stay in even if the victim uninstalls the application, because what remains
+installed is no longer the vendor's.
+
+Rated **high (CVSS 7.8)**. Local, but complete: any account on the machine is an
+administrator of the machine.
+</div>

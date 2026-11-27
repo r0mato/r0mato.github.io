@@ -109,6 +109,12 @@ protection. It is a formality.
 An attacker only needs a believable excuse for someone to type four characters: tech
 support, an "account verification", a prize draw, a colleague. The usual repertoire.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/02-pin-ya-de-la-victima.png' | relative_url }}"
+       alt="Server response for the same 7MTU code: the users_id field is no longer null, it now holds the victim identifier, redacted">
+  <figcaption>The same code, <code>7MTU</code>, after the victim types four characters. The empty slot has been filled with them: <code>users_id</code> is no longer <code>null</code>.</figcaption>
+</figure>
+
 ## Part 3: the redeemed code returns a permanent credential
 
 Before the victim confirmed, I tried to redeem the code. It failed: `"user not valid"`.
@@ -133,6 +139,12 @@ cheque: no name on it, cashed by whoever holds it.
 
 And that credential is **permanent**: it identifies "a device on this account" and keeps
 working indefinitely.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/03-credencial-permanente.png' | relative_url }}"
+       alt="Redemption response: an object with token, tokenSecret, creation date and the OAuth consumer, with deviceType android and active 1. Sensitive values are covered">
+  <figcaption>What redemption returns: a <code>token</code> and its <code>tokenSecret</code>, with <code>active: 1</code> and no expiry. A complete device credential, handed to whoever asked for the code.</figcaption>
+</figure>
 
 ## Part 4: from device credential to password
 

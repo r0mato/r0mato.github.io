@@ -109,6 +109,12 @@ Un atacante solo necesita una excusa creíble para que alguien teclee cuatro car
 soporte técnico, una «verificación de cuenta», un sorteo, un compañero de trabajo. El
 repertorio de siempre.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/02-pin-ya-de-la-victima.png' | relative_url }}"
+       alt="Respuesta del servidor para el mismo codigo 7MTU: el campo users_id ya no es null, ahora contiene el identificador de la victima, tapado">
+  <figcaption>El mismo código, <code>7MTU</code>, después de que la víctima teclee cuatro caracteres. El hueco vacío se ha llenado con ella: <code>users_id</code> ya no es <code>null</code>.</figcaption>
+</figure>
+
 ## Parte 3: el código canjeado devuelve una credencial permanente
 
 Antes de que la víctima confirme, intenté canjear el código. Fallo: `"user not valid"`.
@@ -130,6 +136,12 @@ cabecera de autenticación, sin cookie y sin firma de ningún tipo**.
 El servidor no comprueba quién recoge el premio. Comprueba que alguien ha
 dicho «sí» a ese código, y entonces se lo da **a quien lo pida**. Es un cheque al portador:
 no lleva nombre, lo cobra quien lo tenga en la mano.
+
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/03-credencial-permanente.png' | relative_url }}"
+       alt="Respuesta del canje: un objeto con token, tokenSecret, fecha de creacion y el consumidor OAuth, con deviceType android y active 1. Los valores sensibles van tapados">
+  <figcaption>Lo que devuelve el canje: un <code>token</code> y su <code>tokenSecret</code>, con <code>active: 1</code> y sin fecha de caducidad. Una credencial de dispositivo completa, entregada a quien pidió el código.</figcaption>
+</figure>
 
 Y esa credencial es **permanente**: identifica a «un dispositivo de esta cuenta» y sigue
 valiendo indefinidamente.

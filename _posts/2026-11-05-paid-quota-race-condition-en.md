@@ -1,6 +1,6 @@
 ---
 title:       "Race condition on a paid quota: 10 devices activated where only 1 fit"
-summary:     "The counter that enforces each plan's device quota was read before it was incremented. Sent one after another, the second activation gets a 403. Released in the same instant, all ten get through: ten real devices, each with a valid credential, on an account that allows one. Ten real devices on an account that allows one."
+summary:     "The counter that enforces each plan's device quota was read before it was incremented. Sent one after another, the second activation gets a 403. Released in the same instant, all ten get through: ten real devices, each with a valid credential, on an account that allows one. Reproduced nine times out of nine."
 date:        2026-11-05 10:33:00 +0100
 lang:        en
 ref:         race-cupo-dispositivos

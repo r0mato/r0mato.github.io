@@ -46,7 +46,7 @@ es:
   latest:
     eyebrow: "Casos publicados"
     title: "Writeups recientes"
-    text: "Vulnerabilidades reportadas, corregidas y publicadas con permiso. Lo que importa no es el payload: es la suposición del desarrollador que lo hizo posible."
+    text: "Vulnerabilidades reales, reportadas por canales oficiales y publicadas con permiso. Lo que importa no es el payload: es la suposición del desarrollador que lo hizo posible."
     view_all: "Ver todos los writeups"
     empty: "Todavía no hay writeups publicados."
 
@@ -55,7 +55,7 @@ es:
     title: "Writeups"
     one: "caso publicado."
     many: "casos publicados."
-    lede_tail: "Todos reportados por canales oficiales, corregidos por el propietario y publicados con permiso."
+    lede_tail: "Todos reportados por canales oficiales y publicados con permiso. El estado de cada uno —corregido, reportado o informativo— aparece en su ficha."
     search: "Buscar por título, clase o etiqueta…"
     all_sev: "Todas"
     all_class: "Toda clase"
@@ -140,7 +140,7 @@ en:
   latest:
     eyebrow: "Published cases"
     title: "Recent writeups"
-    text: "Vulnerabilities reported, fixed and published with permission. What matters is not the payload: it is the developer assumption that made it possible."
+    text: "Real vulnerabilities, reported through official channels and published with permission. What matters is not the payload: it is the developer assumption that made it possible."
     view_all: "See all writeups"
     empty: "No writeups published yet."
 
@@ -149,7 +149,7 @@ en:
     title: "Writeups"
     one: "published case."
     many: "published cases."
-    lede_tail: "All reported through official channels, fixed by the owner and published with permission."
+    lede_tail: "All reported through official channels and published with permission. Each one's status — fixed, reported or informational — is shown on its page."
     search: "Search by title, class or tag…"
     all_sev: "All"
     all_class: "All classes"

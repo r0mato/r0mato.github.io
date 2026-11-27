@@ -1,6 +1,6 @@
 ---
 title:       "Condición de carrera en un límite de pago: 10 dispositivos activados donde solo cabía 1"
-summary:     "El contador que hace cumplir el cupo de dispositivos de cada plan se leía antes de subirlo. Una detrás de otra, la segunda activación recibe un 403. Soltadas en el mismo instante, pasan las diez: diez dispositivos reales, con su credencial válida, en una cuenta que permite uno. Diez dispositivos reales en una cuenta que permite uno."
+summary:     "El contador que hace cumplir el cupo de dispositivos de cada plan se leía antes de subirlo. Una detrás de otra, la segunda activación recibe un 403. Soltadas en el mismo instante, pasan las diez: diez dispositivos reales, con su credencial válida, en una cuenta que permite uno. Reproducible nueve veces de nueve."
 date:        2026-11-05 10:33:00 +0100
 lang:        es
 ref:         race-cupo-dispositivos

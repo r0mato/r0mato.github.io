@@ -169,14 +169,6 @@ set-cookie: SESSION_ID=...;  USER_ID=...;  USERNAME=...
 The server hands over **the victim's session cookies**. The ticket alone produced the
 session.
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
-<figure>
-  <img src="{{ '/assets/img/writeups/open-redirect-sso/01-ticket-canjeado.png' | relative_url }}"
-       alt="Request with no cookies presenting the stolen ticket, and a response setting the victim's session cookies">
-  <figcaption>No cookies, no password. The ticket is enough.</figcaption>
-</figure>
-{% endcomment %}
-
 ## Proving impact without overreaching
 
 Holding a cookie proves nothing on its own. You have to show **what it opens**. I used that

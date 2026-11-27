@@ -399,6 +399,9 @@ p  { margin: 0 0 1.15rem; }
 
 /* Imágenes y figuras */
 .prose img {
+  /* sin esto, una captura de 1900 px de ancho desborda la pantalla del movil
+     y aparece la barra horizontal en toda la pagina */
+  display: block; max-width: 100%; height: auto;
   border: 1px solid var(--border); border-radius: var(--radius);
   box-shadow: var(--shadow-sm); margin: 1.7rem auto .6rem;
   background: var(--surface);
@@ -534,7 +537,10 @@ p  { margin: 0 0 1.15rem; }
 
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 1000px) {
-  .wu-layout { grid-template-columns: 1fr; gap: 0; }
+  /* minmax(0, 1fr) y no 1fr: con `1fr` la columna no puede encoger por debajo
+     del contenido mas ancho que tenga dentro, y en movil el articulo se
+     quedaba en 760 px arrastrando toda la pagina a scroll horizontal */
+  .wu-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .toc { display: none; }
 }
 @media (max-width: 860px) {

@@ -143,14 +143,6 @@ The response arrived as an event stream, and inside it was this:
  "observation":"0e407c15aa4778af3f4ba76dbfa2b0d3fd990d2f365bdf3aa3d95091e4069005"}
 ```
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-agente-ia/01-canario.png' | relative_url }}"
-       alt="Two terminals side by side: on the left the SHA-256 computed locally, on the right the server's response with the identical value">
-  <figcaption>Left: computed on my machine before touching anything. Right: returned by the server. Identical. That cannot be improvised.</figcaption>
-</figure>
-{% endcomment %}
-
 **Character for character, the same.** That closes the discussion.
 
 <figure>

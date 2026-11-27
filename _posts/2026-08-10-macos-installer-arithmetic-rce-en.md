@@ -1,7 +1,7 @@
 ---
 title:       "Root RCE in a macOS installer: bash arithmetic runs whatever you put in it"
 summary:     "An installation script added one to a number that came from the server. The problem is that in bash \"adding\" means \"evaluating\", and that number could be written by anyone on the internet without an account. Report accepted and rewarded."
-date:        2026-08-21 18:40:00 +0100
+date:        2026-08-10 18:40:00 +0100
 lang:        en
 ref:         rce-instalador-macos-aritmetica
 image:       /assets/img/og/rce-instalador-macos-aritmetica-en.png
@@ -72,14 +72,6 @@ cat /tmp/installer-open/*.pkg/Scripts/postinstall
 
 That is all. Two commands and you are reading the code that will run as root on thousands
 of people's computers.
-
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-instalador-macos/01-pkg-expandido.png' | relative_url }}"
-       alt="Terminal showing the expanded package and the folder structure with the postinstall script">
-  <figcaption>The expanded package. From here on I am not guessing: I am reading.</figcaption>
-</figure>
-{% endcomment %}
 
 ## The line that made me stop
 
@@ -194,14 +186,6 @@ HTTP/2 200 OK
 ```
 
 Two hundred. No authentication. Anyone, from anywhere.
-
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
-<figure>
-  <img src="{{ '/assets/img/writeups/rce-instalador-macos/02-escritura-sin-auth.png' | relative_url }}"
-       alt="Burp Repeater: POST request with no authorisation header and 200 OK response from the feedback server">
-  <figcaption>No <code>Authorization</code> header, no cookie, nothing. <code>200 OK</code>.</figcaption>
-</figure>
-{% endcomment %}
 
 And reading it back, the value came back **byte for byte**, nothing filtered or escaped:
 

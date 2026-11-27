@@ -170,14 +170,6 @@ set-cookie: SESSION_ID=...;  USER_ID=...;  USERNAME=...
 El servidor entrega **las cookies de sesión de la víctima**. El ticket por sí solo
 produjo la sesión.
 
-{% comment %} PENDIENTE DE CAPTURA — quita esta linea y la de cierre cuando exista el fichero
-<figure>
-  <img src="{{ '/assets/img/writeups/open-redirect-sso/01-ticket-canjeado.png' | relative_url }}"
-       alt="Petición sin ninguna cookie presentando el ticket robado, y respuesta que establece las cookies de sesión de la víctima">
-  <figcaption>Sin cookies, sin contraseña. El ticket basta.</figcaption>
-</figure>
-{% endcomment %}
-
 ## Demostrar el impacto sin pasarse
 
 Tener una cookie no demuestra nada por sí solo. Hay que enseñar **qué abre**. Usé esa

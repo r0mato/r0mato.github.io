@@ -528,6 +528,122 @@ def _envolver(texto, ancho):
     return lineas
 
 
+
+# ═══════ 12 · la ventana entre comprobar y escribir (TOCTOU) ═══════
+def ventana_carrera(L):
+    t = dict(
+        es=dict(tit="La misma comprobación, enviada de dos maneras",
+                izq="UNA DETRÁS DE OTRA", der="LAS DOS A LA VEZ",
+                a="Petición A", b="Petición B",
+                lee0="lee 0", lee1="lee 1", esc="escribe 1", no="403 · cupo lleno",
+                vent="ventana", tope="tope del plan: 1 dispositivo",
+                vizq="El cupo se respeta: B ve lo que A ya escribió",
+                vder="Las dos leen 0 y las dos escriben: 2 donde cabía 1",
+                pie="El fallo no está en la comprobación, que es correcta. Está en el hueco que deja detrás."),
+        en=dict(tit="The same check, sent two different ways",
+                izq="ONE AFTER THE OTHER", der="BOTH AT THE SAME TIME",
+                a="Request A", b="Request B",
+                lee0="reads 0", lee1="reads 1", esc="writes 1", no="403 · quota full",
+                vent="window", tope="plan limit: 1 device",
+                vizq="The quota holds: B sees what A already wrote",
+                vder="Both read 0 and both write: 2 where 1 fit",
+                pie="The bug is not the check, which is correct. It is the gap the check leaves behind."))[L]
+
+    def panel(px, titulo, carrera):
+        o = [caja(px, 74, 410, 232, BORDE, "#0b1220", 12, ".5"),
+             txt(px + 205, 98, titulo, AMBAR if carrera else DIM, 11.5, MONO, "middle", "600")]
+        ya, yb = 142, 196
+        if carrera:   # el hueco de A abarca la lectura de B
+            o.insert(1, f'<rect x="{px + 118}" y="120" width="140" height="100" rx="8" '
+                        f'fill="{AMBAR}" fill-opacity=".10" stroke="{AMBAR}" stroke-opacity=".45" '
+                        f'stroke-dasharray="4 3"/>')
+            o.append(txt(px + 188, 136, t["vent"], AMBAR, 10.5, MONO, "middle"))
+        for y, etiqueta in ((ya, t["a"]), (yb, t["b"])):
+            o.append(txt(px + 16, y + 4, etiqueta, DIM, 11.5, MONO))
+            o.append(f'<path d="M{px + 100} {y} L{px + 392} {y}" stroke="{BORDE}" stroke-width="1.5"/>')
+
+        def evento(x, y, s, color):
+            an = 8 + len(s) * 6.6
+            return [caja(x, y - 13, an, 26, color, "#141f36", 7, ".85"),
+                    txt(x + an / 2, y + 4, s, color, 11, MONO, "middle", "600")]
+
+        if carrera:
+            o += evento(px + 118, ya, t["lee0"], AZUL) + evento(px + 252, ya, t["esc"], VERDE)
+            o += evento(px + 150, yb, t["lee0"], AZUL) + evento(px + 290, yb, t["esc"], VERDE)
+        else:
+            o += evento(px + 118, ya, t["lee0"], AZUL) + evento(px + 206, ya, t["esc"], VERDE)
+            o += evento(px + 252, yb, t["lee1"], AZUL) + evento(px + 318, yb, t["no"], ROJO)
+        col = ROJO if carrera else VERDE
+        o.append(caja(px + 16, 250, 378, 42, col, "#141f36", 9, ".5"))
+        for i, linea in enumerate(_envolver(t["vder"] if carrera else t["vizq"], 50)[:2]):
+            o.append(txt(px + 205, 268 + i * 15, linea, col, 11.5, UI, "middle"))
+        return "".join(o)
+
+    c = [txt(470, 42, t["tit"], TXT, 16, UI, "middle", "650"),
+         panel(30, t["izq"], False), panel(500, t["der"], True),
+         txt(470, 336, t["tope"], DIM, 11.5, MONO, "middle"),
+         txt(470, 362, t["pie"], DIM, 12.5, UI, "middle")]
+    return svg(940, 384, "".join(c))
+
+
+# ═══════ 13 · por que "a la vez" no es "muy rapido" ═══════
+def ultimo_byte(L):
+    t = dict(
+        es=dict(tit="«A la vez» no es «muy rápido»",
+                a="Enviadas seguidas", b="Sincronizadas por el último byte",
+                pa="Cada una sale cuando termina la anterior. Entre la primera y la última hay"
+                   " milisegundos de red: tiempo de sobra para que el contador ya esté subido.",
+                pb="Se abren N conexiones y se manda la petición entera MENOS su último byte. El"
+                   " servidor no puede procesar nada todavía. Después se sueltan los N bytes finales"
+                   " juntos, y la latencia ya está pagada.",
+                con="conexión", casi="petición completa menos 1 byte", byte="1 byte",
+                llegan="llegan separadas", juntas="llegan dentro de la misma ventana",
+                pie="La latencia se paga ANTES de que empiece la carrera, no durante."),
+        en=dict(tit="\u201cAt the same time\u201d is not \u201cvery fast\u201d",
+                a="Sent back to back", b="Last-byte synchronised",
+                pa="Each one leaves when the previous finishes. Between the first and the last there"
+                   " are milliseconds of network: plenty of time for the counter to already be up.",
+                pb="Open N connections and send the whole request MINUS its final byte. The server"
+                   " cannot process anything yet. Then release the N final bytes together, with the"
+                   " latency already paid.",
+                con="connection", casi="whole request minus 1 byte", byte="1 byte",
+                llegan="arrive spread out", juntas="arrive inside the same window",
+                pie="The latency is paid BEFORE the race starts, not during it."))[L]
+
+    c = [txt(470, 40, t["tit"], TXT, 16, UI, "middle", "650")]
+
+    # ── arriba: una detrás de otra ──
+    c += [caja(30, 62, 880, 122, BORDE, "#0b1220", 12, ".5"),
+          txt(52, 88, t["a"], ROJO, 12, MONO, "start", "600")]
+    for i in range(3):
+        y = 112 + i * 24
+        x = 150 + i * 150
+        c += [txt(52, y + 4, f'{t["con"]} {i + 1}', DIM, 10.5, MONO),
+              f'<rect x="{x}" y="{y - 8}" width="128" height="16" rx="4" fill="{AZUL}" fill-opacity=".30"/>',
+              f'<rect x="{x + 128}" y="{y - 8}" width="7" height="16" rx="2" fill="{ROJO}"/>']
+    c.append(txt(888, 172, t["llegan"], ROJO, 11, MONO, "end"))
+    for i, linea in enumerate(_envolver(t["pa"], 100)[:2]):
+        c.append(txt(470, 208 + i * 17, linea, DIM, 12, UI, "middle"))
+
+    # ── abajo: sincronizadas ──
+    c += [caja(30, 254, 880, 138, BORDE, "#0b1220", 12, ".5"),
+          txt(52, 280, t["b"], VERDE, 12, MONO, "start", "600")]
+    for i in range(3):
+        y = 304 + i * 24
+        c += [txt(52, y + 4, f'{t["con"]} {i + 1}', DIM, 10.5, MONO),
+              f'<rect x="150" y="{y - 8}" width="520" height="16" rx="4" fill="{AZUL}" fill-opacity=".30"/>',
+              f'<rect x="676" y="{y - 8}" width="7" height="16" rx="2" fill="{VERDE}"/>']
+    c += [txt(410, 296, t["casi"], DIM, 10.5, MONO, "middle"),
+          f'<path d="M694 290 L694 362" stroke="{VERDE}" stroke-width="1.6" stroke-dasharray="4 3"/>',
+          txt(704, 296, t["byte"], VERDE, 10.5, MONO),
+          txt(888, 380, t["juntas"], VERDE, 11, MONO, "end")]
+    for i, linea in enumerate(_envolver(t["pb"], 100)[:2]):
+        c.append(txt(470, 416 + i * 17, linea, DIM, 12, UI, "middle"))
+
+    c.append(txt(470, 468, t["pie"], TXT, 12.5, UI, "middle", "500"))
+    return svg(940, 488, "".join(c))
+
+
 DIAGRAMAS = [
     ("rce-cli-shell-true", "04-shell-true.svg", shell_true),
     ("open-redirect-sso", "02-anatomia-url.svg", anatomia_url),
@@ -540,6 +656,8 @@ DIAGRAMAS = [
     ("rce-agente-ia", "03-canario.svg", canario),
     ("open-redirect-sso", "03-cadena.svg", cadena_sso),
     ("rce-cli-shell-true", "05-mitm.svg", mitm),
+    ("race-cupo-dispositivos", "01-ventana-carrera.svg", ventana_carrera),
+    ("race-cupo-dispositivos", "02-ultimo-byte.svg", ultimo_byte),
 ]
 
 if __name__ == "__main__":

@@ -73,7 +73,7 @@ es:
     prev: "← Anterior"
     next: "Siguiente →"
     no_translation: "Este writeup aún no está traducido."
-    disclosure: "Publicado tras la corrección del fallo y con el consentimiento del programa correspondiente. Los identificadores, dominios y datos sensibles han sido anonimizados o sustituidos por valores de laboratorio propios. Ninguna prueba utilizó datos de usuarios reales."
+    disclosure: "Publicado con el consentimiento del programa correspondiente. El estado de cada caso —corregido, reportado o cerrado como informativo— aparece arriba, junto a la severidad. Los identificadores, dominios y datos sensibles han sido anonimizados o sustituidos por valores de laboratorio propios. Ninguna prueba utilizó datos de usuarios reales."
     facts:
       target: "Tipo de objetivo"
       class: "Clase"
@@ -167,7 +167,7 @@ en:
     prev: "← Previous"
     next: "Next →"
     no_translation: "This writeup is not translated yet."
-    disclosure: "Published after the issue was fixed and with the consent of the relevant program. Identifiers, domains and sensitive data have been anonymised or replaced with my own lab values. No test used real user data."
+    disclosure: "Published with the consent of the relevant program. Each case's status — fixed, reported, or closed as informational — is shown above, next to the severity. Identifiers, domains and sensitive data have been anonymised or replaced with my own lab values. No test used real user data."
     facts:
       target: "Target type"
       class: "Class"

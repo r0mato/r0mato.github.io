@@ -159,6 +159,12 @@ Authorization: <firma con el token y el secreto del dispositivo>
 Y en la respuesta, además del correo de la víctima, había un campo que no debería haber
 estado ahí: **el token de recuperación de contraseña**.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/04-token-de-recuperacion.png' | relative_url }}"
+       alt="Respuesta del perfil leida con la credencial del dispositivo: entre los campos aparecen user_email, user_name, new_recover_token y temp_recover_token, todos con su valor tapado">
+  <figcaption>El perfil, leído con la credencial del dispositivo. Entre los campos está <code>new_recover_token</code>: el mecanismo para recuperar la cuenta, legible desde un aparato vinculado. Los valores van tapados; los nombres de campo son el hallazgo.</figcaption>
+</figure>
+
 El token de recuperación es ese código que te llega por correo cuando
 pulsas «he olvidado mi contraseña». Es, a todos los efectos, **equivalente a la
 contraseña**: quien lo tiene, puede cambiarla.

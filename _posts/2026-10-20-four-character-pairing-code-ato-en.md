@@ -159,6 +159,12 @@ Authorization: <signature using the device token and secret>
 And in the response, along with the victim's email, there was a field that should not have
 been there: **the password recovery token**.
 
+<figure>
+  <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/04-token-de-recuperacion.png' | relative_url }}"
+       alt="Profile response read with the device credential: among the fields are user_email, user_name, new_recover_token and temp_recover_token, each with its value covered">
+  <figcaption>The profile, read with the device credential. Among the fields sits <code>new_recover_token</code>: the account-recovery mechanism, readable from a paired device. The values are covered; the field names are the finding.</figcaption>
+</figure>
+
 The recovery token is that code you get by email when you click "I
 forgot my password". It is, to all intents and purposes, **equivalent to the password**:
 whoever holds it can change it.

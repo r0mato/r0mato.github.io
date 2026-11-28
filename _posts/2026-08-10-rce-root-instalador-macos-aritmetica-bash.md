@@ -135,6 +135,14 @@ está compartiendo el identificador.
   <figcaption>Un segundo después de instalar, la máquina llama a mi oyente: primero resuelve el dominio y luego hace el <code>POST</code>. El código se ejecutó. Las IP de origen son mías y van tapadas.</figcaption>
 </figure>
 
+Y ese `POST` traía, como cuerpo, la salida del comando:
+
+<figure>
+  <img src="{{ '/assets/img/writeups/rce-instalador-macos/04-id-root-en-el-oyente.png' | relative_url }}"
+       alt="Cuerpo de la peticion recibida en el oyente: las cabeceras HTTP y, debajo, la salida de id con uid=0(root) gid=0(wheel) y la lista de grupos de macOS">
+  <figcaption>El cuerpo de ese <code>POST</code>: la salida de <code>id</code> ejecutándose en el Mac de la víctima. <code>uid=0(root)</code>. El comando no solo se evaluó, se ejecutó con permisos totales y mandó el resultado a mi servidor.</figcaption>
+</figure>
+
 ## Y la víctima no ve nada
 
 ```bash

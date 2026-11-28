@@ -24,74 +24,39 @@ takeaways:
   - "If the vendor's own code documents the boundary their bug crosses, quote it. Nothing is more convincing than their own comment."
 ---
 
-This bug has my favourite part of offensive security in it: the answer is not sending a
-weird value, it is **creating a folder**. The filesystem, which nobody treats as user
-input, is the user input.
+On macOS, an application that needs to touch system configuration installs a **privileged
+helper**: a separate process running permanently as root that the application asks for
+favours. All of its security comes down to one question: how it checks who is talking to it.
 
-<div class="warn" markdown="1">
-**Everything is anonymised.** Vendor, service identifiers and product paths have been
-changed. The mechanism, the checks the binary performs and the technique are exact.
-</div>
+This one did it like so:
 
-## What a "privileged helper" is
-
-On macOS, an ordinary application cannot touch system configuration. When it needs to —
-configuring the network, installing a service, modifying protected folders — it installs a
-**privileged helper**: a small separate program that runs **as root** permanently and that
-the application asks for favours.
-
-It is a butler with the keys to everything. The app does not open the
-doors: it asks the butler. And since the butler holds every key, **the only thing standing
-between him and disaster is knowing who he is obeying**.
-
-Which is why the security of these components boils down to one question: how does it check
-who is talking to it?
-
-## How this one checked its caller
-
-The helper did this, in this order:
-
-1. Asked for the **PID** — the process number — of whoever was talking to it.
-2. Used that number to resolve the **executable's path** on disk.
-3. Checked that path did not contain certain forbidden characters.
-4. Dropped the path **between single quotes** into a shell command, to verify the
-   program's digital signature.
-5. Ran that command with `popen()`, which means launching `/bin/sh -c "…"`.
+1. It asked for the caller's **PID**.
+2. From that it resolved the **executable path** on disk.
+3. It checked the path for certain forbidden characters.
+4. It wrapped it in **single quotes** inside a shell command to verify the signature.
+5. It ran that with `popen()`, which is `/bin/sh -c "…"`.
 
 ```c
 std::string cmd = "/usr/bin/codesign -d --verbose=4 '" + path + "' 2>&1";
 std::string out = runWithOutput(cmd);   // popen() → /bin/sh -c
 ```
 
-Step 4 is the bug. The path — something **the attacker chooses**, because they choose where
-their program lives — ends up inside a string the shell interprets.
+Step 4 is the bug: the attacker chooses that path, because they choose where to put their
+program.
 
-## Single quotes: the false sense of safety
+## The quotes and the blacklist
 
-The developer was not entirely naive. They put the path **between single quotes**, which in
-a shell is the strongest way of saying "this is literal text".
-
-```bash
-echo 'this $(does not) execute'      # printed as is
-```
-
-And they added a **four-character blacklist**, so you could not sneak anything in.
-
-A blacklist is the *"I'll forbid the dangerous stuff"* strategy. The
-problem is that for it to work you must have thought of **everything** dangerous. And
-something always gets away.
-
-What got away here was the single quote itself. If you **close** the quote, whatever comes
-after is no longer literal text: it is code.
+Single quotes are the strongest way to say "this is literal text", and there was also a
+blacklist of four characters. What slipped through was the single quote itself: if you
+**close** it, what follows is no longer text.
 
 ```bash
 # the program builds this:
 codesign -d --verbose=4 '<PATH>' 2>&1
 
 # if the path is:   /tmp/p'$(my-script)'
-# it becomes:
 codesign -d --verbose=4 '/tmp/p'$(my-script)'' 2>&1
-#                        └ closes ┘└ executes ┘
+#                        └ closes ┘└  runs  ┘
 ```
 
 <figure>
@@ -100,46 +65,31 @@ codesign -d --verbose=4 '/tmp/p'$(my-script)'' 2>&1
   <figcaption>Above, what the program thinks it is running. Below, what it actually runs.</figcaption>
 </figure>
 
-## The idea: make the injection the folder's name
+## The payload is the folder name
 
-Here is the beautiful part. The "path" is not something I make up: it is **where my program
-lives**. So to inject, I have to **create a folder whose name is the injection**:
+I do not get to invent the path: it is where my program lives. So to inject, you create a
+folder whose name **is** the injection.
 
 ```bash
 mkdir "/tmp/p\$(/bin/sh /tmp/x.sh)"
 ```
 
-I am not sending a malicious value through any field. I am creating a
-folder with an odd name and putting my program inside it. When the butler asks "where do
-you live?", the answer **is** the attack.
+I am not sending a malicious value through any field. I create a folder with an odd name
+and put my program inside it. When the helper asks where it lives, the answer is the attack.
+A quote, a dollar and a parenthesis: a perfectly legal name on macOS.
 
-And it is a perfectly legal folder name on macOS: a quote, a dollar sign and a parenthesis.
-Nothing forbidden.
-
-A lovely detail of this case: the name **cannot contain a slash `/`**, because it is the
-one character filesystems do not allow in a name. So the payload cannot be a command with
-paths: it has to **call a script** living somewhere else. Filesystem limitations force you
-to design the payload carefully, and that is part of the fun.
+One detail that forces care: the name **cannot contain a slash**, the one character a
+filesystem will not allow in a name. So the payload cannot be a command with paths in it; it
+has to call a script that lives elsewhere.
 
 ## The rest of the chain
 
-One intermediate check remained: the helper verified the program was **signed** with the
-product's identifier before reaching the vulnerable line.
+Before reaching the vulnerable line, the helper verified that the program was signed with
+the product's identifier. That is not a barrier: macOS lets you ad-hoc sign any binary, with
+no developer certificate, carrying whatever identifier you like. It checks that the ID card
+bears the company's name, not that the company issued it.
 
-That sounds like a barrier, but it is not: macOS lets you sign any binary **ad hoc**,
-without a developer certificate, giving it whatever identifier you like. And that is exactly
-what the check looked at.
-
-In other words: it checks the badge says the company's name, not that the company issued it.
-
-## What it reaches from there
-
-With code running as root I was able to confirm — by reading, never modifying — that it
-reached:
-
-- **The system's local credential store** and the accounts file, readable only by root.
-- **The product's own privileged service**, which root can rewrite. In other words: the
-  attacker can replace the butler with one of their own.
+## What it reaches
 
 <figure>
   <img src="{{ '/assets/img/writeups/inyeccion-nombre-carpeta/01-root-desde-cuenta-normal.png' | relative_url }}"
@@ -147,25 +97,21 @@ reached:
   <figcaption>From a normal account (<code>uid=502</code>): <code>whoami → root</code>. It writes a canary into a root-only directory <strong>and deletes it again</strong>, and reads the system accounts file. The group list is covered because it includes one of the product's.</figcaption>
 </figure>
 
-Once you are root on a Mac, the product you were attacking is the least
-of it. You have the machine. And in this case you can also modify the privileged component
-itself, which means you stay in even if the application is uninstalled.
+Reading, never modifying: the local credential store and the system accounts file, readable
+only by root. And the product's own privileged service, which root can rewrite — meaning the
+attacker can replace the helper with one of their own and stay in even if the application is
+uninstalled.
 
-And a detail that makes it worse: when the helper rejects a caller it does not recognise,
-it **exits immediately**. The result is that any legitimate installation in progress fails
-with a generic installer error. It looks like an installer glitch, not an attack.
+One thing that makes it worse: when the helper rejects a caller it does not recognise, it
+terminates outright. Any legitimate install in progress fails with a generic error. It looks
+like a broken installer, not an attack.
 
 ## The argument that closes the report
 
-Reading the product's own installer scripts, I found a comment from its developers saying,
-in essence, that *otherwise an unprivileged process could request a reinstall at any time*.
-
-The vendor had written down, in their own code, which boundary they
-wanted to defend. My report proved that boundary was broken, **quoting their own
-sentence**.
-
-This is one of the most effective things you can put in a report: it is not your opinion
-about what should happen, it is theirs.
+In the product's own installer scripts there was a comment from its developers saying, in
+essence, that *otherwise an unprivileged process could request a reinstall at any time*. The
+vendor had written down the boundary they wanted to defend; my report showed it was broken by
+quoting their own sentence. That convinces far better than any opinion of mine.
 
 ## Impact
 

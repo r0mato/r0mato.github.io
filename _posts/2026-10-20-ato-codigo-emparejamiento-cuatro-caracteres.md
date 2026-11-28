@@ -23,40 +23,17 @@ takeaways:
   - "Si cambiar la contraseña no echa al atacante, el incidente no se ha cerrado: solo lo parece."
 ---
 
-Este fallo me gusta especialmente porque no hay ni una línea de código roto. Todo funciona
-exactamente como está programado. Lo que está mal es **el diseño**: una cadena de
-decisiones razonables por separado que, puestas en fila, entregan la cuenta.
+Aquí no hay una línea de código roto: todo funciona como está programado. Lo que está mal
+es el diseño, y la única acción que hace falta de la víctima es teclear cuatro caracteres.
 
-Y porque la única acción que hace falta de la víctima es **teclear cuatro caracteres** en
-una pantalla que la propia aplicación le pide que use.
+El flujo legítimo es el de media humanidad: el televisor muestra un código corto, tú lo
+escribes en el móvil donde ya tienes sesión, y el televisor queda vinculado. Funciona
+porque se asume que quien escribe el código está mirando la pantalla donde aparece. Ese
+supuesto es el que se rompe.
 
-<div class="warn" markdown="1">
-**Todo está anonimizado.** Publicado con permiso del programa y sin identificar al
-producto: empresa, dominios y nombres de campo están cambiados. El mecanismo es exacto.
-</div>
+## 1 · Pedir un código sin tener cuenta
 
-## El flujo legítimo, el que usa todo el mundo
-
-Hay aplicaciones que también funcionan en un televisor. Como escribir una contraseña con
-el mando es una tortura, casi todas usan el mismo patrón:
-
-1. El televisor muestra un **código corto**: cuatro caracteres.
-2. Tú abres la aplicación en el móvil, donde ya tienes la sesión iniciada.
-3. Escribes el código.
-4. El televisor queda vinculado a tu cuenta.
-
-Es el mismo patrón que usan las aplicaciones de las *smart TV* de medio
-mundo. Lo has hecho veinte veces. Y funciona porque se asume que **quien escribe el código
-está mirando la pantalla donde aparece** — es decir, que los dos aparatos están en la misma
-habitación.
-
-Ese supuesto es el que se rompe aquí.
-
-## Parte 1: pedir un código sin tener cuenta
-
-Lo primero que probé fue pedir uno de esos códigos directamente a la API, sin sesión y sin
-cuenta. Lo único que hace falta es la clave pública de la aplicación — que, por ser
-pública, viene dentro del propio instalador y la puede leer cualquiera.
+Lo único que hace falta es la clave pública del cliente, que viene dentro del instalador.
 
 ```http
 GET /v2/devices/pin HTTP/2
@@ -74,30 +51,15 @@ x-app-key: <clave pública del cliente, extraída del instalador>
   <figcaption>Una petición con la clave pública de la aplicación y nada más. El servidor emite el código: <code>users_id: null</code>, <code>pin: "7MTU"</code>. Van tapados la clave y el host.</figcaption>
 </figure>
 
-Fíjate en el detalle que lo decide todo: **`users_id: null`**.
+**`users_id: null`**: un código que no pertenece a nadie, un hueco esperando a que alguien
+lo rellene. Lo rellena quien lo teclee.
 
-El servidor me acaba de dar un código **que no pertenece a nadie**. Es un
-hueco vacío esperando a que alguien lo rellene. Y lo rellena quien lo teclee.
+## 2 · La pantalla no dice qué estás autorizando
 
-Un código así no debería existir sin estar atado desde el primer segundo a la sesión del
-aparato que lo pidió.
-
-## Parte 2: la pantalla que no dice qué estás autorizando
-
-Aquí viene la parte que el reporte explica con más cuidado, porque es la que decide si esto
-es explotable en el mundo real o solo en un laboratorio.
-
-Cuando la víctima teclea el código en su aplicación, aparece una confirmación. Y esa
-confirmación **no decía nada del aparato que lo había pedido**: ni nombre, ni tipo, ni
-dirección IP, ni ubicación aproximada.
-
-La víctima ve algo parecido a *«¿Autorizar este dispositivo?»* y un botón.
-No hay forma humana de distinguir su propio televisor del portátil de un desconocido al
-otro lado del país. No es que la víctima sea descuidada: **es que no le están dando la
-información para decidir**.
-
-Por eso una pantalla de consentimiento que no describe lo que estás autorizando no es una
-protección. Es un trámite.
+Cuando la víctima teclea el código aparece una confirmación, y no decía nada del aparato
+que lo había pedido: ni nombre, ni tipo, ni IP, ni ubicación. Solo «¿Autorizar este
+dispositivo?» y un botón. No hay forma de distinguir tu televisor del portátil de un
+desconocido. No es descuido de la víctima: es que no le dan la información para decidir.
 
 <figure>
   <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/02-consentimiento.svg' | relative_url }}"
@@ -105,22 +67,16 @@ protección. Es un trámite.
   <figcaption>A la izquierda, lo que se le pedía autorizar. A la derecha, lo que hacía falta para poder decidir.</figcaption>
 </figure>
 
-Un atacante solo necesita una excusa creíble para que alguien teclee cuatro caracteres:
-soporte técnico, una «verificación de cuenta», un sorteo, un compañero de trabajo. El
-repertorio de siempre.
-
 <figure>
   <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/02-pin-ya-de-la-victima.png' | relative_url }}"
        alt="Respuesta del servidor para el mismo codigo 7MTU: el campo users_id ya no es null, ahora contiene el identificador de la victima, tapado">
   <figcaption>El mismo código, <code>7MTU</code>, después de que la víctima teclee cuatro caracteres. El hueco vacío se ha llenado con ella: <code>users_id</code> ya no es <code>null</code>.</figcaption>
 </figure>
 
-## Parte 3: el código canjeado devuelve una credencial permanente
+## 3 · El canje devuelve una credencial permanente
 
-Antes de que la víctima confirme, intenté canjear el código. Fallo: `"user not valid"`.
-Ese intento fallido es importante y luego explico por qué.
-
-Después de que la víctima confirme, repetí **exactamente la misma petición**:
+Antes de que la víctima confirme, el canje falla con `"user not valid"`. Después de que
+confirme, **exactamente la misma petición**:
 
 ```http
 POST /v2/devices/pin/accesstoken HTTP/2
@@ -130,12 +86,8 @@ x-app-key: <clave pública>
 {"pin":"7MTU"}
 ```
 
-Y el servidor entregó una credencial completa de dispositivo —un token y su secreto— **sin
-cabecera de autenticación, sin cookie y sin firma de ningún tipo**.
-
-El servidor no comprueba quién recoge el premio. Comprueba que alguien ha
-dicho «sí» a ese código, y entonces se lo da **a quien lo pida**. Es un cheque al portador:
-no lleva nombre, lo cobra quien lo tenga en la mano.
+Y entrega un token y su secreto sin cabecera de autenticación, sin cookie y sin firma. No
+comprueba quién recoge el premio, solo que alguien dijo «sí» a ese código.
 
 <figure>
   <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/03-credencial-permanente.png' | relative_url }}"
@@ -143,21 +95,17 @@ no lleva nombre, lo cobra quien lo tenga en la mano.
   <figcaption>Lo que devuelve el canje: un <code>token</code> y su <code>tokenSecret</code>, con <code>active: 1</code> y sin fecha de caducidad. Una credencial de dispositivo completa, entregada a quien pidió el código.</figcaption>
 </figure>
 
-Y esa credencial es **permanente**: identifica a «un dispositivo de esta cuenta» y sigue
-valiendo indefinidamente.
+## 4 · De credencial de dispositivo a contraseña
 
-## Parte 4: de credencial de dispositivo a contraseña
-
-Con esa credencial, firmé una lectura del perfil de la cuenta:
+Firmando con ella:
 
 ```http
-GET /cg/users/me HTTP/2
+GET /users/me HTTP/2
 Host: api.ejemplo.tld
 Authorization: <firma con el token y el secreto del dispositivo>
 ```
 
-Y en la respuesta, además del correo de la víctima, había un campo que no debería haber
-estado ahí: **el token de recuperación de contraseña**.
+Además del correo, en la respuesta venía el **token de recuperación de contraseña**.
 
 <figure>
   <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/04-token-de-recuperacion.png' | relative_url }}"
@@ -165,34 +113,23 @@ estado ahí: **el token de recuperación de contraseña**.
   <figcaption>El perfil, leído con la credencial del dispositivo. Entre los campos está <code>new_recover_token</code>: el mecanismo para recuperar la cuenta, legible desde un aparato vinculado. Los valores van tapados; los nombres de campo son el hallazgo.</figcaption>
 </figure>
 
-El token de recuperación es ese código que te llega por correo cuando
-pulsas «he olvidado mi contraseña». Es, a todos los efectos, **equivalente a la
-contraseña**: quien lo tiene, puede cambiarla.
+Ese token es equivalente a la contraseña: quien lo tiene puede cambiarla. Un aparato
+vinculado no debería poder leerlo; son dos niveles de confianza distintos.
 
-Y aquí se podía **leer** desde una credencial de dispositivo. Un aparato vinculado no
-debería poder leer el mecanismo que sirve para recuperar la cuenta. Son dos niveles de
-confianza completamente distintos.
-
-Lo verifiqué con el control que le da sentido: **antes** de pedir una recuperación, ese
-campo venía vacío. Después de pedirla desde el formulario público —con solo una dirección
-de correo, sin credenciales— la misma lectura devolvía el token real.
-
-A partir de ahí la cadena se cierra sola:
+Lo comprobé con el control que le da sentido: antes de pedir una recuperación el campo
+venía vacío; después de pedirla desde el formulario público —solo con un correo— la misma
+lectura devolvía el token real. Y la cadena se cierra sola:
 
 ```http
 POST /api/recover/puk          ← canjear el token leído
 → set-cookie: sesión completa, válida un año
 ```
 
-Y al seguir esa sesión hasta la pantalla de cambio de contraseña, el formulario traía el
-campo oculto de «contraseña actual» **ya relleno** con el mismo token.
+Siguiendo esa sesión hasta la pantalla de cambio de contraseña, el campo oculto de
+«contraseña actual» venía **ya relleno** con el mismo token. Nunca hace falta conocer la
+original.
 
-El último obstáculo para cambiar una contraseña suele ser *«escribe la
-actual»*. Aquí la página lo rellenaba sola, porque considera que quien llega con el token
-de recuperación ya ha demostrado quién es. **Nunca hace falta conocer la contraseña
-original.**
-
-## La cadena completa
+## La cadena
 
 ```
 Sin cuenta de ningún tipo
@@ -204,30 +141,21 @@ Sin cuenta de ningún tipo
  → cambiar la contraseña sin conocer la anterior
 ```
 
-**Seis peticiones HTTP y cuatro caracteres tecleados por la víctima.**
-
 <figure>
   <img src="{{ '/assets/img/writeups/ato-codigo-emparejamiento/01-cadena.svg' | relative_url }}"
        alt="Diagrama de los seis pasos de la cadena, desde pedir un código sin cuenta hasta cambiar la contraseña sin conocer la anterior">
   <figcaption>Cada paso es razonable por separado. Puestos en fila, entregan la cuenta.</figcaption>
 </figure>
 
-## El detalle que lo hace peor: cambiar la contraseña no sirve
+Seis peticiones y cuatro caracteres.
 
-Esta es la parte que más me interesó al redactar el impacto.
+## Cambiar la contraseña no echa al atacante
 
-Cuando alguien sospecha que le han entrado en la cuenta, hace lo que todo el mundo
-recomienda: **cambiar la contraseña**. Aquí eso **no echa al atacante**, porque lo que él
-tiene no es la contraseña: es la credencial de dispositivo del paso 3. Y esa credencial
-**sobrevive al cambio de contraseña**.
-
-La víctima hace todo lo que le dirían en cualquier guía de seguridad,
-cree que ha cerrado el incidente, y el atacante sigue dentro. Peor aún: con esa credencial
-puede repetir la cadena entera y volver a cambiar la contraseña cuando quiera.
-
-La única limpieza real es **borrar el dispositivo concreto** de la lista de dispositivos
-vinculados — algo que a nadie se le ocurre, porque nadie relaciona «me han entrado en la
-cuenta» con «tengo un televisor de más en la lista».
+Lo que él tiene no es la contraseña, es la credencial de dispositivo del paso 3, y esa
+sobrevive al cambio. La víctima hace lo que recomienda cualquier guía, cree que ha cerrado
+el incidente, y el atacante puede repetir la cadena entera cuando quiera. La única limpieza
+real es borrar ese dispositivo de la lista, y a nadie se le ocurre relacionar «me han
+entrado» con «tengo un televisor de más».
 
 ## Impacto
 

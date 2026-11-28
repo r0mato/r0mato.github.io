@@ -23,24 +23,9 @@ takeaways:
   - "Un fallo de cupo no expone datos de nadie, pero rompe justo lo que el producto vende. El impacto es de ingresos, y se cuantifica igual."
 ---
 
-Reproducible nueve veces de nueve, y con el servidor admitiendo por escrito que está por
-encima de su propio límite: diez dispositivos activos en una cuenta que permite uno. Todo
-lo que hace falta es enviar las peticiones **en el mismo instante** en vez de una detrás
-de otra.
-
-<div class="warn" markdown="1">
-**Todo está anonimizado.** Publicado con el consentimiento del programa y sin identificar
-al producto: fabricante, dominios, rutas, nombres de campo y mensajes de error están
-cambiados. El mecanismo, la secuencia y las cifras son exactos.
-</div>
-
-## El cupo de dispositivos, que es literalmente el producto
-
-Hay un montón de servicios por suscripción cuyo precio **es** un número de dispositivos.
-No pagas por más funciones ni por más velocidad: pagas por poder usarlo en tres aparatos
-en vez de en uno. El plan se llama, literalmente, «7 dispositivos».
-
-Cuando instalas la aplicación en un aparato nuevo, esta llama a un endpoint de alta:
+Hay servicios por suscripción cuyo precio **es** un número de dispositivos. El plan se
+llama, literalmente, «7 dispositivos». Cuando instalas la aplicación en un aparato nuevo,
+llama al endpoint de alta:
 
 ```http
 POST /oauth/access_token
@@ -50,14 +35,7 @@ Content-Type: application/json
  "x_auth_mode":"client_auth","x_auth_username":"<correo>","x_auth_password":"<contraseña>","reset":0}
 ```
 
-Si queda hueco, responde `200` con un token de dispositivo. Si no:
-
-```
-403 Forbidden
-```
-
-Ese `403` es el producto haciendo su trabajo. La comprobación **existe, funciona y está
-bien escrita**. No voy a encontrar ningún fallo en ella, porque no lo tiene.
+Si queda hueco, `200` con un token. Si no, `403`.
 
 <figure>
   <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/01-control-403.png' | relative_url }}"
@@ -65,13 +43,9 @@ bien escrita**. No voy a encontrar ningún fallo en ella, porque no lo tiene.
   <figcaption>Con la cuenta llena, el alta recibe <code>403</code>. El cuerpo lleva un mensaje de límite alcanzado; va tapado porque su redacción exacta identifica al producto.</figcaption>
 </figure>
 
-## La pregunta que abre el caso
-
-No es «¿puedo saltarme la comprobación?». Es otra, bastante más barata:
-
-> **¿Cuánto tiempo pasa entre que el servidor mira el contador y lo sube?**
-
-Porque el código, en el 99 % de los sitios donde he visto esto, tiene esta forma:
+Esa comprobación existe, funciona y está bien escrita. No tiene ningún fallo. La pregunta
+no es cómo saltársela, es otra: **cuánto tiempo pasa entre que el servidor mira el contador
+y lo sube.**
 
 ```python
 usados = db.query("SELECT activateddevices FROM users WHERE id = ?", uid)
@@ -85,12 +59,9 @@ db.execute("UPDATE users SET activateddevices = activateddevices + 1 WHERE id = 
 return token
 ```
 
-Léelo otra vez pensando en **dos peticiones a la vez**. La primera lee `0`. La segunda
-lee… también `0`, porque la primera todavía no ha llegado al `UPDATE`. Las dos pasan el
-`if`. Las dos crean un token. Las dos suman uno.
-
-Eso tiene nombre desde hace décadas: **TOCTOU**, *time of check to time of use*. El
-hueco entre comprobar y usar.
+Con dos peticiones a la vez: la primera lee `0`, la segunda también, porque la primera no
+ha llegado al `UPDATE`. Las dos pasan el `if`. Eso es TOCTOU, el hueco entre comprobar y
+usar.
 
 <figure>
   <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/01-ventana-carrera.svg' | relative_url }}"
@@ -100,33 +71,24 @@ hueco entre comprobar y usar.
 
 ## «A la vez» no es «muy rápido»
 
-Aquí es donde la mayoría de los intentos de explotar una carrera fracasan, y donde está
-la técnica que de verdad merece la pena aprender.
+Aquí fracasa la mayoría de los intentos. Un bucle con diez peticiones seguidas no las manda
+a la vez: cada una sale cuando la anterior ha terminado de escribirse en el socket, y entre
+la primera y la última hay milisegundos. Para el servidor eso es una eternidad. Obtienes un
+`200` y nueve `403`, y concluyes mal.
 
-Si abres un bucle y mandas diez peticiones seguidas, **no van a la vez**. Cada una sale
-cuando la anterior ha terminado de escribirse en el socket, y entre la primera y la última
-hay milisegundos de red. Para un servidor, milisegundos son una eternidad: el `UPDATE` de
-la primera ya está hecho cuando llega la segunda. Obtienes un `200` y nueve `403`, y
-concluyes que no hay fallo. Conclusión equivocada.
+Lo que hace falta es la sincronización por último byte:
 
-Lo que hace falta es que las diez lleguen dentro de la **misma ventana**, y para eso se
-usa la sincronización por último byte:
-
-1. Se abren diez conexiones TLS, una por petición.
-2. Por cada una se envía la petición entera **menos su último byte**. El servidor recibe
-   casi todo, pero no puede empezar a procesar nada: le falta el final.
-3. Se espera a que las diez estén en ese estado — ahí es donde se paga toda la latencia.
+1. Se abren diez conexiones TLS.
+2. Se envía cada petición entera **menos su último byte**. El servidor no puede empezar a
+   procesar: le falta el final.
+3. Se espera a que las diez estén así — ahí se paga toda la latencia.
 4. Se sueltan los diez bytes finales juntos.
-
-Los diez servidores… perdón, los diez hilos del mismo servidor arrancan a la vez.
 
 <figure>
   <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/02-ultimo-byte.svg' | relative_url }}"
        alt="Arriba, tres conexiones enviadas una tras otra llegan separadas en el tiempo; abajo, tres conexiones envían la petición completa menos su último byte y después sueltan los tres bytes finales a la vez, llegando dentro de la misma ventana">
   <figcaption>La latencia se paga <strong>antes</strong> de que empiece la carrera, no durante.</figcaption>
 </figure>
-
-En Python eso es más corto de lo que parece. Lo esencial cabe en una función:
 
 ```python
 import threading
@@ -153,15 +115,7 @@ def carrera(peticiones):
 ```
 
 La pieza clave es `threading.Barrier`: ningún hilo pasa de `puerta.wait()` hasta que han
-llegado todos. Cuando se abre, los diez `sendall` del byte final salen prácticamente
-pegados.
-
-<div class="note" markdown="1">
-**Por qué no publico el script completo.** El que mandé al programa tiene unas 250 líneas
-porque hace el alta en serie, la carrera, la verificación y la limpieza de todo lo que
-crea. Lo que vale la pena aprender es la función de
-arriba; el resto es fontanería atada a un producto concreto.
-</div>
+llegado todos.
 
 ## Lo que devolvió el servidor
 
@@ -171,24 +125,19 @@ arriba; el resto es fontanería atada a un producto concreto.
   <figcaption>Seis altas soltadas en el mismo instante: las seis marcan <code>12:29:04</code> y dos salen con <code>200</code>, en una cuenta de un dispositivo. Se han recortado las columnas intermedias y tapado el host.</figcaption>
 </figure>
 
-Nueve tandas, dos hosts de la API y dos planes distintos. Las dos más claras:
+Nueve tandas, dos hosts de la API y dos planes. Las dos más claras:
 
 | Plan | Ya en uso | En paralelo | Aceptadas | El servidor informa |
 |---|---|---|---|---|
 | 7 dispositivos | 3 | 10 | **10** | `activateddevices=13`, `max_devices=7` |
 | 1 dispositivo | 0 | 10 | **10** | `activateddevices=10`, `max_devices=1` |
 
-Me interesa subrayar la última columna, porque no es una deducción mía: es el propio
-servidor, en su respuesta a `GET /users/me`, diciendo que tiene **diez dispositivos
-activos en un plan que permite uno**. No hace falta interpretar nada.
+La última columna no es una deducción mía: es el propio servidor, en `GET /users/me`,
+diciendo que tiene diez dispositivos activos en un plan que permite uno.
 
-Y no son sesiones ni conexiones simultáneas. Cada una de las diez es un alta persistente:
-
-- cuenta en `activateddevices`,
-- tiene su propio token de larga duración, con un identificador distinto,
-- y pidiendo `GET /certificate` devuelve `200` con su propia credencial de cliente.
-
-Es decir: exactamente lo que `max_devices` existe para limitar.
+Y no son sesiones simultáneas. Cada una de las diez cuenta en `activateddevices`, tiene su
+propio token de larga duración con identificador distinto, y pidiendo `GET /certificate`
+devuelve `200` con su credencial de cliente.
 
 <figure>
   <img src="{{ '/assets/img/writeups/race-cupo-dispositivos/03-contador-2-de-1.png' | relative_url }}"
@@ -196,13 +145,12 @@ Es decir: exactamente lo que `max_devices` existe para limitar.
   <figcaption>No es una deducción mía: lo dice el servidor. <code>activateddevices: 2</code> sobre <code>max_devices: 1</code>.</figcaption>
 </figure>
 
-## Hasta dónde llegué, y dónde paré
+## Dónde paré
 
-Diez peticiones en paralelo, no más. Cada dispositivo creado lo revoqué, también cuando el
-script se interrumpía, y cada cuenta terminó con el mismo número de dispositivos que tenía
-al empezar. Solo usé cuentas de prueba mías. No llegué a conectar ninguno de los
-dispositivos extra al servicio: con que el servidor me entregue la credencial ya está
-demostrado que el alta es real, y conectarse no añade nada al reporte.
+Diez peticiones en paralelo, no más. Revoqué cada dispositivo creado, también cuando el
+script se interrumpía, y cada cuenta terminó con los mismos dispositivos que tenía al
+empezar. Solo cuentas de prueba mías. No conecté ninguno al servicio: con que el servidor
+entregue la credencial ya está demostrado que el alta es real.
 
 ## Impacto
 

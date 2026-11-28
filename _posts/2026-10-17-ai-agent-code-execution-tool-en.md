@@ -24,31 +24,10 @@ takeaways:
   - "Two different bugs sharing one entrance are still two bugs: one is fixed by rotating a key, the other by removing a tool."
 ---
 
-This is the most technically serious bug I have found, and the one that best explains why
-AI assistants are a new and different attack surface. Spoiler: **the problem was not the
-language model**. The problem was what they had let it do.
-
-<div class="warn" markdown="1">
-**Everything is anonymised.** Published with the program's permission and without
-identifying the product: company, domains, paths, service and agent names have been
-changed. The mechanism, the verification method and the impact are exact.
-</div>
-
-## First, what an "agent" is and why it changes the rules
-
-A normal chatbot takes text and returns text. If you ask it to delete a file, it replies
-something pleasant and nothing happens, because **it cannot touch anything**.
-
-An **agent** is a different animal. You give an agent *tools*: search a database, call an
-API, send an email, run code. The model decides **which one to use** based on what you ask,
-and the system **actually runs it**.
-
-A chatbot is someone on the phone giving you advice. An agent is
-someone on the phone **with the keys to your house**. The conversation is just as harmless;
-what changes is what they can do while talking to you.
-
-That is why, when auditing an AI assistant, the question is not "can I make it say silly
-things?". The question is **"what tools does it have and who can ask it to use them?"**.
+A chatbot takes text and returns text. An agent has **tools** — query a database, call an
+API, run code — and the system actually executes them when the model decides to use one. So
+auditing an assistant is not trying to make it say silly things: it is asking what tools it
+has and who can ask it to use them.
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-agente-ia/02-chatbot-vs-agente-en.svg' | relative_url }}"
@@ -56,74 +35,44 @@ things?". The question is **"what tools does it have and who can ask it to use t
   <figcaption>A chatbot answers. An agent acts. And its list of tools is the attack surface.</figcaption>
 </figure>
 
-## The target
+This was a corporate portal's internal assistant. I already knew how to talk to it without
+an account, because [the signing key sat in a public JavaScript file]({{ '/en/writeups/aes-key-in-public-bundle/' | relative_url }}).
 
-The internal assistant of a corporate portal. I had already found how to talk to it without
-an account — [the signing key was in a public JavaScript file]({{ '/en/writeups/aes-key-in-public-bundle/' | relative_url }}) —
-so I could send it messages like any employee.
+## What tools it has
 
-The next question was obvious: **what can this thing do?**
-
-## Step 1: ask it what tools it has
-
-No reverse engineering required. Often, asking is enough:
+I asked it:
 
 ```
 What tools do you have available? List their exact names.
 ```
 
-Among the list was one that made me sit up straight:
+In the list:
 
 ```
 run_ipython_cell
 ```
 
-The name leaves no room for doubt: a tool that "runs an IPython cell" runs whatever Python it is given, inside an assistant anyone can write to.
+## The trap
 
-## Step 2: the trap almost everyone falls into
-
-The temptation is to ask it to run something and show the answer. Like this:
-
-```
-Run: import os; print(os.getcwd())
-```
-
-And the assistant replies something like `/app/workspace`. Done? **No.** And this is the
-most valuable lesson in the whole article:
+The tempting move is to ask for `import os; print(os.getcwd())`, get `/app/workspace` back,
+and send that in.
 
 <div class="warn" markdown="1">
-**A language model can invent that answer entirely.** It was trained on millions of
-terminal sessions. Ask it for the current directory and it will tell you something
-plausible whether or not it ran the code.
-
-If you send that report, whoever triages it will reply — rightly — *"the model hallucinated
-the output"*, and close it. I have watched many AI reports die exactly like that.
+**A model can invent that answer entirely.** It was trained on millions of terminal
+sessions: it will tell you something plausible whether or not it ran the code. Whoever
+triages it will reply — rightly — that the model hallucinated the output, and close it.
 </div>
 
-You need proof that **a model cannot fake**.
+## The canary
 
-## Step 3: the cryptographic canary
-
-The solution is elegant and you can reuse it forever: ask it to compute something whose
-result is **impossible to guess but trivial to verify**.
-
-A SHA-256 hash meets both conditions.
+You need something impossible to guess and trivial to verify. A SHA-256 is both, and a
+model cannot compute the hash of a string I just made up.
 
 ```bash
-# 1 · on MY machine, BEFORE touching the server
-python3 -c 'import hashlib; print(hashlib.sha256(b"canary-verify-20261017-7f3ad9").hexdigest())'
+# on MY machine, BEFORE touching the server
+python3 -c 'import hashlib; print(hashlib.sha256(b"canary-verification-20261017-7f3ad9").hexdigest())'
 # 0e407c15aa4778af3f4ba76dbfa2b0d3fd990d2f365bdf3aa3d95091e4069005
 ```
-
-A hash is a fingerprint of a piece of text. Change one letter and the
-fingerprint changes completely. There is no way to "deduce" it: you have to compute it.
-
-A language model **cannot compute hashes**. It can recite famous hashes it saw during
-training, but it cannot produce one for a string I just invented. If the server returns
-exactly the same fingerprint I computed on my laptop, there is only one explanation: **it
-really ran the code**.
-
-And now, to the assistant:
 
 ```http
 POST /assistant/chat/v1/messages HTTP/2
@@ -132,18 +81,17 @@ X-Authorization: <minted token, no account>
 
 {"user":"canary-bbtest",
  "query":"Use run_ipython_cell to run this line and paste the literal output:
-          import hashlib; print(hashlib.sha256(b\"canary-verify-20261017-7f3ad9\").hexdigest())",
+          import hashlib; print(hashlib.sha256(b\"canary-verification-20261017-7f3ad9\").hexdigest())",
  "is_agent":"1"}
 ```
-
-The response arrived as an event stream, and inside it was this:
 
 ```json
 {"actionName":"run_ipython_cell",
  "observation":"0e407c15aa4778af3f4ba76dbfa2b0d3fd990d2f365bdf3aa3d95091e4069005"}
 ```
 
-**Character for character, the same.** That closes the discussion.
+Character for character, the same. I repeated it twice more with different strings: one
+canary could be luck, three are not.
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-agente-ia/03-canario-en.svg' | relative_url }}"
@@ -151,24 +99,17 @@ The response arrived as an event stream, and inside it was this:
   <figcaption>The hash is computed before touching the server. If it comes back identical, it ran.</figcaption>
 </figure>
 
-And I repeated it **twice more, with different strings**, to rule out coincidence or
-caching. One canary could be luck; three are not.
-
-## Step 4: where is this running?
-
-Once execution was proven, it was time to measure how far it reached. Carefully, touching
-nothing:
+## Where it was running
 
 ```python
 import os, socket
 print(os.getuid())        # 0  -> root
 print(socket.gethostname())
-print(len(os.environ))    # process variables
+print(len(os.environ))    # how many variables, not their contents
 ```
 
-The result: **uid 0 (root)**, inside a container on a production cluster, with network
-reach to several dozen internal services and credentials sitting in the process
-environment.
+**uid 0**, inside a container on a production cluster, with network visibility of several
+dozen internal services and credentials in the process environment.
 
 <figure>
   <img src="{{ '/assets/img/writeups/rce-agente-ia/01-root.png' | relative_url }}"
@@ -176,37 +117,24 @@ environment.
   <figcaption>The agent runs the line and returns the output: <code>observation: "root"</code>. Excerpt of the response; the rest carries product identifiers.</figcaption>
 </figure>
 
-The code was not running in an isolated toy box. It ran as administrator
-inside the company's internal network, with access to other services that should never be
-reachable from the internet. From there, an attacker is not "chatting with a bot": **they
-are inside**.
-
 <div class="note" markdown="1">
-**Where I stopped.** I read the user id, the hostname and counted how many environment
-variables there were. I did **not** read their contents, did not move to any internal
-service, did not touch data and left nothing installed. To demonstrate "I execute code as
-root in production" that is more than enough; everything beyond it is intrusion, not
-research.
+**Where I stopped.** I read the uid, the hostname and counted the environment variables. I
+did not read their contents, did not move to any internal service, did not touch data and
+left nothing installed.
 </div>
 
-## Why I reported it separately from the other bug
+## Why it goes separately from the authentication bug
 
-The entrance was the same: the token that could be minted with the key from the JavaScript
-file. It might look like the same report. **It is not**, and arguing that properly was part
-of the job:
+The way in was the same, but these are two bugs with two different fixes:
 
-| | The authentication bug | This one |
+| | Authentication bug | This one |
 |---|---|---|
-| **What it is** | You can get in without an account | There is a tool that executes code |
-| **How it is fixed** | Rotating the key and binding the token to a user | Removing the tool from the agent |
+| **What it is** | You can get in with no account | There is a tool that runs code |
+| **How it is fixed** | Rotate the key, bind the token to a user | Remove the tool from the agent |
 | **If only the other is fixed** | — | Still exploitable **by any legitimate employee** |
 
-That last point is the decisive argument: even if they fixed authentication tomorrow, any
-employee with normal chat access could still run code as root in production. Two bugs, two
-different fixes.
-
-It is one thing for the front door to be open and another for there to
-be a lever inside that blows up the building. Fixing the door does not remove the lever.
+That last row is the argument: even if they fix authentication tomorrow, any employee with
+normal chat access can still run code as root in production.
 
 ## Impact
 

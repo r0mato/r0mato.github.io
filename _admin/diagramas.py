@@ -645,17 +645,13 @@ def ultimo_byte(L):
 
 
 DIAGRAMAS = [
-    ("rce-cli-shell-true", "04-shell-true.svg", shell_true),
     ("open-redirect-sso", "02-anatomia-url.svg", anatomia_url),
     ("clave-aes-bundle-js", "02-clave-en-el-navegador.svg", clave_bundle),
     ("rce-agente-ia", "02-chatbot-vs-agente.svg", agente_ia),
     ("ato-codigo-emparejamiento", "01-cadena.svg", cadena_pin),
-    ("escalada-symlink", "01-enlace-simbolico.svg", symlink),
-    ("inyeccion-nombre-carpeta", "02-comillas.svg", comillas),
     ("ato-codigo-emparejamiento", "02-consentimiento.svg", pantalla_consentimiento),
     ("rce-agente-ia", "03-canario.svg", canario),
     ("open-redirect-sso", "03-cadena.svg", cadena_sso),
-    ("rce-cli-shell-true", "05-mitm.svg", mitm),
     ("race-cupo-dispositivos", "01-ventana-carrera.svg", ventana_carrera),
     ("race-cupo-dispositivos", "02-ultimo-byte.svg", ultimo_byte),
 ]
